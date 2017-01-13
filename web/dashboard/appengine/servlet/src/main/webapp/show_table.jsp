@@ -67,13 +67,13 @@
 
           // disable buttons on load
           if (!${hasNewer}) {
-              $('#newer_button').toggleClass('disabled');
+              $('#newer-button').toggleClass('disabled');
           }
           if (!${hasOlder}) {
-              $('#older_button').toggleClass('disabled');
+              $('#older-button').toggleClass('disabled');
           }
-          $('#newer_button').click(prev);
-          $('#older_button').click(next);
+          $('#newer-button').click(prev);
+          $('#older-button').click(next);
       });
 
       // refresh the page to see the selected test types (pre-/post-submit)
@@ -115,6 +115,10 @@
           if (${unfiltered}) {
               link += '&unfiltered=';
           }
+          var searchString = '${searchString}';
+          if (searchString) {
+              link += '&search=' + encodeURIComponent(searchString);
+          }
           window.open(link,'_self');
       }
 
@@ -132,6 +136,10 @@
           }
           if (${unfiltered}) {
               link += '&unfiltered=';
+          }
+          var searchString = '${searchString}';
+          if (searchString) {
+              link += '&search=' + encodeURIComponent(searchString);
           }
           window.open(link,'_self');
         }
@@ -226,8 +234,10 @@
 
           // Add column headers.
           headerRow = ${headerRow};
-          headerRow.forEach(function(d) {
-              data.addColumn('string', '<span class="table-header-content">' +
+          headerRow.forEach(function(d, i) {
+              var classNames = 'table-header-content';
+              if (i == 0) classNames += ' table-header-legend';
+              data.addColumn('string', '<span class="' + classNames + '">' +
                              d + '</span>');
           });
 
@@ -266,10 +276,18 @@
 
           var table = new google.visualization.Table(document.getElementById('grid_table_div'));
           var classNames = {
-              headerRow : 'table-header'
+              headerRow : 'table-header',
+              headerCell : 'table-header-cell'
           };
-          table.draw(data, {showRowNumber: false, alternatingRowStyle : true, 'allowHtml': true,
-                            frozenColumns: 1, cssClassNames: classNames});
+          var options = {
+              showRowNumber: false,
+              alternatingRowStyle: true,
+              allowHtml: true,
+              frozenColumns: 1,
+              cssClassNames: classNames,
+              sort: 'disable'
+          };
+          table.draw(data, options);
       }
     </script>
 
@@ -317,7 +335,7 @@
             </div>
           </div>
         </div>
-        <div class='col s6'>
+        <div class='col s7'>
           <div class='col s12 card center-align'>
             <div id='legend_wrapper'>
               <c:forEach items='${resultNames}' var='res'>
@@ -342,7 +360,7 @@
             </c:choose>
           </div>
         </div>
-        <div class='col s6 valign-wrapper'>
+        <div class='col s5 valign-wrapper'>
           <!-- pie chart -->
           <div id='pie-chart-wrapper' class='col s12 valign center-align card'>
             <h6 class='pie-chart-title'>Test Status for Device Build ID: ${topBuildId}</h6>
@@ -355,12 +373,17 @@
         <div id='chart_holder' class='col s12 card'>
           <!-- Grid tables-->
           <div id='grid_table_div'></div>
-
-          <div id='buttons' class='col s12'>
-            <a id='newer_button' class='btn-floating waves-effect waves-light red'><i class='material-icons'>keyboard_arrow_left</i></a>
-            <a id='older_button' class='btn-floating waves-effect waves-light red right'><i class='material-icons'>keyboard_arrow_right</i></a>
-          </div>
         </div>
+      </div>
+      <div id='newer-wrapper' class='page-button-wrapper fixed-action-btn'>
+        <a id='newer-button' class='btn-floating btn red waves-effect'>
+          <i class='large material-icons'>keyboard_arrow_left</i>
+        </a>
+      </div>
+      <div id='older-wrapper' class='page-button-wrapper fixed-action-btn'>
+        <a id='older-button' class='btn-floating btn red waves-effect'>
+          <i class='large material-icons'>keyboard_arrow_right</i>
+        </a>
       </div>
     </div>
     <div id="help-modal" class="modal">

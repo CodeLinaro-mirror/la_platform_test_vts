@@ -244,6 +244,130 @@ public final class VtsReportMessage {
   }
 
   /**
+   * Protobuf enum {@code android.vts.VtsProfilingRegressionMode}
+   */
+  public enum VtsProfilingRegressionMode
+      implements com.google.protobuf.ProtocolMessageEnum {
+    /**
+     * <code>UNKNOWN_REGRESSION_MODE = 0;</code>
+     */
+    UNKNOWN_REGRESSION_MODE(0, 0),
+    /**
+     * <code>VTS_REGRESSION_MODE_DISABLED = 1;</code>
+     *
+     * <pre>
+     * disable analysis
+     * </pre>
+     */
+    VTS_REGRESSION_MODE_DISABLED(1, 1),
+    /**
+     * <code>VTS_REGRESSION_MODE_INCREASING = 2;</code>
+     *
+     * <pre>
+     * interpret increases in values as regression
+     * </pre>
+     */
+    VTS_REGRESSION_MODE_INCREASING(2, 2),
+    /**
+     * <code>VTS_REGRESSION_MODE_DECREASING = 3;</code>
+     *
+     * <pre>
+     * interpret decreases in values as regression
+     * </pre>
+     */
+    VTS_REGRESSION_MODE_DECREASING(3, 3),
+    ;
+
+    /**
+     * <code>UNKNOWN_REGRESSION_MODE = 0;</code>
+     */
+    public static final int UNKNOWN_REGRESSION_MODE_VALUE = 0;
+    /**
+     * <code>VTS_REGRESSION_MODE_DISABLED = 1;</code>
+     *
+     * <pre>
+     * disable analysis
+     * </pre>
+     */
+    public static final int VTS_REGRESSION_MODE_DISABLED_VALUE = 1;
+    /**
+     * <code>VTS_REGRESSION_MODE_INCREASING = 2;</code>
+     *
+     * <pre>
+     * interpret increases in values as regression
+     * </pre>
+     */
+    public static final int VTS_REGRESSION_MODE_INCREASING_VALUE = 2;
+    /**
+     * <code>VTS_REGRESSION_MODE_DECREASING = 3;</code>
+     *
+     * <pre>
+     * interpret decreases in values as regression
+     * </pre>
+     */
+    public static final int VTS_REGRESSION_MODE_DECREASING_VALUE = 3;
+
+
+    public final int getNumber() { return value; }
+
+    public static VtsProfilingRegressionMode valueOf(int value) {
+      switch (value) {
+        case 0: return UNKNOWN_REGRESSION_MODE;
+        case 1: return VTS_REGRESSION_MODE_DISABLED;
+        case 2: return VTS_REGRESSION_MODE_INCREASING;
+        case 3: return VTS_REGRESSION_MODE_DECREASING;
+        default: return null;
+      }
+    }
+
+    public static com.google.protobuf.Internal.EnumLiteMap<VtsProfilingRegressionMode>
+        internalGetValueMap() {
+      return internalValueMap;
+    }
+    private static com.google.protobuf.Internal.EnumLiteMap<VtsProfilingRegressionMode>
+        internalValueMap =
+          new com.google.protobuf.Internal.EnumLiteMap<VtsProfilingRegressionMode>() {
+            public VtsProfilingRegressionMode findValueByNumber(int number) {
+              return VtsProfilingRegressionMode.valueOf(number);
+            }
+          };
+
+    public final com.google.protobuf.Descriptors.EnumValueDescriptor
+        getValueDescriptor() {
+      return getDescriptor().getValues().get(index);
+    }
+    public final com.google.protobuf.Descriptors.EnumDescriptor
+        getDescriptorForType() {
+      return getDescriptor();
+    }
+    public static final com.google.protobuf.Descriptors.EnumDescriptor
+        getDescriptor() {
+      return com.android.vts.proto.VtsReportMessage.getDescriptor().getEnumTypes().get(2);
+    }
+
+    private static final VtsProfilingRegressionMode[] VALUES = values();
+
+    public static VtsProfilingRegressionMode valueOf(
+        com.google.protobuf.Descriptors.EnumValueDescriptor desc) {
+      if (desc.getType() != getDescriptor()) {
+        throw new java.lang.IllegalArgumentException(
+          "EnumValueDescriptor is not for this type.");
+      }
+      return VALUES[desc.getIndex()];
+    }
+
+    private final int index;
+    private final int value;
+
+    private VtsProfilingRegressionMode(int index, int value) {
+      this.index = index;
+      this.value = value;
+    }
+
+    // @@protoc_insertion_point(enum_scope:android.vts.VtsProfilingRegressionMode)
+  }
+
+  /**
    * Protobuf enum {@code android.vts.VtsProfilingType}
    */
   public enum VtsProfilingType
@@ -325,7 +449,7 @@ public final class VtsReportMessage {
     }
     public static final com.google.protobuf.Descriptors.EnumDescriptor
         getDescriptor() {
-      return com.android.vts.proto.VtsReportMessage.getDescriptor().getEnumTypes().get(2);
+      return com.android.vts.proto.VtsReportMessage.getDescriptor().getEnumTypes().get(3);
     }
 
     private static final VtsProfilingType[] VALUES = values();
@@ -2736,6 +2860,445 @@ public final class VtsReportMessage {
     // @@protoc_insertion_point(class_scope:android.vts.AndroidBuildInfo)
   }
 
+  public interface VtsHostInfoOrBuilder
+      extends com.google.protobuf.MessageOrBuilder {
+
+    // optional bytes hostname = 1;
+    /**
+     * <code>optional bytes hostname = 1;</code>
+     *
+     * <pre>
+     * the host name (i.e., full domain name).
+     * </pre>
+     */
+    boolean hasHostname();
+    /**
+     * <code>optional bytes hostname = 1;</code>
+     *
+     * <pre>
+     * the host name (i.e., full domain name).
+     * </pre>
+     */
+    com.google.protobuf.ByteString getHostname();
+  }
+  /**
+   * Protobuf type {@code android.vts.VtsHostInfo}
+   *
+   * <pre>
+   * To specify the information about a host node.
+   * </pre>
+   */
+  public static final class VtsHostInfo extends
+      com.google.protobuf.GeneratedMessage
+      implements VtsHostInfoOrBuilder {
+    // Use VtsHostInfo.newBuilder() to construct.
+    private VtsHostInfo(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      super(builder);
+      this.unknownFields = builder.getUnknownFields();
+    }
+    private VtsHostInfo(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
+
+    private static final VtsHostInfo defaultInstance;
+    public static VtsHostInfo getDefaultInstance() {
+      return defaultInstance;
+    }
+
+    public VtsHostInfo getDefaultInstanceForType() {
+      return defaultInstance;
+    }
+
+    private final com.google.protobuf.UnknownFieldSet unknownFields;
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+        getUnknownFields() {
+      return this.unknownFields;
+    }
+    private VtsHostInfo(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      initFields();
+      int mutable_bitField0_ = 0;
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            default: {
+              if (!parseUnknownField(input, unknownFields,
+                                     extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+            case 10: {
+              bitField0_ |= 0x00000001;
+              hostname_ = input.readBytes();
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e.getMessage()).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return com.android.vts.proto.VtsReportMessage.internal_static_android_vts_VtsHostInfo_descriptor;
+    }
+
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return com.android.vts.proto.VtsReportMessage.internal_static_android_vts_VtsHostInfo_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              com.android.vts.proto.VtsReportMessage.VtsHostInfo.class, com.android.vts.proto.VtsReportMessage.VtsHostInfo.Builder.class);
+    }
+
+    public static com.google.protobuf.Parser<VtsHostInfo> PARSER =
+        new com.google.protobuf.AbstractParser<VtsHostInfo>() {
+      public VtsHostInfo parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new VtsHostInfo(input, extensionRegistry);
+      }
+    };
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<VtsHostInfo> getParserForType() {
+      return PARSER;
+    }
+
+    private int bitField0_;
+    // optional bytes hostname = 1;
+    public static final int HOSTNAME_FIELD_NUMBER = 1;
+    private com.google.protobuf.ByteString hostname_;
+    /**
+     * <code>optional bytes hostname = 1;</code>
+     *
+     * <pre>
+     * the host name (i.e., full domain name).
+     * </pre>
+     */
+    public boolean hasHostname() {
+      return ((bitField0_ & 0x00000001) == 0x00000001);
+    }
+    /**
+     * <code>optional bytes hostname = 1;</code>
+     *
+     * <pre>
+     * the host name (i.e., full domain name).
+     * </pre>
+     */
+    public com.google.protobuf.ByteString getHostname() {
+      return hostname_;
+    }
+
+    private void initFields() {
+      hostname_ = com.google.protobuf.ByteString.EMPTY;
+    }
+    private byte memoizedIsInitialized = -1;
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized != -1) return isInitialized == 1;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      getSerializedSize();
+      if (((bitField0_ & 0x00000001) == 0x00000001)) {
+        output.writeBytes(1, hostname_);
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    private int memoizedSerializedSize = -1;
+    public int getSerializedSize() {
+      int size = memoizedSerializedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (((bitField0_ & 0x00000001) == 0x00000001)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBytesSize(1, hostname_);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSerializedSize = size;
+      return size;
+    }
+
+    private static final long serialVersionUID = 0L;
+    @java.lang.Override
+    protected java.lang.Object writeReplace()
+        throws java.io.ObjectStreamException {
+      return super.writeReplace();
+    }
+
+    public static com.android.vts.proto.VtsReportMessage.VtsHostInfo parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.android.vts.proto.VtsReportMessage.VtsHostInfo parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.android.vts.proto.VtsReportMessage.VtsHostInfo parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.android.vts.proto.VtsReportMessage.VtsHostInfo parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.android.vts.proto.VtsReportMessage.VtsHostInfo parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input);
+    }
+    public static com.android.vts.proto.VtsReportMessage.VtsHostInfo parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input, extensionRegistry);
+    }
+    public static com.android.vts.proto.VtsReportMessage.VtsHostInfo parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return PARSER.parseDelimitedFrom(input);
+    }
+    public static com.android.vts.proto.VtsReportMessage.VtsHostInfo parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    }
+    public static com.android.vts.proto.VtsReportMessage.VtsHostInfo parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input);
+    }
+    public static com.android.vts.proto.VtsReportMessage.VtsHostInfo parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input, extensionRegistry);
+    }
+
+    public static Builder newBuilder() { return Builder.create(); }
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder(com.android.vts.proto.VtsReportMessage.VtsHostInfo prototype) {
+      return newBuilder().mergeFrom(prototype);
+    }
+    public Builder toBuilder() { return newBuilder(this); }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code android.vts.VtsHostInfo}
+     *
+     * <pre>
+     * To specify the information about a host node.
+     * </pre>
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessage.Builder<Builder>
+       implements com.android.vts.proto.VtsReportMessage.VtsHostInfoOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return com.android.vts.proto.VtsReportMessage.internal_static_android_vts_VtsHostInfo_descriptor;
+      }
+
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return com.android.vts.proto.VtsReportMessage.internal_static_android_vts_VtsHostInfo_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                com.android.vts.proto.VtsReportMessage.VtsHostInfo.class, com.android.vts.proto.VtsReportMessage.VtsHostInfo.Builder.class);
+      }
+
+      // Construct using com.android.vts.proto.VtsReportMessage.VtsHostInfo.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+        }
+      }
+      private static Builder create() {
+        return new Builder();
+      }
+
+      public Builder clear() {
+        super.clear();
+        hostname_ = com.google.protobuf.ByteString.EMPTY;
+        bitField0_ = (bitField0_ & ~0x00000001);
+        return this;
+      }
+
+      public Builder clone() {
+        return create().mergeFrom(buildPartial());
+      }
+
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return com.android.vts.proto.VtsReportMessage.internal_static_android_vts_VtsHostInfo_descriptor;
+      }
+
+      public com.android.vts.proto.VtsReportMessage.VtsHostInfo getDefaultInstanceForType() {
+        return com.android.vts.proto.VtsReportMessage.VtsHostInfo.getDefaultInstance();
+      }
+
+      public com.android.vts.proto.VtsReportMessage.VtsHostInfo build() {
+        com.android.vts.proto.VtsReportMessage.VtsHostInfo result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      public com.android.vts.proto.VtsReportMessage.VtsHostInfo buildPartial() {
+        com.android.vts.proto.VtsReportMessage.VtsHostInfo result = new com.android.vts.proto.VtsReportMessage.VtsHostInfo(this);
+        int from_bitField0_ = bitField0_;
+        int to_bitField0_ = 0;
+        if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
+          to_bitField0_ |= 0x00000001;
+        }
+        result.hostname_ = hostname_;
+        result.bitField0_ = to_bitField0_;
+        onBuilt();
+        return result;
+      }
+
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof com.android.vts.proto.VtsReportMessage.VtsHostInfo) {
+          return mergeFrom((com.android.vts.proto.VtsReportMessage.VtsHostInfo)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(com.android.vts.proto.VtsReportMessage.VtsHostInfo other) {
+        if (other == com.android.vts.proto.VtsReportMessage.VtsHostInfo.getDefaultInstance()) return this;
+        if (other.hasHostname()) {
+          setHostname(other.getHostname());
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        return this;
+      }
+
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        com.android.vts.proto.VtsReportMessage.VtsHostInfo parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (com.android.vts.proto.VtsReportMessage.VtsHostInfo) e.getUnfinishedMessage();
+          throw e;
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+      private int bitField0_;
+
+      // optional bytes hostname = 1;
+      private com.google.protobuf.ByteString hostname_ = com.google.protobuf.ByteString.EMPTY;
+      /**
+       * <code>optional bytes hostname = 1;</code>
+       *
+       * <pre>
+       * the host name (i.e., full domain name).
+       * </pre>
+       */
+      public boolean hasHostname() {
+        return ((bitField0_ & 0x00000001) == 0x00000001);
+      }
+      /**
+       * <code>optional bytes hostname = 1;</code>
+       *
+       * <pre>
+       * the host name (i.e., full domain name).
+       * </pre>
+       */
+      public com.google.protobuf.ByteString getHostname() {
+        return hostname_;
+      }
+      /**
+       * <code>optional bytes hostname = 1;</code>
+       *
+       * <pre>
+       * the host name (i.e., full domain name).
+       * </pre>
+       */
+      public Builder setHostname(com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000001;
+        hostname_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional bytes hostname = 1;</code>
+       *
+       * <pre>
+       * the host name (i.e., full domain name).
+       * </pre>
+       */
+      public Builder clearHostname() {
+        bitField0_ = (bitField0_ & ~0x00000001);
+        hostname_ = getDefaultInstance().getHostname();
+        onChanged();
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:android.vts.VtsHostInfo)
+    }
+
+    static {
+      defaultInstance = new VtsHostInfo(true);
+      defaultInstance.initFields();
+    }
+
+    // @@protoc_insertion_point(class_scope:android.vts.VtsHostInfo)
+  }
+
   public interface TestCaseReportMessageOrBuilder
       extends com.google.protobuf.MessageOrBuilder {
 
@@ -3996,6 +4559,16 @@ public final class VtsReportMessage {
      */
     com.android.vts.proto.VtsReportMessage.VtsProfilingType getType();
 
+    // optional .android.vts.VtsProfilingRegressionMode regression_mode = 3;
+    /**
+     * <code>optional .android.vts.VtsProfilingRegressionMode regression_mode = 3;</code>
+     */
+    boolean hasRegressionMode();
+    /**
+     * <code>optional .android.vts.VtsProfilingRegressionMode regression_mode = 3;</code>
+     */
+    com.android.vts.proto.VtsReportMessage.VtsProfilingRegressionMode getRegressionMode();
+
     // optional int64 start_timestamp = 11;
     /**
      * <code>optional int64 start_timestamp = 11;</code>
@@ -4151,28 +4724,39 @@ public final class VtsReportMessage {
               }
               break;
             }
+            case 24: {
+              int rawValue = input.readEnum();
+              com.android.vts.proto.VtsReportMessage.VtsProfilingRegressionMode value = com.android.vts.proto.VtsReportMessage.VtsProfilingRegressionMode.valueOf(rawValue);
+              if (value == null) {
+                unknownFields.mergeVarintField(3, rawValue);
+              } else {
+                bitField0_ |= 0x00000004;
+                regressionMode_ = value;
+              }
+              break;
+            }
             case 88: {
-              bitField0_ |= 0x00000004;
+              bitField0_ |= 0x00000008;
               startTimestamp_ = input.readInt64();
               break;
             }
             case 96: {
-              bitField0_ |= 0x00000008;
+              bitField0_ |= 0x00000010;
               endTimestamp_ = input.readInt64();
               break;
             }
             case 170: {
-              if (!((mutable_bitField0_ & 0x00000010) == 0x00000010)) {
+              if (!((mutable_bitField0_ & 0x00000020) == 0x00000020)) {
                 label_ = new java.util.ArrayList<com.google.protobuf.ByteString>();
-                mutable_bitField0_ |= 0x00000010;
+                mutable_bitField0_ |= 0x00000020;
               }
               label_.add(input.readBytes());
               break;
             }
             case 176: {
-              if (!((mutable_bitField0_ & 0x00000020) == 0x00000020)) {
+              if (!((mutable_bitField0_ & 0x00000040) == 0x00000040)) {
                 value_ = new java.util.ArrayList<java.lang.Long>();
-                mutable_bitField0_ |= 0x00000020;
+                mutable_bitField0_ |= 0x00000040;
               }
               value_.add(input.readInt64());
               break;
@@ -4180,9 +4764,9 @@ public final class VtsReportMessage {
             case 178: {
               int length = input.readRawVarint32();
               int limit = input.pushLimit(length);
-              if (!((mutable_bitField0_ & 0x00000020) == 0x00000020) && input.getBytesUntilLimit() > 0) {
+              if (!((mutable_bitField0_ & 0x00000040) == 0x00000040) && input.getBytesUntilLimit() > 0) {
                 value_ = new java.util.ArrayList<java.lang.Long>();
-                mutable_bitField0_ |= 0x00000020;
+                mutable_bitField0_ |= 0x00000040;
               }
               while (input.getBytesUntilLimit() > 0) {
                 value_.add(input.readInt64());
@@ -4191,12 +4775,12 @@ public final class VtsReportMessage {
               break;
             }
             case 250: {
-              bitField0_ |= 0x00000010;
+              bitField0_ |= 0x00000020;
               xAxisLabel_ = input.readBytes();
               break;
             }
             case 258: {
-              bitField0_ |= 0x00000020;
+              bitField0_ |= 0x00000040;
               yAxisLabel_ = input.readBytes();
               break;
             }
@@ -4208,10 +4792,10 @@ public final class VtsReportMessage {
         throw new com.google.protobuf.InvalidProtocolBufferException(
             e.getMessage()).setUnfinishedMessage(this);
       } finally {
-        if (((mutable_bitField0_ & 0x00000010) == 0x00000010)) {
+        if (((mutable_bitField0_ & 0x00000020) == 0x00000020)) {
           label_ = java.util.Collections.unmodifiableList(label_);
         }
-        if (((mutable_bitField0_ & 0x00000020) == 0x00000020)) {
+        if (((mutable_bitField0_ & 0x00000040) == 0x00000040)) {
           value_ = java.util.Collections.unmodifiableList(value_);
         }
         this.unknownFields = unknownFields.build();
@@ -4286,6 +4870,22 @@ public final class VtsReportMessage {
       return type_;
     }
 
+    // optional .android.vts.VtsProfilingRegressionMode regression_mode = 3;
+    public static final int REGRESSION_MODE_FIELD_NUMBER = 3;
+    private com.android.vts.proto.VtsReportMessage.VtsProfilingRegressionMode regressionMode_;
+    /**
+     * <code>optional .android.vts.VtsProfilingRegressionMode regression_mode = 3;</code>
+     */
+    public boolean hasRegressionMode() {
+      return ((bitField0_ & 0x00000004) == 0x00000004);
+    }
+    /**
+     * <code>optional .android.vts.VtsProfilingRegressionMode regression_mode = 3;</code>
+     */
+    public com.android.vts.proto.VtsReportMessage.VtsProfilingRegressionMode getRegressionMode() {
+      return regressionMode_;
+    }
+
     // optional int64 start_timestamp = 11;
     public static final int START_TIMESTAMP_FIELD_NUMBER = 11;
     private long startTimestamp_;
@@ -4297,7 +4897,7 @@ public final class VtsReportMessage {
      * </pre>
      */
     public boolean hasStartTimestamp() {
-      return ((bitField0_ & 0x00000004) == 0x00000004);
+      return ((bitField0_ & 0x00000008) == 0x00000008);
     }
     /**
      * <code>optional int64 start_timestamp = 11;</code>
@@ -4317,7 +4917,7 @@ public final class VtsReportMessage {
      * <code>optional int64 end_timestamp = 12;</code>
      */
     public boolean hasEndTimestamp() {
-      return ((bitField0_ & 0x00000008) == 0x00000008);
+      return ((bitField0_ & 0x00000010) == 0x00000010);
     }
     /**
      * <code>optional int64 end_timestamp = 12;</code>
@@ -4383,7 +4983,7 @@ public final class VtsReportMessage {
      * </pre>
      */
     public boolean hasXAxisLabel() {
-      return ((bitField0_ & 0x00000010) == 0x00000010);
+      return ((bitField0_ & 0x00000020) == 0x00000020);
     }
     /**
      * <code>optional bytes x_axis_label = 31;</code>
@@ -4403,7 +5003,7 @@ public final class VtsReportMessage {
      * <code>optional bytes y_axis_label = 32;</code>
      */
     public boolean hasYAxisLabel() {
-      return ((bitField0_ & 0x00000020) == 0x00000020);
+      return ((bitField0_ & 0x00000040) == 0x00000040);
     }
     /**
      * <code>optional bytes y_axis_label = 32;</code>
@@ -4415,6 +5015,7 @@ public final class VtsReportMessage {
     private void initFields() {
       name_ = com.google.protobuf.ByteString.EMPTY;
       type_ = com.android.vts.proto.VtsReportMessage.VtsProfilingType.UNKNOWN_VTS_PROFILING_TYPE;
+      regressionMode_ = com.android.vts.proto.VtsReportMessage.VtsProfilingRegressionMode.UNKNOWN_REGRESSION_MODE;
       startTimestamp_ = 0L;
       endTimestamp_ = 0L;
       label_ = java.util.Collections.emptyList();
@@ -4441,9 +5042,12 @@ public final class VtsReportMessage {
         output.writeEnum(2, type_.getNumber());
       }
       if (((bitField0_ & 0x00000004) == 0x00000004)) {
-        output.writeInt64(11, startTimestamp_);
+        output.writeEnum(3, regressionMode_.getNumber());
       }
       if (((bitField0_ & 0x00000008) == 0x00000008)) {
+        output.writeInt64(11, startTimestamp_);
+      }
+      if (((bitField0_ & 0x00000010) == 0x00000010)) {
         output.writeInt64(12, endTimestamp_);
       }
       for (int i = 0; i < label_.size(); i++) {
@@ -4452,10 +5056,10 @@ public final class VtsReportMessage {
       for (int i = 0; i < value_.size(); i++) {
         output.writeInt64(22, value_.get(i));
       }
-      if (((bitField0_ & 0x00000010) == 0x00000010)) {
+      if (((bitField0_ & 0x00000020) == 0x00000020)) {
         output.writeBytes(31, xAxisLabel_);
       }
-      if (((bitField0_ & 0x00000020) == 0x00000020)) {
+      if (((bitField0_ & 0x00000040) == 0x00000040)) {
         output.writeBytes(32, yAxisLabel_);
       }
       getUnknownFields().writeTo(output);
@@ -4477,9 +5081,13 @@ public final class VtsReportMessage {
       }
       if (((bitField0_ & 0x00000004) == 0x00000004)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeInt64Size(11, startTimestamp_);
+          .computeEnumSize(3, regressionMode_.getNumber());
       }
       if (((bitField0_ & 0x00000008) == 0x00000008)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt64Size(11, startTimestamp_);
+      }
+      if (((bitField0_ & 0x00000010) == 0x00000010)) {
         size += com.google.protobuf.CodedOutputStream
           .computeInt64Size(12, endTimestamp_);
       }
@@ -4501,11 +5109,11 @@ public final class VtsReportMessage {
         size += dataSize;
         size += 2 * getValueList().size();
       }
-      if (((bitField0_ & 0x00000010) == 0x00000010)) {
+      if (((bitField0_ & 0x00000020) == 0x00000020)) {
         size += com.google.protobuf.CodedOutputStream
           .computeBytesSize(31, xAxisLabel_);
       }
-      if (((bitField0_ & 0x00000020) == 0x00000020)) {
+      if (((bitField0_ & 0x00000040) == 0x00000040)) {
         size += com.google.protobuf.CodedOutputStream
           .computeBytesSize(32, yAxisLabel_);
       }
@@ -4633,18 +5241,20 @@ public final class VtsReportMessage {
         bitField0_ = (bitField0_ & ~0x00000001);
         type_ = com.android.vts.proto.VtsReportMessage.VtsProfilingType.UNKNOWN_VTS_PROFILING_TYPE;
         bitField0_ = (bitField0_ & ~0x00000002);
-        startTimestamp_ = 0L;
+        regressionMode_ = com.android.vts.proto.VtsReportMessage.VtsProfilingRegressionMode.UNKNOWN_REGRESSION_MODE;
         bitField0_ = (bitField0_ & ~0x00000004);
-        endTimestamp_ = 0L;
+        startTimestamp_ = 0L;
         bitField0_ = (bitField0_ & ~0x00000008);
-        label_ = java.util.Collections.emptyList();
+        endTimestamp_ = 0L;
         bitField0_ = (bitField0_ & ~0x00000010);
-        value_ = java.util.Collections.emptyList();
+        label_ = java.util.Collections.emptyList();
         bitField0_ = (bitField0_ & ~0x00000020);
-        xAxisLabel_ = com.google.protobuf.ByteString.EMPTY;
+        value_ = java.util.Collections.emptyList();
         bitField0_ = (bitField0_ & ~0x00000040);
-        yAxisLabel_ = com.google.protobuf.ByteString.EMPTY;
+        xAxisLabel_ = com.google.protobuf.ByteString.EMPTY;
         bitField0_ = (bitField0_ & ~0x00000080);
+        yAxisLabel_ = com.google.protobuf.ByteString.EMPTY;
+        bitField0_ = (bitField0_ & ~0x00000100);
         return this;
       }
 
@@ -4684,27 +5294,31 @@ public final class VtsReportMessage {
         if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
           to_bitField0_ |= 0x00000004;
         }
-        result.startTimestamp_ = startTimestamp_;
+        result.regressionMode_ = regressionMode_;
         if (((from_bitField0_ & 0x00000008) == 0x00000008)) {
           to_bitField0_ |= 0x00000008;
         }
-        result.endTimestamp_ = endTimestamp_;
-        if (((bitField0_ & 0x00000010) == 0x00000010)) {
-          label_ = java.util.Collections.unmodifiableList(label_);
-          bitField0_ = (bitField0_ & ~0x00000010);
-        }
-        result.label_ = label_;
-        if (((bitField0_ & 0x00000020) == 0x00000020)) {
-          value_ = java.util.Collections.unmodifiableList(value_);
-          bitField0_ = (bitField0_ & ~0x00000020);
-        }
-        result.value_ = value_;
-        if (((from_bitField0_ & 0x00000040) == 0x00000040)) {
+        result.startTimestamp_ = startTimestamp_;
+        if (((from_bitField0_ & 0x00000010) == 0x00000010)) {
           to_bitField0_ |= 0x00000010;
         }
-        result.xAxisLabel_ = xAxisLabel_;
+        result.endTimestamp_ = endTimestamp_;
+        if (((bitField0_ & 0x00000020) == 0x00000020)) {
+          label_ = java.util.Collections.unmodifiableList(label_);
+          bitField0_ = (bitField0_ & ~0x00000020);
+        }
+        result.label_ = label_;
+        if (((bitField0_ & 0x00000040) == 0x00000040)) {
+          value_ = java.util.Collections.unmodifiableList(value_);
+          bitField0_ = (bitField0_ & ~0x00000040);
+        }
+        result.value_ = value_;
         if (((from_bitField0_ & 0x00000080) == 0x00000080)) {
           to_bitField0_ |= 0x00000020;
+        }
+        result.xAxisLabel_ = xAxisLabel_;
+        if (((from_bitField0_ & 0x00000100) == 0x00000100)) {
+          to_bitField0_ |= 0x00000040;
         }
         result.yAxisLabel_ = yAxisLabel_;
         result.bitField0_ = to_bitField0_;
@@ -4729,6 +5343,9 @@ public final class VtsReportMessage {
         if (other.hasType()) {
           setType(other.getType());
         }
+        if (other.hasRegressionMode()) {
+          setRegressionMode(other.getRegressionMode());
+        }
         if (other.hasStartTimestamp()) {
           setStartTimestamp(other.getStartTimestamp());
         }
@@ -4738,7 +5355,7 @@ public final class VtsReportMessage {
         if (!other.label_.isEmpty()) {
           if (label_.isEmpty()) {
             label_ = other.label_;
-            bitField0_ = (bitField0_ & ~0x00000010);
+            bitField0_ = (bitField0_ & ~0x00000020);
           } else {
             ensureLabelIsMutable();
             label_.addAll(other.label_);
@@ -4748,7 +5365,7 @@ public final class VtsReportMessage {
         if (!other.value_.isEmpty()) {
           if (value_.isEmpty()) {
             value_ = other.value_;
-            bitField0_ = (bitField0_ & ~0x00000020);
+            bitField0_ = (bitField0_ & ~0x00000040);
           } else {
             ensureValueIsMutable();
             value_.addAll(other.value_);
@@ -4876,6 +5493,42 @@ public final class VtsReportMessage {
         return this;
       }
 
+      // optional .android.vts.VtsProfilingRegressionMode regression_mode = 3;
+      private com.android.vts.proto.VtsReportMessage.VtsProfilingRegressionMode regressionMode_ = com.android.vts.proto.VtsReportMessage.VtsProfilingRegressionMode.UNKNOWN_REGRESSION_MODE;
+      /**
+       * <code>optional .android.vts.VtsProfilingRegressionMode regression_mode = 3;</code>
+       */
+      public boolean hasRegressionMode() {
+        return ((bitField0_ & 0x00000004) == 0x00000004);
+      }
+      /**
+       * <code>optional .android.vts.VtsProfilingRegressionMode regression_mode = 3;</code>
+       */
+      public com.android.vts.proto.VtsReportMessage.VtsProfilingRegressionMode getRegressionMode() {
+        return regressionMode_;
+      }
+      /**
+       * <code>optional .android.vts.VtsProfilingRegressionMode regression_mode = 3;</code>
+       */
+      public Builder setRegressionMode(com.android.vts.proto.VtsReportMessage.VtsProfilingRegressionMode value) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        bitField0_ |= 0x00000004;
+        regressionMode_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional .android.vts.VtsProfilingRegressionMode regression_mode = 3;</code>
+       */
+      public Builder clearRegressionMode() {
+        bitField0_ = (bitField0_ & ~0x00000004);
+        regressionMode_ = com.android.vts.proto.VtsReportMessage.VtsProfilingRegressionMode.UNKNOWN_REGRESSION_MODE;
+        onChanged();
+        return this;
+      }
+
       // optional int64 start_timestamp = 11;
       private long startTimestamp_ ;
       /**
@@ -4886,7 +5539,7 @@ public final class VtsReportMessage {
        * </pre>
        */
       public boolean hasStartTimestamp() {
-        return ((bitField0_ & 0x00000004) == 0x00000004);
+        return ((bitField0_ & 0x00000008) == 0x00000008);
       }
       /**
        * <code>optional int64 start_timestamp = 11;</code>
@@ -4906,7 +5559,7 @@ public final class VtsReportMessage {
        * </pre>
        */
       public Builder setStartTimestamp(long value) {
-        bitField0_ |= 0x00000004;
+        bitField0_ |= 0x00000008;
         startTimestamp_ = value;
         onChanged();
         return this;
@@ -4919,7 +5572,7 @@ public final class VtsReportMessage {
        * </pre>
        */
       public Builder clearStartTimestamp() {
-        bitField0_ = (bitField0_ & ~0x00000004);
+        bitField0_ = (bitField0_ & ~0x00000008);
         startTimestamp_ = 0L;
         onChanged();
         return this;
@@ -4931,7 +5584,7 @@ public final class VtsReportMessage {
        * <code>optional int64 end_timestamp = 12;</code>
        */
       public boolean hasEndTimestamp() {
-        return ((bitField0_ & 0x00000008) == 0x00000008);
+        return ((bitField0_ & 0x00000010) == 0x00000010);
       }
       /**
        * <code>optional int64 end_timestamp = 12;</code>
@@ -4943,7 +5596,7 @@ public final class VtsReportMessage {
        * <code>optional int64 end_timestamp = 12;</code>
        */
       public Builder setEndTimestamp(long value) {
-        bitField0_ |= 0x00000008;
+        bitField0_ |= 0x00000010;
         endTimestamp_ = value;
         onChanged();
         return this;
@@ -4952,7 +5605,7 @@ public final class VtsReportMessage {
        * <code>optional int64 end_timestamp = 12;</code>
        */
       public Builder clearEndTimestamp() {
-        bitField0_ = (bitField0_ & ~0x00000008);
+        bitField0_ = (bitField0_ & ~0x00000010);
         endTimestamp_ = 0L;
         onChanged();
         return this;
@@ -4961,9 +5614,9 @@ public final class VtsReportMessage {
       // repeated bytes label = 21;
       private java.util.List<com.google.protobuf.ByteString> label_ = java.util.Collections.emptyList();
       private void ensureLabelIsMutable() {
-        if (!((bitField0_ & 0x00000010) == 0x00000010)) {
+        if (!((bitField0_ & 0x00000020) == 0x00000020)) {
           label_ = new java.util.ArrayList<com.google.protobuf.ByteString>(label_);
-          bitField0_ |= 0x00000010;
+          bitField0_ |= 0x00000020;
          }
       }
       /**
@@ -5025,7 +5678,7 @@ public final class VtsReportMessage {
        */
       public Builder clearLabel() {
         label_ = java.util.Collections.emptyList();
-        bitField0_ = (bitField0_ & ~0x00000010);
+        bitField0_ = (bitField0_ & ~0x00000020);
         onChanged();
         return this;
       }
@@ -5033,9 +5686,9 @@ public final class VtsReportMessage {
       // repeated int64 value = 22;
       private java.util.List<java.lang.Long> value_ = java.util.Collections.emptyList();
       private void ensureValueIsMutable() {
-        if (!((bitField0_ & 0x00000020) == 0x00000020)) {
+        if (!((bitField0_ & 0x00000040) == 0x00000040)) {
           value_ = new java.util.ArrayList<java.lang.Long>(value_);
-          bitField0_ |= 0x00000020;
+          bitField0_ |= 0x00000040;
          }
       }
       /**
@@ -5091,7 +5744,7 @@ public final class VtsReportMessage {
        */
       public Builder clearValue() {
         value_ = java.util.Collections.emptyList();
-        bitField0_ = (bitField0_ & ~0x00000020);
+        bitField0_ = (bitField0_ & ~0x00000040);
         onChanged();
         return this;
       }
@@ -5106,7 +5759,7 @@ public final class VtsReportMessage {
        * </pre>
        */
       public boolean hasXAxisLabel() {
-        return ((bitField0_ & 0x00000040) == 0x00000040);
+        return ((bitField0_ & 0x00000080) == 0x00000080);
       }
       /**
        * <code>optional bytes x_axis_label = 31;</code>
@@ -5129,7 +5782,7 @@ public final class VtsReportMessage {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000040;
+  bitField0_ |= 0x00000080;
         xAxisLabel_ = value;
         onChanged();
         return this;
@@ -5142,7 +5795,7 @@ public final class VtsReportMessage {
        * </pre>
        */
       public Builder clearXAxisLabel() {
-        bitField0_ = (bitField0_ & ~0x00000040);
+        bitField0_ = (bitField0_ & ~0x00000080);
         xAxisLabel_ = getDefaultInstance().getXAxisLabel();
         onChanged();
         return this;
@@ -5154,7 +5807,7 @@ public final class VtsReportMessage {
        * <code>optional bytes y_axis_label = 32;</code>
        */
       public boolean hasYAxisLabel() {
-        return ((bitField0_ & 0x00000080) == 0x00000080);
+        return ((bitField0_ & 0x00000100) == 0x00000100);
       }
       /**
        * <code>optional bytes y_axis_label = 32;</code>
@@ -5169,7 +5822,7 @@ public final class VtsReportMessage {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000080;
+  bitField0_ |= 0x00000100;
         yAxisLabel_ = value;
         onChanged();
         return this;
@@ -5178,7 +5831,7 @@ public final class VtsReportMessage {
        * <code>optional bytes y_axis_label = 32;</code>
        */
       public Builder clearYAxisLabel() {
-        bitField0_ = (bitField0_ & ~0x00000080);
+        bitField0_ = (bitField0_ & ~0x00000100);
         yAxisLabel_ = getDefaultInstance().getYAxisLabel();
         onChanged();
         return this;
@@ -6835,6 +7488,32 @@ public final class VtsReportMessage {
      */
     com.google.protobuf.ByteString getSubscriberEmail(int index);
 
+    // optional .android.vts.VtsHostInfo host_info = 7;
+    /**
+     * <code>optional .android.vts.VtsHostInfo host_info = 7;</code>
+     *
+     * <pre>
+     * info about the host computer
+     * </pre>
+     */
+    boolean hasHostInfo();
+    /**
+     * <code>optional .android.vts.VtsHostInfo host_info = 7;</code>
+     *
+     * <pre>
+     * info about the host computer
+     * </pre>
+     */
+    com.android.vts.proto.VtsReportMessage.VtsHostInfo getHostInfo();
+    /**
+     * <code>optional .android.vts.VtsHostInfo host_info = 7;</code>
+     *
+     * <pre>
+     * info about the host computer
+     * </pre>
+     */
+    com.android.vts.proto.VtsReportMessage.VtsHostInfoOrBuilder getHostInfoOrBuilder();
+
     // repeated .android.vts.TestCaseReportMessage test_case = 11;
     /**
      * <code>repeated .android.vts.TestCaseReportMessage test_case = 11;</code>
@@ -7103,36 +7782,49 @@ public final class VtsReportMessage {
               subscriberEmail_.add(input.readBytes());
               break;
             }
+            case 58: {
+              com.android.vts.proto.VtsReportMessage.VtsHostInfo.Builder subBuilder = null;
+              if (((bitField0_ & 0x00000010) == 0x00000010)) {
+                subBuilder = hostInfo_.toBuilder();
+              }
+              hostInfo_ = input.readMessage(com.android.vts.proto.VtsReportMessage.VtsHostInfo.PARSER, extensionRegistry);
+              if (subBuilder != null) {
+                subBuilder.mergeFrom(hostInfo_);
+                hostInfo_ = subBuilder.buildPartial();
+              }
+              bitField0_ |= 0x00000010;
+              break;
+            }
             case 90: {
-              if (!((mutable_bitField0_ & 0x00000040) == 0x00000040)) {
+              if (!((mutable_bitField0_ & 0x00000080) == 0x00000080)) {
                 testCase_ = new java.util.ArrayList<com.android.vts.proto.VtsReportMessage.TestCaseReportMessage>();
-                mutable_bitField0_ |= 0x00000040;
+                mutable_bitField0_ |= 0x00000080;
               }
               testCase_.add(input.readMessage(com.android.vts.proto.VtsReportMessage.TestCaseReportMessage.PARSER, extensionRegistry));
               break;
             }
             case 170: {
-              if (!((mutable_bitField0_ & 0x00000080) == 0x00000080)) {
+              if (!((mutable_bitField0_ & 0x00000100) == 0x00000100)) {
                 profiling_ = new java.util.ArrayList<com.android.vts.proto.VtsReportMessage.ProfilingReportMessage>();
-                mutable_bitField0_ |= 0x00000080;
+                mutable_bitField0_ |= 0x00000100;
               }
               profiling_.add(input.readMessage(com.android.vts.proto.VtsReportMessage.ProfilingReportMessage.PARSER, extensionRegistry));
               break;
             }
             case 808: {
-              bitField0_ |= 0x00000010;
+              bitField0_ |= 0x00000020;
               startTimestamp_ = input.readInt64();
               break;
             }
             case 816: {
-              bitField0_ |= 0x00000020;
+              bitField0_ |= 0x00000040;
               endTimestamp_ = input.readInt64();
               break;
             }
             case 826: {
-              if (!((mutable_bitField0_ & 0x00000400) == 0x00000400)) {
+              if (!((mutable_bitField0_ & 0x00000800) == 0x00000800)) {
                 coverage_ = new java.util.ArrayList<com.android.vts.proto.VtsReportMessage.CoverageReportMessage>();
-                mutable_bitField0_ |= 0x00000400;
+                mutable_bitField0_ |= 0x00000800;
               }
               coverage_.add(input.readMessage(com.android.vts.proto.VtsReportMessage.CoverageReportMessage.PARSER, extensionRegistry));
               break;
@@ -7151,13 +7843,13 @@ public final class VtsReportMessage {
         if (((mutable_bitField0_ & 0x00000020) == 0x00000020)) {
           subscriberEmail_ = java.util.Collections.unmodifiableList(subscriberEmail_);
         }
-        if (((mutable_bitField0_ & 0x00000040) == 0x00000040)) {
+        if (((mutable_bitField0_ & 0x00000080) == 0x00000080)) {
           testCase_ = java.util.Collections.unmodifiableList(testCase_);
         }
-        if (((mutable_bitField0_ & 0x00000080) == 0x00000080)) {
+        if (((mutable_bitField0_ & 0x00000100) == 0x00000100)) {
           profiling_ = java.util.Collections.unmodifiableList(profiling_);
         }
-        if (((mutable_bitField0_ & 0x00000400) == 0x00000400)) {
+        if (((mutable_bitField0_ & 0x00000800) == 0x00000800)) {
           coverage_ = java.util.Collections.unmodifiableList(coverage_);
         }
         this.unknownFields = unknownFields.build();
@@ -7389,6 +8081,40 @@ public final class VtsReportMessage {
       return subscriberEmail_.get(index);
     }
 
+    // optional .android.vts.VtsHostInfo host_info = 7;
+    public static final int HOST_INFO_FIELD_NUMBER = 7;
+    private com.android.vts.proto.VtsReportMessage.VtsHostInfo hostInfo_;
+    /**
+     * <code>optional .android.vts.VtsHostInfo host_info = 7;</code>
+     *
+     * <pre>
+     * info about the host computer
+     * </pre>
+     */
+    public boolean hasHostInfo() {
+      return ((bitField0_ & 0x00000010) == 0x00000010);
+    }
+    /**
+     * <code>optional .android.vts.VtsHostInfo host_info = 7;</code>
+     *
+     * <pre>
+     * info about the host computer
+     * </pre>
+     */
+    public com.android.vts.proto.VtsReportMessage.VtsHostInfo getHostInfo() {
+      return hostInfo_;
+    }
+    /**
+     * <code>optional .android.vts.VtsHostInfo host_info = 7;</code>
+     *
+     * <pre>
+     * info about the host computer
+     * </pre>
+     */
+    public com.android.vts.proto.VtsReportMessage.VtsHostInfoOrBuilder getHostInfoOrBuilder() {
+      return hostInfo_;
+    }
+
     // repeated .android.vts.TestCaseReportMessage test_case = 11;
     public static final int TEST_CASE_FIELD_NUMBER = 11;
     private java.util.List<com.android.vts.proto.VtsReportMessage.TestCaseReportMessage> testCase_;
@@ -7512,7 +8238,7 @@ public final class VtsReportMessage {
      * </pre>
      */
     public boolean hasStartTimestamp() {
-      return ((bitField0_ & 0x00000010) == 0x00000010);
+      return ((bitField0_ & 0x00000020) == 0x00000020);
     }
     /**
      * <code>optional int64 start_timestamp = 101;</code>
@@ -7532,7 +8258,7 @@ public final class VtsReportMessage {
      * <code>optional int64 end_timestamp = 102;</code>
      */
     public boolean hasEndTimestamp() {
-      return ((bitField0_ & 0x00000020) == 0x00000020);
+      return ((bitField0_ & 0x00000040) == 0x00000040);
     }
     /**
      * <code>optional int64 end_timestamp = 102;</code>
@@ -7604,6 +8330,7 @@ public final class VtsReportMessage {
       deviceInfo_ = java.util.Collections.emptyList();
       buildInfo_ = com.android.vts.proto.VtsReportMessage.AndroidBuildInfo.getDefaultInstance();
       subscriberEmail_ = java.util.Collections.emptyList();
+      hostInfo_ = com.android.vts.proto.VtsReportMessage.VtsHostInfo.getDefaultInstance();
       testCase_ = java.util.Collections.emptyList();
       profiling_ = java.util.Collections.emptyList();
       startTimestamp_ = 0L;
@@ -7640,16 +8367,19 @@ public final class VtsReportMessage {
       for (int i = 0; i < subscriberEmail_.size(); i++) {
         output.writeBytes(6, subscriberEmail_.get(i));
       }
+      if (((bitField0_ & 0x00000010) == 0x00000010)) {
+        output.writeMessage(7, hostInfo_);
+      }
       for (int i = 0; i < testCase_.size(); i++) {
         output.writeMessage(11, testCase_.get(i));
       }
       for (int i = 0; i < profiling_.size(); i++) {
         output.writeMessage(21, profiling_.get(i));
       }
-      if (((bitField0_ & 0x00000010) == 0x00000010)) {
+      if (((bitField0_ & 0x00000020) == 0x00000020)) {
         output.writeInt64(101, startTimestamp_);
       }
-      if (((bitField0_ & 0x00000020) == 0x00000020)) {
+      if (((bitField0_ & 0x00000040) == 0x00000040)) {
         output.writeInt64(102, endTimestamp_);
       }
       for (int i = 0; i < coverage_.size(); i++) {
@@ -7693,6 +8423,10 @@ public final class VtsReportMessage {
         size += dataSize;
         size += 1 * getSubscriberEmailList().size();
       }
+      if (((bitField0_ & 0x00000010) == 0x00000010)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(7, hostInfo_);
+      }
       for (int i = 0; i < testCase_.size(); i++) {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(11, testCase_.get(i));
@@ -7701,11 +8435,11 @@ public final class VtsReportMessage {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(21, profiling_.get(i));
       }
-      if (((bitField0_ & 0x00000010) == 0x00000010)) {
+      if (((bitField0_ & 0x00000020) == 0x00000020)) {
         size += com.google.protobuf.CodedOutputStream
           .computeInt64Size(101, startTimestamp_);
       }
-      if (((bitField0_ & 0x00000020) == 0x00000020)) {
+      if (((bitField0_ & 0x00000040) == 0x00000040)) {
         size += com.google.protobuf.CodedOutputStream
           .computeInt64Size(102, endTimestamp_);
       }
@@ -7827,6 +8561,7 @@ public final class VtsReportMessage {
         if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
           getDeviceInfoFieldBuilder();
           getBuildInfoFieldBuilder();
+          getHostInfoFieldBuilder();
           getTestCaseFieldBuilder();
           getProfilingFieldBuilder();
           getCoverageFieldBuilder();
@@ -7858,25 +8593,31 @@ public final class VtsReportMessage {
         bitField0_ = (bitField0_ & ~0x00000010);
         subscriberEmail_ = java.util.Collections.emptyList();
         bitField0_ = (bitField0_ & ~0x00000020);
+        if (hostInfoBuilder_ == null) {
+          hostInfo_ = com.android.vts.proto.VtsReportMessage.VtsHostInfo.getDefaultInstance();
+        } else {
+          hostInfoBuilder_.clear();
+        }
+        bitField0_ = (bitField0_ & ~0x00000040);
         if (testCaseBuilder_ == null) {
           testCase_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000040);
+          bitField0_ = (bitField0_ & ~0x00000080);
         } else {
           testCaseBuilder_.clear();
         }
         if (profilingBuilder_ == null) {
           profiling_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000080);
+          bitField0_ = (bitField0_ & ~0x00000100);
         } else {
           profilingBuilder_.clear();
         }
         startTimestamp_ = 0L;
-        bitField0_ = (bitField0_ & ~0x00000100);
-        endTimestamp_ = 0L;
         bitField0_ = (bitField0_ & ~0x00000200);
+        endTimestamp_ = 0L;
+        bitField0_ = (bitField0_ & ~0x00000400);
         if (coverageBuilder_ == null) {
           coverage_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000400);
+          bitField0_ = (bitField0_ & ~0x00000800);
         } else {
           coverageBuilder_.clear();
         }
@@ -7942,36 +8683,44 @@ public final class VtsReportMessage {
           bitField0_ = (bitField0_ & ~0x00000020);
         }
         result.subscriberEmail_ = subscriberEmail_;
+        if (((from_bitField0_ & 0x00000040) == 0x00000040)) {
+          to_bitField0_ |= 0x00000010;
+        }
+        if (hostInfoBuilder_ == null) {
+          result.hostInfo_ = hostInfo_;
+        } else {
+          result.hostInfo_ = hostInfoBuilder_.build();
+        }
         if (testCaseBuilder_ == null) {
-          if (((bitField0_ & 0x00000040) == 0x00000040)) {
+          if (((bitField0_ & 0x00000080) == 0x00000080)) {
             testCase_ = java.util.Collections.unmodifiableList(testCase_);
-            bitField0_ = (bitField0_ & ~0x00000040);
+            bitField0_ = (bitField0_ & ~0x00000080);
           }
           result.testCase_ = testCase_;
         } else {
           result.testCase_ = testCaseBuilder_.build();
         }
         if (profilingBuilder_ == null) {
-          if (((bitField0_ & 0x00000080) == 0x00000080)) {
+          if (((bitField0_ & 0x00000100) == 0x00000100)) {
             profiling_ = java.util.Collections.unmodifiableList(profiling_);
-            bitField0_ = (bitField0_ & ~0x00000080);
+            bitField0_ = (bitField0_ & ~0x00000100);
           }
           result.profiling_ = profiling_;
         } else {
           result.profiling_ = profilingBuilder_.build();
         }
-        if (((from_bitField0_ & 0x00000100) == 0x00000100)) {
-          to_bitField0_ |= 0x00000010;
-        }
-        result.startTimestamp_ = startTimestamp_;
         if (((from_bitField0_ & 0x00000200) == 0x00000200)) {
           to_bitField0_ |= 0x00000020;
         }
+        result.startTimestamp_ = startTimestamp_;
+        if (((from_bitField0_ & 0x00000400) == 0x00000400)) {
+          to_bitField0_ |= 0x00000040;
+        }
         result.endTimestamp_ = endTimestamp_;
         if (coverageBuilder_ == null) {
-          if (((bitField0_ & 0x00000400) == 0x00000400)) {
+          if (((bitField0_ & 0x00000800) == 0x00000800)) {
             coverage_ = java.util.Collections.unmodifiableList(coverage_);
-            bitField0_ = (bitField0_ & ~0x00000400);
+            bitField0_ = (bitField0_ & ~0x00000800);
           }
           result.coverage_ = coverage_;
         } else {
@@ -8041,11 +8790,14 @@ public final class VtsReportMessage {
           }
           onChanged();
         }
+        if (other.hasHostInfo()) {
+          mergeHostInfo(other.getHostInfo());
+        }
         if (testCaseBuilder_ == null) {
           if (!other.testCase_.isEmpty()) {
             if (testCase_.isEmpty()) {
               testCase_ = other.testCase_;
-              bitField0_ = (bitField0_ & ~0x00000040);
+              bitField0_ = (bitField0_ & ~0x00000080);
             } else {
               ensureTestCaseIsMutable();
               testCase_.addAll(other.testCase_);
@@ -8058,7 +8810,7 @@ public final class VtsReportMessage {
               testCaseBuilder_.dispose();
               testCaseBuilder_ = null;
               testCase_ = other.testCase_;
-              bitField0_ = (bitField0_ & ~0x00000040);
+              bitField0_ = (bitField0_ & ~0x00000080);
               testCaseBuilder_ = 
                 com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
                    getTestCaseFieldBuilder() : null;
@@ -8071,7 +8823,7 @@ public final class VtsReportMessage {
           if (!other.profiling_.isEmpty()) {
             if (profiling_.isEmpty()) {
               profiling_ = other.profiling_;
-              bitField0_ = (bitField0_ & ~0x00000080);
+              bitField0_ = (bitField0_ & ~0x00000100);
             } else {
               ensureProfilingIsMutable();
               profiling_.addAll(other.profiling_);
@@ -8084,7 +8836,7 @@ public final class VtsReportMessage {
               profilingBuilder_.dispose();
               profilingBuilder_ = null;
               profiling_ = other.profiling_;
-              bitField0_ = (bitField0_ & ~0x00000080);
+              bitField0_ = (bitField0_ & ~0x00000100);
               profilingBuilder_ = 
                 com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
                    getProfilingFieldBuilder() : null;
@@ -8103,7 +8855,7 @@ public final class VtsReportMessage {
           if (!other.coverage_.isEmpty()) {
             if (coverage_.isEmpty()) {
               coverage_ = other.coverage_;
-              bitField0_ = (bitField0_ & ~0x00000400);
+              bitField0_ = (bitField0_ & ~0x00000800);
             } else {
               ensureCoverageIsMutable();
               coverage_.addAll(other.coverage_);
@@ -8116,7 +8868,7 @@ public final class VtsReportMessage {
               coverageBuilder_.dispose();
               coverageBuilder_ = null;
               coverage_ = other.coverage_;
-              bitField0_ = (bitField0_ & ~0x00000400);
+              bitField0_ = (bitField0_ & ~0x00000800);
               coverageBuilder_ = 
                 com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
                    getCoverageFieldBuilder() : null;
@@ -8873,13 +9625,166 @@ public final class VtsReportMessage {
         return this;
       }
 
+      // optional .android.vts.VtsHostInfo host_info = 7;
+      private com.android.vts.proto.VtsReportMessage.VtsHostInfo hostInfo_ = com.android.vts.proto.VtsReportMessage.VtsHostInfo.getDefaultInstance();
+      private com.google.protobuf.SingleFieldBuilder<
+          com.android.vts.proto.VtsReportMessage.VtsHostInfo, com.android.vts.proto.VtsReportMessage.VtsHostInfo.Builder, com.android.vts.proto.VtsReportMessage.VtsHostInfoOrBuilder> hostInfoBuilder_;
+      /**
+       * <code>optional .android.vts.VtsHostInfo host_info = 7;</code>
+       *
+       * <pre>
+       * info about the host computer
+       * </pre>
+       */
+      public boolean hasHostInfo() {
+        return ((bitField0_ & 0x00000040) == 0x00000040);
+      }
+      /**
+       * <code>optional .android.vts.VtsHostInfo host_info = 7;</code>
+       *
+       * <pre>
+       * info about the host computer
+       * </pre>
+       */
+      public com.android.vts.proto.VtsReportMessage.VtsHostInfo getHostInfo() {
+        if (hostInfoBuilder_ == null) {
+          return hostInfo_;
+        } else {
+          return hostInfoBuilder_.getMessage();
+        }
+      }
+      /**
+       * <code>optional .android.vts.VtsHostInfo host_info = 7;</code>
+       *
+       * <pre>
+       * info about the host computer
+       * </pre>
+       */
+      public Builder setHostInfo(com.android.vts.proto.VtsReportMessage.VtsHostInfo value) {
+        if (hostInfoBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          hostInfo_ = value;
+          onChanged();
+        } else {
+          hostInfoBuilder_.setMessage(value);
+        }
+        bitField0_ |= 0x00000040;
+        return this;
+      }
+      /**
+       * <code>optional .android.vts.VtsHostInfo host_info = 7;</code>
+       *
+       * <pre>
+       * info about the host computer
+       * </pre>
+       */
+      public Builder setHostInfo(
+          com.android.vts.proto.VtsReportMessage.VtsHostInfo.Builder builderForValue) {
+        if (hostInfoBuilder_ == null) {
+          hostInfo_ = builderForValue.build();
+          onChanged();
+        } else {
+          hostInfoBuilder_.setMessage(builderForValue.build());
+        }
+        bitField0_ |= 0x00000040;
+        return this;
+      }
+      /**
+       * <code>optional .android.vts.VtsHostInfo host_info = 7;</code>
+       *
+       * <pre>
+       * info about the host computer
+       * </pre>
+       */
+      public Builder mergeHostInfo(com.android.vts.proto.VtsReportMessage.VtsHostInfo value) {
+        if (hostInfoBuilder_ == null) {
+          if (((bitField0_ & 0x00000040) == 0x00000040) &&
+              hostInfo_ != com.android.vts.proto.VtsReportMessage.VtsHostInfo.getDefaultInstance()) {
+            hostInfo_ =
+              com.android.vts.proto.VtsReportMessage.VtsHostInfo.newBuilder(hostInfo_).mergeFrom(value).buildPartial();
+          } else {
+            hostInfo_ = value;
+          }
+          onChanged();
+        } else {
+          hostInfoBuilder_.mergeFrom(value);
+        }
+        bitField0_ |= 0x00000040;
+        return this;
+      }
+      /**
+       * <code>optional .android.vts.VtsHostInfo host_info = 7;</code>
+       *
+       * <pre>
+       * info about the host computer
+       * </pre>
+       */
+      public Builder clearHostInfo() {
+        if (hostInfoBuilder_ == null) {
+          hostInfo_ = com.android.vts.proto.VtsReportMessage.VtsHostInfo.getDefaultInstance();
+          onChanged();
+        } else {
+          hostInfoBuilder_.clear();
+        }
+        bitField0_ = (bitField0_ & ~0x00000040);
+        return this;
+      }
+      /**
+       * <code>optional .android.vts.VtsHostInfo host_info = 7;</code>
+       *
+       * <pre>
+       * info about the host computer
+       * </pre>
+       */
+      public com.android.vts.proto.VtsReportMessage.VtsHostInfo.Builder getHostInfoBuilder() {
+        bitField0_ |= 0x00000040;
+        onChanged();
+        return getHostInfoFieldBuilder().getBuilder();
+      }
+      /**
+       * <code>optional .android.vts.VtsHostInfo host_info = 7;</code>
+       *
+       * <pre>
+       * info about the host computer
+       * </pre>
+       */
+      public com.android.vts.proto.VtsReportMessage.VtsHostInfoOrBuilder getHostInfoOrBuilder() {
+        if (hostInfoBuilder_ != null) {
+          return hostInfoBuilder_.getMessageOrBuilder();
+        } else {
+          return hostInfo_;
+        }
+      }
+      /**
+       * <code>optional .android.vts.VtsHostInfo host_info = 7;</code>
+       *
+       * <pre>
+       * info about the host computer
+       * </pre>
+       */
+      private com.google.protobuf.SingleFieldBuilder<
+          com.android.vts.proto.VtsReportMessage.VtsHostInfo, com.android.vts.proto.VtsReportMessage.VtsHostInfo.Builder, com.android.vts.proto.VtsReportMessage.VtsHostInfoOrBuilder> 
+          getHostInfoFieldBuilder() {
+        if (hostInfoBuilder_ == null) {
+          hostInfoBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+              com.android.vts.proto.VtsReportMessage.VtsHostInfo, com.android.vts.proto.VtsReportMessage.VtsHostInfo.Builder, com.android.vts.proto.VtsReportMessage.VtsHostInfoOrBuilder>(
+                  hostInfo_,
+                  getParentForChildren(),
+                  isClean());
+          hostInfo_ = null;
+        }
+        return hostInfoBuilder_;
+      }
+
       // repeated .android.vts.TestCaseReportMessage test_case = 11;
       private java.util.List<com.android.vts.proto.VtsReportMessage.TestCaseReportMessage> testCase_ =
         java.util.Collections.emptyList();
       private void ensureTestCaseIsMutable() {
-        if (!((bitField0_ & 0x00000040) == 0x00000040)) {
+        if (!((bitField0_ & 0x00000080) == 0x00000080)) {
           testCase_ = new java.util.ArrayList<com.android.vts.proto.VtsReportMessage.TestCaseReportMessage>(testCase_);
-          bitField0_ |= 0x00000040;
+          bitField0_ |= 0x00000080;
          }
       }
 
@@ -9072,7 +9977,7 @@ public final class VtsReportMessage {
       public Builder clearTestCase() {
         if (testCaseBuilder_ == null) {
           testCase_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000040);
+          bitField0_ = (bitField0_ & ~0x00000080);
           onChanged();
         } else {
           testCaseBuilder_.clear();
@@ -9177,7 +10082,7 @@ public final class VtsReportMessage {
           testCaseBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
               com.android.vts.proto.VtsReportMessage.TestCaseReportMessage, com.android.vts.proto.VtsReportMessage.TestCaseReportMessage.Builder, com.android.vts.proto.VtsReportMessage.TestCaseReportMessageOrBuilder>(
                   testCase_,
-                  ((bitField0_ & 0x00000040) == 0x00000040),
+                  ((bitField0_ & 0x00000080) == 0x00000080),
                   getParentForChildren(),
                   isClean());
           testCase_ = null;
@@ -9189,9 +10094,9 @@ public final class VtsReportMessage {
       private java.util.List<com.android.vts.proto.VtsReportMessage.ProfilingReportMessage> profiling_ =
         java.util.Collections.emptyList();
       private void ensureProfilingIsMutable() {
-        if (!((bitField0_ & 0x00000080) == 0x00000080)) {
+        if (!((bitField0_ & 0x00000100) == 0x00000100)) {
           profiling_ = new java.util.ArrayList<com.android.vts.proto.VtsReportMessage.ProfilingReportMessage>(profiling_);
-          bitField0_ |= 0x00000080;
+          bitField0_ |= 0x00000100;
          }
       }
 
@@ -9384,7 +10289,7 @@ public final class VtsReportMessage {
       public Builder clearProfiling() {
         if (profilingBuilder_ == null) {
           profiling_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000080);
+          bitField0_ = (bitField0_ & ~0x00000100);
           onChanged();
         } else {
           profilingBuilder_.clear();
@@ -9489,7 +10394,7 @@ public final class VtsReportMessage {
           profilingBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
               com.android.vts.proto.VtsReportMessage.ProfilingReportMessage, com.android.vts.proto.VtsReportMessage.ProfilingReportMessage.Builder, com.android.vts.proto.VtsReportMessage.ProfilingReportMessageOrBuilder>(
                   profiling_,
-                  ((bitField0_ & 0x00000080) == 0x00000080),
+                  ((bitField0_ & 0x00000100) == 0x00000100),
                   getParentForChildren(),
                   isClean());
           profiling_ = null;
@@ -9507,7 +10412,7 @@ public final class VtsReportMessage {
        * </pre>
        */
       public boolean hasStartTimestamp() {
-        return ((bitField0_ & 0x00000100) == 0x00000100);
+        return ((bitField0_ & 0x00000200) == 0x00000200);
       }
       /**
        * <code>optional int64 start_timestamp = 101;</code>
@@ -9527,7 +10432,7 @@ public final class VtsReportMessage {
        * </pre>
        */
       public Builder setStartTimestamp(long value) {
-        bitField0_ |= 0x00000100;
+        bitField0_ |= 0x00000200;
         startTimestamp_ = value;
         onChanged();
         return this;
@@ -9540,7 +10445,7 @@ public final class VtsReportMessage {
        * </pre>
        */
       public Builder clearStartTimestamp() {
-        bitField0_ = (bitField0_ & ~0x00000100);
+        bitField0_ = (bitField0_ & ~0x00000200);
         startTimestamp_ = 0L;
         onChanged();
         return this;
@@ -9552,7 +10457,7 @@ public final class VtsReportMessage {
        * <code>optional int64 end_timestamp = 102;</code>
        */
       public boolean hasEndTimestamp() {
-        return ((bitField0_ & 0x00000200) == 0x00000200);
+        return ((bitField0_ & 0x00000400) == 0x00000400);
       }
       /**
        * <code>optional int64 end_timestamp = 102;</code>
@@ -9564,7 +10469,7 @@ public final class VtsReportMessage {
        * <code>optional int64 end_timestamp = 102;</code>
        */
       public Builder setEndTimestamp(long value) {
-        bitField0_ |= 0x00000200;
+        bitField0_ |= 0x00000400;
         endTimestamp_ = value;
         onChanged();
         return this;
@@ -9573,7 +10478,7 @@ public final class VtsReportMessage {
        * <code>optional int64 end_timestamp = 102;</code>
        */
       public Builder clearEndTimestamp() {
-        bitField0_ = (bitField0_ & ~0x00000200);
+        bitField0_ = (bitField0_ & ~0x00000400);
         endTimestamp_ = 0L;
         onChanged();
         return this;
@@ -9583,9 +10488,9 @@ public final class VtsReportMessage {
       private java.util.List<com.android.vts.proto.VtsReportMessage.CoverageReportMessage> coverage_ =
         java.util.Collections.emptyList();
       private void ensureCoverageIsMutable() {
-        if (!((bitField0_ & 0x00000400) == 0x00000400)) {
+        if (!((bitField0_ & 0x00000800) == 0x00000800)) {
           coverage_ = new java.util.ArrayList<com.android.vts.proto.VtsReportMessage.CoverageReportMessage>(coverage_);
-          bitField0_ |= 0x00000400;
+          bitField0_ |= 0x00000800;
          }
       }
 
@@ -9778,7 +10683,7 @@ public final class VtsReportMessage {
       public Builder clearCoverage() {
         if (coverageBuilder_ == null) {
           coverage_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000400);
+          bitField0_ = (bitField0_ & ~0x00000800);
           onChanged();
         } else {
           coverageBuilder_.clear();
@@ -9883,7 +10788,7 @@ public final class VtsReportMessage {
           coverageBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
               com.android.vts.proto.VtsReportMessage.CoverageReportMessage, com.android.vts.proto.VtsReportMessage.CoverageReportMessage.Builder, com.android.vts.proto.VtsReportMessage.CoverageReportMessageOrBuilder>(
                   coverage_,
-                  ((bitField0_ & 0x00000400) == 0x00000400),
+                  ((bitField0_ & 0x00000800) == 0x00000800),
                   getParentForChildren(),
                   isClean());
           coverage_ = null;
@@ -9912,6 +10817,11 @@ public final class VtsReportMessage {
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_android_vts_AndroidBuildInfo_fieldAccessorTable;
+  private static com.google.protobuf.Descriptors.Descriptor
+    internal_static_android_vts_VtsHostInfo_descriptor;
+  private static
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_android_vts_VtsHostInfo_fieldAccessorTable;
   private static com.google.protobuf.Descriptors.Descriptor
     internal_static_android_vts_TestCaseReportMessage_descriptor;
   private static
@@ -9950,47 +10860,54 @@ public final class VtsReportMessage {
       "ss\0304 \001(\014\022\016\n\006serial\030e \001(\014\"g\n\020AndroidBuild" +
       "Info\022\n\n\002id\030\001 \001(\014\022\014\n\004name\030\013 \001(\014\022\022\n\nbuild_" +
       "type\030\014 \001(\014\022\016\n\006branch\030\r \001(\014\022\025\n\rbuild_summ" +
-      "ary\030\025 \001(\014\"\275\001\n\025TestCaseReportMessage\022\014\n\004n",
-      "ame\030\001 \001(\014\0220\n\013test_result\030\013 \001(\0162\033.android" +
-      ".vts.TestCaseResult\022\027\n\017start_timestamp\030\025" +
-      " \001(\003\022\025\n\rend_timestamp\030\026 \001(\003\0224\n\010coverage\030" +
-      "\037 \003(\0132\".android.vts.CoverageReportMessag" +
-      "e\"\315\001\n\026ProfilingReportMessage\022\014\n\004name\030\001 \001" +
-      "(\014\022+\n\004type\030\002 \001(\0162\035.android.vts.VtsProfil" +
-      "ingType\022\027\n\017start_timestamp\030\013 \001(\003\022\025\n\rend_" +
-      "timestamp\030\014 \001(\003\022\r\n\005label\030\025 \003(\014\022\r\n\005value\030" +
-      "\026 \003(\003\022\024\n\014x_axis_label\030\037 \001(\014\022\024\n\014y_axis_la" +
-      "bel\030  \001(\014\"\345\001\n\025CoverageReportMessage\022\021\n\tf",
-      "ile_path\030\013 \001(\014\022\024\n\014project_name\030\014 \001(\014\022\020\n\010" +
-      "revision\030\r \001(\014\022\034\n\024line_coverage_vector\030\027" +
-      " \003(\005\022\030\n\020total_line_count\030e \001(\005\022\032\n\022covere" +
-      "d_line_count\030f \001(\005\022\024\n\010dir_path\030\001 \001(\014B\002\030\001" +
-      "\022\025\n\tfile_name\030\002 \001(\014B\002\030\001\022\020\n\004html\030\003 \001(\014B\002\030" +
-      "\001\"\300\003\n\021TestReportMessage\022\022\n\ntest_suite\030\001 " +
-      "\001(\014\022\014\n\004test\030\002 \001(\014\022+\n\ttest_type\030\003 \001(\0162\030.a" +
-      "ndroid.vts.VtsTestType\022:\n\013device_info\030\004 " +
-      "\003(\0132%.android.vts.AndroidDeviceInfoMessa" +
-      "ge\0221\n\nbuild_info\030\005 \001(\0132\035.android.vts.And",
-      "roidBuildInfo\022\030\n\020subscriber_email\030\006 \003(\014\022" +
-      "5\n\ttest_case\030\013 \003(\0132\".android.vts.TestCas" +
-      "eReportMessage\0226\n\tprofiling\030\025 \003(\0132#.andr" +
-      "oid.vts.ProfilingReportMessage\022\027\n\017start_" +
-      "timestamp\030e \001(\003\022\025\n\rend_timestamp\030f \001(\003\0224" +
-      "\n\010coverage\030g \003(\0132\".android.vts.CoverageR" +
-      "eportMessage*\263\001\n\016TestCaseResult\022\022\n\016UNKNO" +
-      "WN_RESULT\020\000\022\031\n\025TEST_CASE_RESULT_PASS\020\001\022\031" +
-      "\n\025TEST_CASE_RESULT_FAIL\020\002\022\031\n\025TEST_CASE_R" +
-      "ESULT_SKIP\020\003\022\036\n\032TEST_CASE_RESULT_EXCEPTI",
-      "ON\020\004\022\034\n\030TEST_CASE_RESULT_TIMEOUT\020\005*\234\001\n\013V" +
-      "tsTestType\022\030\n\024UNKNOWN_VTS_TESTTYPE\020\000\022\036\n\032" +
-      "VTS_HOST_DRIVEN_STRUCTURAL\020\001\022\033\n\027VTS_HOST" +
-      "_DRIVEN_FUZZING\020\002\022\031\n\025VTS_TARGET_SIDE_GTE" +
-      "ST\020\003\022\033\n\027VTS_TARGET_SIDE_FUZZING\020\004*{\n\020Vts" +
-      "ProfilingType\022\036\n\032UNKNOWN_VTS_PROFILING_T" +
-      "YPE\020\000\022 \n\034VTS_PROFILING_TYPE_TIMESTAMP\020\001\022" +
-      "%\n!VTS_PROFILING_TYPE_LABELED_VECTOR\020\002B)" +
-      "\n\025com.android.vts.protoB\020VtsReportMessag" +
-      "e"
+      "ary\030\025 \001(\014\"\037\n\013VtsHostInfo\022\020\n\010hostname\030\001 \001",
+      "(\014\"\275\001\n\025TestCaseReportMessage\022\014\n\004name\030\001 \001" +
+      "(\014\0220\n\013test_result\030\013 \001(\0162\033.android.vts.Te" +
+      "stCaseResult\022\027\n\017start_timestamp\030\025 \001(\003\022\025\n" +
+      "\rend_timestamp\030\026 \001(\003\0224\n\010coverage\030\037 \003(\0132\"" +
+      ".android.vts.CoverageReportMessage\"\217\002\n\026P" +
+      "rofilingReportMessage\022\014\n\004name\030\001 \001(\014\022+\n\004t" +
+      "ype\030\002 \001(\0162\035.android.vts.VtsProfilingType" +
+      "\022@\n\017regression_mode\030\003 \001(\0162\'.android.vts." +
+      "VtsProfilingRegressionMode\022\027\n\017start_time" +
+      "stamp\030\013 \001(\003\022\025\n\rend_timestamp\030\014 \001(\003\022\r\n\005la",
+      "bel\030\025 \003(\014\022\r\n\005value\030\026 \003(\003\022\024\n\014x_axis_label" +
+      "\030\037 \001(\014\022\024\n\014y_axis_label\030  \001(\014\"\345\001\n\025Coverag" +
+      "eReportMessage\022\021\n\tfile_path\030\013 \001(\014\022\024\n\014pro" +
+      "ject_name\030\014 \001(\014\022\020\n\010revision\030\r \001(\014\022\034\n\024lin" +
+      "e_coverage_vector\030\027 \003(\005\022\030\n\020total_line_co" +
+      "unt\030e \001(\005\022\032\n\022covered_line_count\030f \001(\005\022\024\n" +
+      "\010dir_path\030\001 \001(\014B\002\030\001\022\025\n\tfile_name\030\002 \001(\014B\002" +
+      "\030\001\022\020\n\004html\030\003 \001(\014B\002\030\001\"\355\003\n\021TestReportMessa" +
+      "ge\022\022\n\ntest_suite\030\001 \001(\014\022\014\n\004test\030\002 \001(\014\022+\n\t" +
+      "test_type\030\003 \001(\0162\030.android.vts.VtsTestTyp",
+      "e\022:\n\013device_info\030\004 \003(\0132%.android.vts.And" +
+      "roidDeviceInfoMessage\0221\n\nbuild_info\030\005 \001(" +
+      "\0132\035.android.vts.AndroidBuildInfo\022\030\n\020subs" +
+      "criber_email\030\006 \003(\014\022+\n\thost_info\030\007 \001(\0132\030." +
+      "android.vts.VtsHostInfo\0225\n\ttest_case\030\013 \003" +
+      "(\0132\".android.vts.TestCaseReportMessage\0226" +
+      "\n\tprofiling\030\025 \003(\0132#.android.vts.Profilin" +
+      "gReportMessage\022\027\n\017start_timestamp\030e \001(\003\022" +
+      "\025\n\rend_timestamp\030f \001(\003\0224\n\010coverage\030g \003(\013" +
+      "2\".android.vts.CoverageReportMessage*\263\001\n",
+      "\016TestCaseResult\022\022\n\016UNKNOWN_RESULT\020\000\022\031\n\025T" +
+      "EST_CASE_RESULT_PASS\020\001\022\031\n\025TEST_CASE_RESU" +
+      "LT_FAIL\020\002\022\031\n\025TEST_CASE_RESULT_SKIP\020\003\022\036\n\032" +
+      "TEST_CASE_RESULT_EXCEPTION\020\004\022\034\n\030TEST_CAS" +
+      "E_RESULT_TIMEOUT\020\005*\234\001\n\013VtsTestType\022\030\n\024UN" +
+      "KNOWN_VTS_TESTTYPE\020\000\022\036\n\032VTS_HOST_DRIVEN_" +
+      "STRUCTURAL\020\001\022\033\n\027VTS_HOST_DRIVEN_FUZZING\020" +
+      "\002\022\031\n\025VTS_TARGET_SIDE_GTEST\020\003\022\033\n\027VTS_TARG" +
+      "ET_SIDE_FUZZING\020\004*\243\001\n\032VtsProfilingRegres" +
+      "sionMode\022\033\n\027UNKNOWN_REGRESSION_MODE\020\000\022 \n",
+      "\034VTS_REGRESSION_MODE_DISABLED\020\001\022\"\n\036VTS_R" +
+      "EGRESSION_MODE_INCREASING\020\002\022\"\n\036VTS_REGRE" +
+      "SSION_MODE_DECREASING\020\003*{\n\020VtsProfilingT" +
+      "ype\022\036\n\032UNKNOWN_VTS_PROFILING_TYPE\020\000\022 \n\034V" +
+      "TS_PROFILING_TYPE_TIMESTAMP\020\001\022%\n!VTS_PRO" +
+      "FILING_TYPE_LABELED_VECTOR\020\002B)\n\025com.andr" +
+      "oid.vts.protoB\020VtsReportMessage"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
@@ -10009,30 +10926,36 @@ public final class VtsReportMessage {
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_android_vts_AndroidBuildInfo_descriptor,
               new java.lang.String[] { "Id", "Name", "BuildType", "Branch", "BuildSummary", });
-          internal_static_android_vts_TestCaseReportMessage_descriptor =
+          internal_static_android_vts_VtsHostInfo_descriptor =
             getDescriptor().getMessageTypes().get(2);
+          internal_static_android_vts_VtsHostInfo_fieldAccessorTable = new
+            com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+              internal_static_android_vts_VtsHostInfo_descriptor,
+              new java.lang.String[] { "Hostname", });
+          internal_static_android_vts_TestCaseReportMessage_descriptor =
+            getDescriptor().getMessageTypes().get(3);
           internal_static_android_vts_TestCaseReportMessage_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_android_vts_TestCaseReportMessage_descriptor,
               new java.lang.String[] { "Name", "TestResult", "StartTimestamp", "EndTimestamp", "Coverage", });
           internal_static_android_vts_ProfilingReportMessage_descriptor =
-            getDescriptor().getMessageTypes().get(3);
+            getDescriptor().getMessageTypes().get(4);
           internal_static_android_vts_ProfilingReportMessage_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_android_vts_ProfilingReportMessage_descriptor,
-              new java.lang.String[] { "Name", "Type", "StartTimestamp", "EndTimestamp", "Label", "Value", "XAxisLabel", "YAxisLabel", });
+              new java.lang.String[] { "Name", "Type", "RegressionMode", "StartTimestamp", "EndTimestamp", "Label", "Value", "XAxisLabel", "YAxisLabel", });
           internal_static_android_vts_CoverageReportMessage_descriptor =
-            getDescriptor().getMessageTypes().get(4);
+            getDescriptor().getMessageTypes().get(5);
           internal_static_android_vts_CoverageReportMessage_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_android_vts_CoverageReportMessage_descriptor,
               new java.lang.String[] { "FilePath", "ProjectName", "Revision", "LineCoverageVector", "TotalLineCount", "CoveredLineCount", "DirPath", "FileName", "Html", });
           internal_static_android_vts_TestReportMessage_descriptor =
-            getDescriptor().getMessageTypes().get(5);
+            getDescriptor().getMessageTypes().get(6);
           internal_static_android_vts_TestReportMessage_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_android_vts_TestReportMessage_descriptor,
-              new java.lang.String[] { "TestSuite", "Test", "TestType", "DeviceInfo", "BuildInfo", "SubscriberEmail", "TestCase", "Profiling", "StartTimestamp", "EndTimestamp", "Coverage", });
+              new java.lang.String[] { "TestSuite", "Test", "TestType", "DeviceInfo", "BuildInfo", "SubscriberEmail", "HostInfo", "TestCase", "Profiling", "StartTimestamp", "EndTimestamp", "Coverage", });
           return null;
         }
       };

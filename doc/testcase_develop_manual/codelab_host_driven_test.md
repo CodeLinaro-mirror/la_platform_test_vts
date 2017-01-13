@@ -14,7 +14,7 @@
 
 `$ repo sync -j 32`
 
-Then to check the vts project directory,
+Then to check the VTS project directory,
 
 `$ ls test/vts`
 
@@ -61,7 +61,8 @@ Then edit its contents to:
 ```
 ---
 
-Multiple instances of `compatibility:include-filter` option can be added to include more tests under a test suite.
+Multiple instances of `compatibility:include-filter` option can be added
+to include more tests under a test suite.
 
 
 ## 2. Build and Run
@@ -80,9 +81,26 @@ To run the tests against physical devices,
 
 ### 2.2. Run
 
+You may run your test using VTS TradeFed console. First, start VTS TradeFed console:
+
 `$ vts-tradefed`
 
+Then, use run command to start your test plan:
+
 `> run vts-codelab`
+
+If your test module is not in a test plan, you can specify test module to run directly:
+
+`> run vts -m <your test module name>`
+
+Instead of using TradeFed console, you may also run test directly through shall and make it faster by
+disabling system check and run on primary ABI only:
+
+`vts-tradefed run commandAndExit vts --skip-all-system-status-check --primary-abi-only
+--skip-preconditions --module <your test module name> -l INFO`
+
+The `-l INFO` argument in the end would allow VTS TradeFed print host log to terminal (you may want
+to set Scrollback lines to a higher value in your terminal's setting).
 
 If your test case can violate some SELinux rules, please run:
 
@@ -91,6 +109,11 @@ If your test case can violate some SELinux rules, please run:
 `target$ su`
 
 `target$ setenforce 0`
+
+Tip: you may put the build command and test run command together:
+
+`make vts -j10 && vts-tradefed run commandAndExit vts --skip-all-system-status-check --primary-abi-only
+--skip-preconditions --module <your test module name> -l INFO`
 
 
 ## 3. Customize your test configuration (Optional)
@@ -167,12 +190,9 @@ Your config file will overwrite the following default json object defined at
 
 ## 4. Serving
 
-[Dashboard](https://android-vts-internal.googleplex.com)
-
 Once a new test case is added to one of the launched test suites,
 it is automatically executed in a test lab (e.g., using some common devices).
 The exact schedule, and the used branches and devices are all customizable.
-Please contact an EngProd representative to your team, or vts-dev@google.com.
 
 Results from the test lab are automatically visible on the dashboard, but local
 runs may also be visible for debugging purposes if tests are run on a machine

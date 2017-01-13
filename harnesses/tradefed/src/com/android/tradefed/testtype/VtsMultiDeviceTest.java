@@ -82,8 +82,10 @@ IRuntimeHintProvider, ITestCollector, IBuildReceiver, IAbiReceiver {
     static final String BINARY_TEST_WORKING_DIRECTORIES = "binary_test_working_directories";
     static final String BINARY_TEST_LD_LIBRARY_PATHS = "binary_test_ld_library_paths";
     static final String BINARY_TEST_PROFILING_LIBRARY_PATHS = "binary_test_profiling_library_paths";
+    static final String BINARY_TEST_DISABLE_FRAMEWORK = "binary_test_disable_framework";
     static final String BINARY_TEST_TYPE_GTEST = "gtest";
     static final String BINARY_TEST_TYPE_LLVMFUZZER = "llvmfuzzer";
+    static final String ENABLE_PROFILING = "enable_profiling";
     static final String TEMPLATE_BINARY_TEST_PATH = "vts/testcases/template/binary_test/binary_test";
     static final String TEMPLATE_GTEST_BINARY_TEST_PATH = "vts/testcases/template/gtest_binary_test/gtest_binary_test";
     static final String TEMPLATE_LLVMFUZZER_TEST_PATH = "vts/testcases/template/llvmfuzzer_test/llvmfuzzer_test";
@@ -126,6 +128,9 @@ IRuntimeHintProvider, ITestCollector, IBuildReceiver, IAbiReceiver {
     @Option(name = "runtime-hint", description = "The hint about the test's runtime.",
             isTimeVal = true)
     private long mRuntimeHint = 60000;  // 1 minute
+
+    @Option(name = "enable-profiling", description = "Enable profiling for the tests.")
+    private boolean mEnableProfiling = false;
 
     @Option(name = "run-32bit-on-64bit-abi",
             description = "Whether to run 32bit tests on 64bit abi.")
@@ -187,6 +192,9 @@ IRuntimeHintProvider, ITestCollector, IBuildReceiver, IAbiReceiver {
             + "specified for the same tag. This option is optional for binary tests. If not "
             + "specified, default directories will be used for files with different tags.")
     private Collection<String> mBinaryTestProfilingLibraryPaths = new ArrayList<>();
+
+    @Option(name = "binary-test-disable-framework", description = "Adb stop/start before/after test.")
+    private boolean mBinaryTestDisableFramework = false;
 
     @Option(name = "binary-test-type", description = "Binary test type. Only specify this when "
             + "running an extended binary test without a python test file. Available options: gtest")
@@ -515,11 +523,21 @@ IRuntimeHintProvider, ITestCollector, IBuildReceiver, IAbiReceiver {
                     new JSONArray(mBinaryTestLdLibraryPaths));
             CLog.i("Added %s to the Json object", BINARY_TEST_LD_LIBRARY_PATHS);
         }
+
+        if (mEnableProfiling) {
+            jsonObject.put(ENABLE_PROFILING, mEnableProfiling);
+            CLog.i("Added %s to the Json object", ENABLE_PROFILING);
+        }
         if (!mBinaryTestProfilingLibraryPaths.isEmpty()) {
           jsonObject.put(BINARY_TEST_PROFILING_LIBRARY_PATHS,
                   new JSONArray(mBinaryTestProfilingLibraryPaths));
           CLog.i("Added %s to the Json object", BINARY_TEST_PROFILING_LIBRARY_PATHS);
-      }
+        }
+
+        if (mBinaryTestDisableFramework) {
+          jsonObject.put(BINARY_TEST_DISABLE_FRAMEWORK, mBinaryTestDisableFramework);
+          CLog.i("Added %s to the Json object", BINARY_TEST_DISABLE_FRAMEWORK);
+        }
     }
 
     /**
@@ -623,6 +641,12 @@ IRuntimeHintProvider, ITestCollector, IBuildReceiver, IAbiReceiver {
             parser.processJsonFile(object);
         }
         printVtsLogs(vtsRunnerLogDir);
+        FileUtil.recursiveDelete(vtsRunnerLogDir);
+        CLog.i("Deleted the runner log dir, %s.", vtsRunnerLogDir);
+        if (jsonFilePath != null) {
+          FileUtil.deleteFile(new File(jsonFilePath));
+          CLog.i("Deleted the runner json config file, %s.", jsonFilePath);
+        }
     }
 
     /**
@@ -675,7 +699,8 @@ IRuntimeHintProvider, ITestCollector, IBuildReceiver, IAbiReceiver {
                 } else {
                     CLog.i("VTS log file %s\n", child.getAbsolutePath());
                     try {
-                        if (child.getName().equals("vts_agent.log")) {
+                        if (child.getName().startsWith("vts_agent") &&
+                                child.getName().endsWith(".log")) {
                             CLog.i("Content: %s\n", FileUtil.readStringFromFile(child));
                         } else {
                             CLog.i("skip %s\n", child.getName());
@@ -741,7 +766,11 @@ IRuntimeHintProvider, ITestCollector, IBuildReceiver, IAbiReceiver {
             if (pythonBinaryFile.exists()) {
                 return pythonBinaryFile.getAbsolutePath();
             }
+            CLog.e("bin/python doesn't exist under the " +
+                   "created virtualenv dir.\n");
         } catch (IOException e) {
+            CLog.e("Checking python binary under the " +
+                   "created virtualenv dir raised an exception.\n");
             /* pass */
         }
 

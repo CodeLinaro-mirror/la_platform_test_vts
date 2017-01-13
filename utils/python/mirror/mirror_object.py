@@ -181,6 +181,11 @@ class MirrorObject(object):
             None otherwise
         """
         logging.debug("GetAPI %s for %s", api_name, self._if_spec_msg)
+        # handle reserved methods first.
+        if api_name == "notifySyspropsChanged":
+            func_msg = CompSpecMsg.FunctionSpecificationMessage()
+            func_msg.name =  api_name
+            return func_msg
         if isinstance(self._if_spec_msg, CompSpecMsg.ComponentSpecificationMessage):
             if len(self._if_spec_msg.interface.api) > 0:
                 for api in self._if_spec_msg.interface.api:
@@ -404,6 +409,13 @@ class MirrorObject(object):
                                         arg.scalar_type = value.scalar_type
                                         setattr(arg.scalar_value, value.scalar_type,
                                                 getattr(value.scalar_value, value.scalar_type))
+                                    elif value.type == CompSpecMsg.TYPE_ENUM:
+                                        arg.scalar_type = value.scalar_type
+                                        if hasattr(value.scalar_value, value.scalar_type):
+                                            setattr(arg.scalar_value, value.scalar_type,
+                                                    getattr(value.scalar_value,
+                                                            value.scalar_type))
+                                        arg.enum_value.CopyFrom(value.enum_value)
                                     elif value.type == CompSpecMsg.TYPE_STRING:
                                         arg.string_value.message = value.string_value.message
                                         arg.string_value.length = value.string_value.length

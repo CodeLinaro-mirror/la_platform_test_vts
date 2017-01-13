@@ -1,17 +1,16 @@
 #include "hardware/interfaces/nfc/1.0/vts/NfcClientCallback.vts.h"
+#include "vts_datatype.h"
+#include "vts_measurement.h"
+#include <iostream>
 #include <hidl/HidlSupport.h>
 #include <android/hardware/nfc/1.0/INfcClientCallback.h>
 #include "hardware/interfaces/nfc/1.0/vts/types.vts.h"
 #include <android/hardware/nfc/1.0/types.h>
-#include "vts_datatype.h"
-#include "vts_measurement.h"
-#include <iostream>
+
+
 using namespace android::hardware::nfc::V1_0;
 namespace android {
 namespace vts {
-
-
-
 
 ::android::hardware::Return<void> VtsNfcClientCallback::sendEvent(
     ::android::hardware::nfc::V1_0::NfcEvent arg0,
@@ -26,8 +25,10 @@ namespace vts {
     return ::android::hardware::Void();
 }
 
-VtsNfcClientCallback* VtsFuzzerCreateINfcClientCallback(const string& callback_socket_name) {
-    return new VtsNfcClientCallback();
+sp<INfcClientCallback> VtsFuzzerCreateINfcClientCallback(const string& callback_socket_name) {
+    sp<INfcClientCallback> result;
+    result = new VtsNfcClientCallback();
+    return result;
 }
 
 }  // namespace vts

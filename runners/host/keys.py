@@ -40,6 +40,7 @@ class ConfigKeys(object):
     IKEY_BINARY_TEST_WORKING_DIRECTORIES = "binary_test_working_directories"
     IKEY_BINARY_TEST_LD_LIBRARY_PATHS = "binary_test_ld_library_paths"
     IKEY_BINARY_TEST_PROFILING_LIBRARY_PATHS = "binary_test_profiling_library_paths"
+    IKEY_BINARY_TEST_DISABLE_FRAMEWORK = "binary_test_disable_framework"
 
     # Internal keys, used internally, not exposed to user's config files.
     IKEY_USER_PARAM = "user_params"
@@ -61,6 +62,9 @@ class ConfigKeys(object):
     IKEY_BUILD_ALIAS = "build_alias"
     IKEY_API_LEVEL = "api_level"
     IKEY_SERIAL = "serial"
+
+    # Keys for profiling
+    IKEY_ENABLE_PROFILING = "enable_profiling"
 
     # A list of keys whose values in configs should not be passed to test
     # classes without unpacking first.

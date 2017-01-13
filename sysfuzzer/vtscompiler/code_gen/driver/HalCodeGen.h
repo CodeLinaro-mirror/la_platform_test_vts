@@ -38,43 +38,37 @@ class HalCodeGen : public DriverCodeGenBase {
       : DriverCodeGenBase(input_vts_file_path, vts_name) {}
 
  protected:
-  void GenerateCppBodyFuzzFunction(
-      Formatter& out, const ComponentSpecificationMessage& message,
-      const string& fuzzer_extended_class_name);
+  void GenerateCppBodyFuzzFunction(Formatter& out,
+      const ComponentSpecificationMessage& message,
+      const string& fuzzer_extended_class_name) override;
 
-  void GenerateCppBodyFuzzFunction(
-      Formatter& out, const StructSpecificationMessage& message,
-      const string& fuzzer_extended_class_name,
-      const string& original_data_structure_name,
-      const string& parent_path);
+  void GenerateCppBodyGetAttributeFunction(Formatter& out,
+      const ComponentSpecificationMessage& message,
+      const string& fuzzer_extended_class_name) override;
 
-  void GenerateCppBodyGetAttributeFunction(
-      Formatter& out, const ComponentSpecificationMessage& message,
-      const string& fuzzer_extended_class_name);
+  void GenerateCppBodyCallbackFunction(Formatter& out,
+      const ComponentSpecificationMessage& message,
+      const string& fuzzer_extended_class_name) override;
 
-  void GenerateCppBodyGetAttributeFunction(
-      Formatter& out, const StructSpecificationMessage& message,
+  void GenerateClassConstructionFunction(Formatter& out,
+      const ComponentSpecificationMessage& message,
+      const string& fuzzer_extended_class_name) override;
+
+  void GenerateSubStructFuzzFunctionCall(Formatter& out,
+      const StructSpecificationMessage& message, const string& parent_path);
+
+  void GenerateSubStructGetAttributeFunctionCall(Formatter& out,
+      const StructSpecificationMessage& message, const string& parent_path);
+
+  void GenerateCppBodyFuzzFunction(Formatter& out,
+      const StructSpecificationMessage& message,
       const string& fuzzer_extended_class_name,
       const string& original_data_structure_name, const string& parent_path);
 
-  void GenerateCppBodyCallbackFunction(
-      Formatter& out, const ComponentSpecificationMessage& message,
-      const string& fuzzer_extended_class_name);
-
-  void GenerateHeaderGlobalFunctionDeclarations(
-      Formatter& out, const string& function_prototype);
-
-  void GenerateCppBodyGlobalFunctions(Formatter& out,
-                                      const string& function_prototype,
-                                      const string& fuzzer_extended_class_name);
-
-  void GenerateSubStructFuzzFunctionCall(
-      Formatter& out, const StructSpecificationMessage& message,
-      const string& parent_path);
-
-  void GenerateSubStructGetAttributeFunctionCall(
-      Formatter& out, const StructSpecificationMessage& message,
-      const string& parent_path);
+  void GenerateCppBodyGetAttributeFunction(Formatter& out,
+      const StructSpecificationMessage& message,
+      const string& fuzzer_extended_class_name,
+      const string& original_data_structure_name, const string& parent_path);
 
   // instance variable name (e.g., device_);
   static const char* const kInstanceVariableName;

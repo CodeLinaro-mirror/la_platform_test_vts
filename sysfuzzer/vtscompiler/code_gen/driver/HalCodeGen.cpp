@@ -24,6 +24,7 @@
 #include "test/vts/proto/ComponentSpecificationMessage.pb.h"
 
 #include "VtsCompilerUtils.h"
+#include "utils/InterfaceSpecUtil.h"
 #include "utils/StringUtil.h"
 
 using namespace std;
@@ -291,7 +292,6 @@ void HalCodeGen::GenerateCppBodyFuzzFunction(
     out.unindent();
     out << "}" << "\n";
   }
-  out.unindent();
 
   out << message.original_data_structure_name()
       << "* local_device = ";
@@ -852,24 +852,10 @@ void HalCodeGen::GenerateCppBodyGetAttributeFunction(
   out << "}" << "\n";
 }
 
-void HalCodeGen::GenerateHeaderGlobalFunctionDeclarations(
-    Formatter& out, const string& function_prototype) {
-  out << "extern \"C\" {" << "\n";
-  out << "extern " << function_prototype << ";" << "\n";
-  out << "}" << "\n";
-}
-
-void HalCodeGen::GenerateCppBodyGlobalFunctions(
-    Formatter& out, const string& function_prototype,
-    const string& fuzzer_extended_class_name) {
-  out << "extern \"C\" {" << "\n";
-  out << function_prototype << " {" << "\n";
-  out.indent();
-  out << "return (android::vts::FuzzerBase*) "
-      << "new android::vts::" << fuzzer_extended_class_name << "();" << "\n";
-  out.unindent();
-  out << "}" << "\n" << "\n";
-  out << "}" << "\n";
+void HalCodeGen::GenerateClassConstructionFunction(Formatter& out,
+      const ComponentSpecificationMessage& /*message*/,
+      const string& fuzzer_extended_class_name) {
+  out << fuzzer_extended_class_name << "() : FuzzerBase(HAL_CONVENTIONAL) {}\n";
 }
 
 void HalCodeGen::GenerateSubStructFuzzFunctionCall(

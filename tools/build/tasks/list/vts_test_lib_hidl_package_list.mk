@@ -48,6 +48,7 @@ vts_test_lib_hidl_packages := \
 
 vts_test_lib_hidl_packages += \
   audio_effect_hidl_hal_test \
+  bluetooth_hidl_hal_test \
   boot_hidl_hal_test \
   graphics_allocator_hidl_hal_test \
   graphics_mapper_hidl_hal_test \
@@ -56,6 +57,7 @@ vts_test_lib_hidl_packages += \
   nfc_hidl_hal_test \
   power_hidl_hal_test \
   sensors_hidl_hal_test \
+  soundtrigger_hidl_hal_test \
   thermal_hidl_hal_test \
   vibrator_hidl_hal_test \
   vr_hidl_hal_test \

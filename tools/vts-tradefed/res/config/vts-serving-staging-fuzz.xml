@@ -16,8 +16,8 @@
 <configuration description="Run New VTS Fuzz Tests in the Staging environment">
     <include name="everything" />
     <option name="plan" value="vts" />
-    <option name="compatibility:include-filter" value="ILightFuzzTest" />
-    <option name="compatibility:include-filter" value="ISensorsFuzzTest" />
-    <option name="compatibility:include-filter" value="IPowerFuzzTest" />
+    <option name="compatibility:include-filter" value="ILightIfaceFuzzTest" />
+    <option name="compatibility:include-filter" value="IPowerIfaceFuzzTest" />
+    <option name="compatibility:include-filter" value="ISensorsIfaceFuzzTest" />
     <template-include name="reporters" default="basic-reporters" />
 </configuration>

@@ -65,12 +65,16 @@ IRuntimeHintProvider, ITestCollector, IBuildReceiver, IAbiReceiver {
     static final String BUILD = "build";
     static final String BUILD_ID = "build_id";
     static final String BUILD_TARGET = "build_target";
+    static final String COVERAGE_PROPERTY = "ro.vts.coverage";
     static final String DATA_FILE_PATH = "data_file_path";
     static final String LOG_PATH = "log_path";
     static final String NAME = "name";
+    static final String OS_NAME = "os.name";
+    static final String WINDOWS = "Windows";
     static final String PYTHONPATH = "PYTHONPATH";
     static final String SERIAL = "serial";
     static final String TEST_SUITE = "test_suite";
+    static final String VIRTUAL_ENV_PATH = "VIRTUALENVPATH";
     static final String ABI_NAME = "abi_name";
     static final String ABI_BITNESS = "abi_bitness";
     static final String RUN_32BIT_ON_64BIT_ABI = "run_32bit_on_64bit_abi";
@@ -85,10 +89,15 @@ IRuntimeHintProvider, ITestCollector, IBuildReceiver, IAbiReceiver {
     static final String BINARY_TEST_DISABLE_FRAMEWORK = "binary_test_disable_framework";
     static final String BINARY_TEST_TYPE_GTEST = "gtest";
     static final String BINARY_TEST_TYPE_LLVMFUZZER = "llvmfuzzer";
+    static final String BINARY_TEST_TYPE_HAL_HIDL_GTEST = "hal_hidl_gtest";
     static final String ENABLE_PROFILING = "enable_profiling";
+    static final String ENABLE_COVERAGE = "enable_coverage";
+    static final String HWBINDER_SERVICE = "hwbinder_service";
+    static final String SYSTRACE_PROCESS_NAME = "systrace_process_name";
     static final String TEMPLATE_BINARY_TEST_PATH = "vts/testcases/template/binary_test/binary_test";
     static final String TEMPLATE_GTEST_BINARY_TEST_PATH = "vts/testcases/template/gtest_binary_test/gtest_binary_test";
     static final String TEMPLATE_LLVMFUZZER_TEST_PATH = "vts/testcases/template/llvmfuzzer_test/llvmfuzzer_test";
+    static final String TEMPLATE_HAL_HIDL_GTEST_PATH = "vts/testcases/template/hal_hidl_gtest/hal_hidl_gtest";
     static final String TEST_RUN_SUMMARY_FILE_NAME = "test_run_summary.json";
     static final float DEFAULT_TARGET_VERSION = -1;
     static final String DEFAULT_TESTCASE_CONFIG_PATH = "vts/tools/vts-tradefed/res/default/DefaultTestCase.config";
@@ -113,6 +122,10 @@ IRuntimeHintProvider, ITestCollector, IBuildReceiver, IAbiReceiver {
             description = "The path for test case config file.")
     private String mTestConfigPath = null;
 
+    @Option(name = "hwbinder-service",
+            description = "The name of a HW binder service needed to run the test.")
+    private String mHwBinderServiceName = null;
+
     @Option(name = "use-stdout-logs",
             description = "Flag that determines whether to use std:out to parse output.")
     private boolean mUseStdoutLogs = false;
@@ -131,6 +144,12 @@ IRuntimeHintProvider, ITestCollector, IBuildReceiver, IAbiReceiver {
 
     @Option(name = "enable-profiling", description = "Enable profiling for the tests.")
     private boolean mEnableProfiling = false;
+
+    @Option(name = "enable-coverage",
+            description = "Enable coverage for the tests. In order for coverage to be measured, " +
+                          "ro.vts.coverage system must have value \"1\" to indicate the target " +
+                          "build is coverage instrumented.")
+    private boolean mEnableCoverage = true;
 
     @Option(name = "run-32bit-on-64bit-abi",
             description = "Whether to run 32bit tests on 64bit abi.")
@@ -199,6 +218,9 @@ IRuntimeHintProvider, ITestCollector, IBuildReceiver, IAbiReceiver {
     @Option(name = "binary-test-type", description = "Binary test type. Only specify this when "
             + "running an extended binary test without a python test file. Available options: gtest")
     private String mBinaryTestType = "";
+
+    @Option(name = "systrace-process-name", description = "Process name for systrace.")
+    private String mSystraceProcessName = null;
 
     @Option(name = "collect-tests-only",
             description = "Only invoke the test binary to collect list of applicable test cases. "
@@ -336,14 +358,17 @@ IRuntimeHintProvider, ITestCollector, IBuildReceiver, IAbiReceiver {
                     case BINARY_TEST_TYPE_GTEST:
                         template = TEMPLATE_GTEST_BINARY_TEST_PATH;
                         break;
-                    case BINARY_TEST_TYPE_LLVMFUZZER:
-                        template = TEMPLATE_LLVMFUZZER_TEST_PATH;
-                        break;
+                    case BINARY_TEST_TYPE_HAL_HIDL_GTEST:
+                      template = TEMPLATE_HAL_HIDL_GTEST_PATH;
+                      break;
                     default:
                         template = TEMPLATE_BINARY_TEST_PATH;
                 }
                 CLog.i("Using default test case template at %s.", template);
                 setTestCasePath(template);
+            } else if (mBinaryTestType.equals(BINARY_TEST_TYPE_LLVMFUZZER)) {
+                // Fuzz test don't need test-case-path.
+                setTestCasePath(TEMPLATE_LLVMFUZZER_TEST_PATH);
             } else {
                 throw new IllegalArgumentException("test-case-path is not set.");
             }
@@ -438,12 +463,15 @@ IRuntimeHintProvider, ITestCollector, IBuildReceiver, IAbiReceiver {
         JSONArray deviceArray = new JSONArray();
         JSONObject deviceItemObject = new JSONObject();
         deviceItemObject.put(SERIAL, mDevice.getSerialNumber());
+        boolean coverageBuild = false;
         try {
             deviceItemObject.put("product_type", mDevice.getProductType());
             deviceItemObject.put("product_variant", mDevice.getProductVariant());
             deviceItemObject.put("build_alias", mDevice.getBuildAlias());
             deviceItemObject.put("build_id", mDevice.getBuildId());
             deviceItemObject.put("build_flavor", mDevice.getBuildFlavor());
+            String coverageProperty = mDevice.getProperty(COVERAGE_PROPERTY);
+            coverageBuild = coverageProperty != null && coverageProperty.equals("1");
         } catch (DeviceNotAvailableException e) {
             CLog.e("A device not available - continuing");
             throw new RuntimeException("Failed to get device information");
@@ -528,6 +556,20 @@ IRuntimeHintProvider, ITestCollector, IBuildReceiver, IAbiReceiver {
             jsonObject.put(ENABLE_PROFILING, mEnableProfiling);
             CLog.i("Added %s to the Json object", ENABLE_PROFILING);
         }
+        if (mEnableCoverage) {
+            if (coverageBuild) {
+                jsonObject.put(ENABLE_COVERAGE, mEnableCoverage);
+                CLog.i("Added %s to the Json object", ENABLE_COVERAGE);
+            } else {
+                CLog.i("Device build has coverage disabled");
+            }
+        }
+
+        if (mHwBinderServiceName != null) {
+            jsonObject.put(HWBINDER_SERVICE, mHwBinderServiceName);
+            CLog.i("Added %s to the Json object", ENABLE_PROFILING);
+        }
+
         if (!mBinaryTestProfilingLibraryPaths.isEmpty()) {
           jsonObject.put(BINARY_TEST_PROFILING_LIBRARY_PATHS,
                   new JSONArray(mBinaryTestProfilingLibraryPaths));
@@ -537,6 +579,11 @@ IRuntimeHintProvider, ITestCollector, IBuildReceiver, IAbiReceiver {
         if (mBinaryTestDisableFramework) {
           jsonObject.put(BINARY_TEST_DISABLE_FRAMEWORK, mBinaryTestDisableFramework);
           CLog.i("Added %s to the Json object", BINARY_TEST_DISABLE_FRAMEWORK);
+        }
+
+        if (mSystraceProcessName != null) {
+            jsonObject.put(SYSTRACE_PROCESS_NAME, mSystraceProcessName);
+            CLog.i("Added %s to the Json object", SYSTRACE_PROCESS_NAME);
         }
     }
 
@@ -587,7 +634,7 @@ IRuntimeHintProvider, ITestCollector, IBuildReceiver, IAbiReceiver {
             mPythonBin = getPythonBinary();
         }
         String[] baseOpts = {mPythonBin, "-m"};
-        String[] testModule = {mTestCasePath, jsonFilePath};
+        String[] testModule = {mTestCasePath.replace("/", "."), jsonFilePath};
         String[] cmd;
         cmd = ArrayUtil.buildArray(baseOpts, testModule);
 
@@ -714,12 +761,23 @@ IRuntimeHintProvider, ITestCollector, IBuildReceiver, IAbiReceiver {
     }
 
     /**
-     * This method sets the python path. It's based on the based on the
+     * This method returns whether the OS is Windows.
+     */
+    private static boolean isOnWindows() {
+        return System.getProperty(OS_NAME).contains(WINDOWS);
+    }
+
+    /**
+     * This method sets the python path. It's based on the
      * assumption that the environment variable $ANDROID_BUILD_TOP is set.
      */
     private void setPythonPath() {
         StringBuilder sb = new StringBuilder();
-        sb.append(System.getenv(PYTHONPATH));
+        String separator = File.pathSeparator;
+        if (System.getenv(PYTHONPATH) != null) {
+            sb.append(separator);
+            sb.append(System.getenv(PYTHONPATH));
+        }
 
         // to get the path for android-vts/testcases/ which keeps the VTS python code under vts.
         if (mBuildInfo != null) {
@@ -732,50 +790,57 @@ IRuntimeHintProvider, ITestCollector, IBuildReceiver, IAbiReceiver {
                 /* pass */
             }
             if (testDir != null) {
-                sb.append(":");
+                sb.append(separator);
                 mTestCaseDataDir = testDir.getAbsolutePath();
                 sb.append(mTestCaseDataDir);
             } else if (mBuildInfo.getFile(VTS) != null) {
-                sb.append(":");
+                sb.append(separator);
                 sb.append(mBuildInfo.getFile(VTS).getAbsolutePath()).append("/..");
             }
         }
 
         // for when one uses PythonVirtualenvPreparer.
         if (mBuildInfo.getFile(PYTHONPATH) != null) {
-            sb.append(":");
+            sb.append(separator);
             sb.append(mBuildInfo.getFile(PYTHONPATH).getAbsolutePath());
         }
         if (System.getenv("ANDROID_BUILD_TOP") != null) {
-            sb.append(":");
+            sb.append(separator);
             sb.append(System.getenv("ANDROID_BUILD_TOP")).append("/test");
         }
-        mPythonPath = sb.toString();
+        if (sb.length() == 0) {
+            throw new RuntimeException("Could not find python path on host machine");
+        }
+        mPythonPath = sb.substring(1);
         CLog.i("mPythonPath: %s", mPythonPath);
     }
 
     /**
-     * This method gets the python binary
+     * This method gets the python binary.
      */
     private String getPythonBinary() {
-        try {
-            File venvDir = FileUtil.createNamedTempDir(
-                    mBuildInfo.getTestTag() + "-virtualenv-" +
-                    mBuildInfo.getDeviceSerial().replaceAll(":", "_"));
-            File pythonBinaryFile = new File(venvDir.getAbsolutePath(), "bin/python");
+        boolean isWindows = isOnWindows();
+        String python = (isWindows? "python.exe": "python");
+        File venvDir = mBuildInfo.getFile(VIRTUAL_ENV_PATH);
+        if (venvDir != null) {
+            String binDir = (isWindows? "Scripts": "bin");
+            File pythonBinaryFile = new File(venvDir.getAbsolutePath(),
+                    binDir + File.separator + python);
+            String pythonBinPath = pythonBinaryFile.getAbsolutePath();
             if (pythonBinaryFile.exists()) {
-                return pythonBinaryFile.getAbsolutePath();
+                CLog.i("Python path " + pythonBinPath + ".\n");
+                return pythonBinPath;
             }
-            CLog.e("bin/python doesn't exist under the " +
-                   "created virtualenv dir.\n");
-        } catch (IOException e) {
-            CLog.e("Checking python binary under the " +
-                   "created virtualenv dir raised an exception.\n");
-            /* pass */
+            CLog.e(python + " doesn't exist under the " +
+                   "created virtualenv dir (" + pythonBinPath + ").\n");
+        } else {
+          CLog.e(VIRTUAL_ENV_PATH + " not available in BuildInfo. " +
+                 "Please use VtsPythonVirtualenvPreparer tartget preparer.\n");
         }
 
-        IRunUtil runUtil = RunUtil.getDefault();
-        CommandResult c = runUtil.runTimedCmd(1000, "which", "python");
+        IRunUtil runUtil = (mRunUtil == null ? RunUtil.getDefault() : mRunUtil);
+        CommandResult c = runUtil.runTimedCmd(1000,
+                (isWindows ? "where" : "which"), python);
         String pythonBin = c.getStdout().trim();
         if (pythonBin.length() == 0) {
             throw new RuntimeException("Could not find python binary on host "

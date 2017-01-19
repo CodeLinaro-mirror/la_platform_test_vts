@@ -26,6 +26,7 @@ include $(CLEAR_VARS)
 VTS_PYTHON_ZIP := $(HOST_OUT)/vts_runner_python/vts_runner_python.zip
 VTS_OUT_ROOT := $(HOST_OUT)/vts
 VTS_CAMERAITS_ZIP := $(VTS_OUT_ROOT)/CameraITS.zip
+VTS_SYSTRACE_ZIP := $(VTS_OUT_ROOT)/Systrace.zip
 VTS_TESTCASES_OUT := $(VTS_OUT_ROOT)/android-vts/testcases
 
 .PHONY: $(VTS_PYTHON_ZIP) $(VTS_CAMERAITS_ZIP)
@@ -51,10 +52,10 @@ $(VTS_PYTHON_ZIP): $(SOONG_ZIP)
 	$(hide)unzip -o $@ -d $(VTS_TESTCASES_OUT)/vts/testcases/
 	#
 	@echo "build vts python package for audio effect HAL"
-	$(hide) find hardware/interfaces/audio/effect/2.0/vts/functional -name '*.py' -or -name '*.config' -or -name '*.push' | sort > $@.list
-	$(hide) $(SOONG_ZIP) -d -o $@ -C hardware/interfaces/audio/effect/2.0/vts/functional -l $@.list
-	@rm -f $@.list
-	$(hide) unzip $@ -d $(VTS_TESTCASES_OUT)
+	# $(hide) find hardware/interfaces/audio/effect/2.0/vts/functional -name '*.py' -or -name '*.config' -or -name '*.push' | sort > $@.list
+	# $(hide) $(SOONG_ZIP) -d -o $@ -C hardware/interfaces/audio/effect/2.0/vts/functional -l $@.list
+	# @rm -f $@.list
+	# $(hide) unzip $@ -d $(VTS_TESTCASES_OUT)
 	#
 	@echo "build vts python package for boot HAL"
 	$(hide) find hardware/interfaces/boot/1.0/vts/functional -name '*.py' -or -name '*.config' -or -name '*.push' | sort > $@.list
@@ -77,10 +78,10 @@ $(VTS_PYTHON_ZIP): $(SOONG_ZIP)
 	#$(hide) unzip $@ -d $(VTS_TESTCASES_OUT)
 	#
 	@echo "build vts python package for memtrack HAL"
-	$(hide) find hardware/interfaces/memtrack/1.0/vts/functional -name '*.py' -or -name '*.config' -or -name '*.push' | sort > $@.list
-	$(hide) $(SOONG_ZIP) -d -o $@ -C hardware/interfaces/memtrack/1.0/vts/functional -l $@.list
-	@rm -f $@.list
-	$(hide) unzip $@ -d $(VTS_TESTCASES_OUT)
+	# $(hide) find hardware/interfaces/memtrack/1.0/vts/functional -name '*.py' -or -name '*.config' -or -name '*.push' | sort > $@.list
+	# $(hide) $(SOONG_ZIP) -d -o $@ -C hardware/interfaces/memtrack/1.0/vts/functional -l $@.list
+	# @rm -f $@.list
+	# $(hide) unzip $@ -d $(VTS_TESTCASES_OUT)
 	#
 	@echo "build vts python package for NFC HAL"
 	$(hide) find hardware/interfaces/nfc/1.0/vts/functional -name '*.py' -or -name '*.config' -or -name '*.push' | sort > $@.list
@@ -89,16 +90,16 @@ $(VTS_PYTHON_ZIP): $(SOONG_ZIP)
 	$(hide) unzip $@ -d $(VTS_TESTCASES_OUT)
 	#
 	@echo "build vts python package for power HAL"
-	$(hide) find hardware/interfaces/power/1.0/vts/functional -name '*.py' -or -name '*.config' -or -name '*.push' | sort > $@.list
-	$(hide) $(SOONG_ZIP) -d -o $@ -C hardware/interfaces/power/1.0/vts/functional -l $@.list
-	@rm -f $@.list
-	$(hide) unzip $@ -d $(VTS_TESTCASES_OUT)
+	# $(hide) find hardware/interfaces/power/1.0/vts/functional -name '*.py' -or -name '*.config' -or -name '*.push' | sort > $@.list
+	# $(hide) $(SOONG_ZIP) -d -o $@ -C hardware/interfaces/power/1.0/vts/functional -l $@.list
+	# @rm -f $@.list
+	# $(hide) unzip $@ -d $(VTS_TESTCASES_OUT)
 	#
 	@echo "build vts python package for thermal HAL"
-	$(hide) find hardware/interfaces/thermal/1.0/vts/functional -name '*.py' -or -name '*.config' -or -name '*.push' | sort > $@.list
-	$(hide) $(SOONG_ZIP) -d -o $@ -C hardware/interfaces/thermal/1.0/vts/functional -l $@.list
-	@rm -f $@.list
-	$(hide) unzip $@ -d $(VTS_TESTCASES_OUT)
+	# $(hide) find hardware/interfaces/thermal/1.0/vts/functional -name '*.py' -or -name '*.config' -or -name '*.push' | sort > $@.list
+	# $(hide) $(SOONG_ZIP) -d -o $@ -C hardware/interfaces/thermal/1.0/vts/functional -l $@.list
+	# @rm -f $@.list
+	# $(hide) unzip $@ -d $(VTS_TESTCASES_OUT)
 	#
 	@echo "build vts python package for vehicle HAL"
 	$(hide) find hardware/interfaces/vehicle/2.0/vts/functional -name '*.py' -or -name '*.config' -or -name '*.push' | sort > $@.list
@@ -131,8 +132,14 @@ $(VTS_PYTHON_ZIP): $(SOONG_ZIP)
 	$(hide) unzip $@ -d $(VTS_TESTCASES_OUT)
 	#
 	@echo "build vts python package for Light HAL"
-	$(hide) find hardware/interfaces/light/2.0/vts/functional -name '*.py' -or -name '*.config' -or -name '*.push' | sort > $@.list
-	$(hide) $(SOONG_ZIP) -d -o $@ -C hardware/interfaces/light/2.0/vts/functional -l $@.list
+	# $(hide) find hardware/interfaces/light/2.0/vts/functional -name '*.py' -or -name '*.config' -or -name '*.push' | sort > $@.list
+	# $(hide) $(SOONG_ZIP) -d -o $@ -C hardware/interfaces/light/2.0/vts/functional -l $@.list
+	# @rm -f $@.list
+	# $(hide) unzip $@ -d $(VTS_TESTCASES_OUT)
+	#
+	@echo "build vts python package for sound trigger HAL"
+	$(hide) find hardware/interfaces/soundtrigger/2.0/vts/functional -name '*.py' -or -name '*.config' -or -name '*.push' | sort > $@.list
+	$(hide) $(SOONG_ZIP) -d -o $@ -C hardware/interfaces/soundtrigger/2.0/vts/functional -l $@.list
 	@rm -f $@.list
 	$(hide) unzip $@ -d $(VTS_TESTCASES_OUT)
 	#
@@ -147,13 +154,20 @@ $(VTS_CAMERAITS_ZIP): $(SOONG_ZIP)
 	$(hide) rm -rf $(VTS_TESTCASES_OUT)/CameraITS/*
 	$(hide) unzip $@ -d $(VTS_TESTCASES_OUT)/CameraITS
 
+$(VTS_SYSTRACE_ZIP): $(SOONG_ZIP)
+	@echo "copying systrace tool from external/chromium-trace"
+	$(hide) find external/chromium-trace -path external/chromium-trace/.git -prune -or -print | sort > $@.list
+	$(hide) $(SOONG_ZIP) -d -o $@ -C . -l $@.list
+	@rm -f $@.list
+	$(hide) unzip $@ -d $(VTS_OUT_ROOT)/android-vts/tools
+
 .PHONY: vts
 
 my_deps_copy_pairs :=
   $(foreach d,$(ADDITIONAL_VTS_JARS),\
     $(eval my_deps_copy_pairs += $(d):$(VTS_OUT_ROOT)/android-vts/tools/$(notdir $(d))))
 
-vts: $(VTS_PYTHON_ZIP) $(VTS_CAMERAITS_ZIP) $(call copy-many-files,$(my_deps_copy_pairs))
+vts: $(VTS_PYTHON_ZIP) $(VTS_CAMERAITS_ZIP) $(VTS_SYSTRACE_ZIP) $(call copy-many-files,$(my_deps_copy_pairs))
 
 endif # vts
 endif # linux

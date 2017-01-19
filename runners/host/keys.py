@@ -39,7 +39,6 @@ class ConfigKeys(object):
     IKEY_BINARY_TEST_SOURCES = "binary_test_sources"
     IKEY_BINARY_TEST_WORKING_DIRECTORIES = "binary_test_working_directories"
     IKEY_BINARY_TEST_LD_LIBRARY_PATHS = "binary_test_ld_library_paths"
-    IKEY_BINARY_TEST_PROFILING_LIBRARY_PATHS = "binary_test_profiling_library_paths"
     IKEY_BINARY_TEST_DISABLE_FRAMEWORK = "binary_test_disable_framework"
 
     # Internal keys, used internally, not exposed to user's config files.
@@ -65,6 +64,21 @@ class ConfigKeys(object):
 
     # Keys for profiling
     IKEY_ENABLE_PROFILING = "enable_profiling"
+    IKEY_BINARY_TEST_PROFILING_LIBRARY_PATHS = "binary_test_profiling_library_paths"
+
+    # Keys for systrace (for hal tests)
+    IKEY_SYSTRACE_PROCESS_NAME = "systrace_process_name"
+    IKEY_SYSTRACE_REPORT_PATH = "systrace_report_path"
+    IKEY_SYSTRACE_UPLAD_TO_DASHBOARD = "systrace_upload_to_dashboard"
+
+    # Keys for coverage
+    IKEY_ENABLE_COVERAGE = "enable_coverage"
+    IKEY_MODULES = "modules"
+    IKEY_SERVICE_JSON_PATH = "service_key_json_path"
+    IKEY_BIGTABLE_BASE_URL = "bigtable_base_url"
+
+    # Keys for the HAL HIDL GTest type.
+    IKEY_HWBINDER_SERVICE = "hwbinder_service"  # when a service is required.
 
     # A list of keys whose values in configs should not be passed to test
     # classes without unpacking first.

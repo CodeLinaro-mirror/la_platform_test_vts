@@ -18,10 +18,12 @@ vts_test_lib_hidl_packages := \
   libhidlbase \
   libhidltransport \
   android.hardware.boot.vts.driver@1.0 \
+  android.hardware.ir.vts.driver@1.0 \
   android.hardware.light.vts.driver@2.0 \
   android.hardware.memtrack.vts.driver@1.0 \
   android.hardware.nfc.vts.driver@1.0 \
   android.hardware.power.vts.driver@1.0 \
+  android.hardware.radio.vts.driver@1.0 \
   android.hardware.sensors.vts.driver@1.0 \
   android.hardware.thermal.vts.driver@1.0 \
   android.hardware.tv.cec.vts.driver@1.0 \
@@ -30,11 +32,13 @@ vts_test_lib_hidl_packages := \
   android.hardware.vibrator.vts.driver@1.0 \
   android.hardware.vr.vts.driver@1.0 \
   android.hardware.boot@1.0-IBootControl-vts.profiler \
+  android.hardware.ir@1.0-IConsumerIr-vts.profiler \
   android.hardware.light@2.0-ILight-vts.profiler \
   android.hardware.memtrack@1.0-IMemtrack-vts.profiler \
   android.hardware.nfc@1.0-INfc-vts.profiler \
   android.hardware.nfc@1.0-INfcClientCallback-vts.profiler \
   android.hardware.power@1.0-IPower-vts.profiler \
+  android.hardware.radio@1.0-IRadio-vts.profiler \
   android.hardware.sensors@1.0-ISensors-vts.profiler \
   android.hardware.thermal@1.0-IThermal-vts.profiler \
   android.hardware.tv.cec@1.0-IHdmiCec-vts.profiler \
@@ -52,6 +56,7 @@ vts_test_lib_hidl_packages += \
   boot_hidl_hal_test \
   graphics_allocator_hidl_hal_test \
   graphics_mapper_hidl_hal_test \
+  ir_hidl_hal_test \
   light_hidl_hal_test \
   memtrack_hidl_hal_test \
   nfc_hidl_hal_test \
@@ -61,3 +66,4 @@ vts_test_lib_hidl_packages += \
   thermal_hidl_hal_test \
   vibrator_hidl_hal_test \
   vr_hidl_hal_test \
+  wifi_hidl_test \

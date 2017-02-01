@@ -96,18 +96,20 @@ class BaseTestWithWebDbClass(base_test.BaseTestClass):
             keys.ConfigKeys.IKEY_ENABLE_PROFILING, default_value=False)
 
         self._systrace_controller = None
-        systrace_process_name = self.getUserParam(
-            keys.ConfigKeys.IKEY_SYSTRACE_PROCESS_NAME, default_value=None)
-        data_file_path = self.getUserParam(
-            keys.ConfigKeys.IKEY_DATA_FILE_PATH, default_value=None)
-        if systrace_process_name:
+        enable_systrace = self.getUserParam(
+            keys.ConfigKeys.IKEY_ENABLE_SYSTRACE, default_value=False)
+        if enable_systrace:
+            systrace_process_name = self.getUserParam(
+                keys.ConfigKeys.IKEY_SYSTRACE_PROCESS_NAME, default_value='')
             systrace_process_name = str(systrace_process_name)
+            data_file_path = self.getUserParam(
+                keys.ConfigKeys.IKEY_DATA_FILE_PATH, default_value=None)
             if data_file_path:
                 android_vts_path = os.path.normpath(
                     os.path.join(data_file_path, '..'))
 
                 self._systrace_controller = systrace_controller.SystraceController(
-                    android_vts_path, systrace_process_name)
+                    android_vts_path, process_name=systrace_process_name)
             else:
                 logging.error('Cannot create systrace controller object: '
                               'data_file_path not available')
@@ -245,16 +247,22 @@ class BaseTestWithWebDbClass(base_test.BaseTestClass):
         """
         test_end_time = self.GetTimestamp()
         if getattr(self, self.USE_GAE_DB, False):
-            if self._current_test_report_msg:
+            if (self._current_test_report_msg and
+                    self._current_test_report_msg.test_result !=
+                    ReportMsg.TEST_CASE_RESULT_SKIP):
                 self._current_test_report_msg.end_timestamp = test_end_time
                 if self._systrace_controller and self._systrace_controller.is_valid:
-                    if self.getUserParam(
-                            keys.ConfigKeys.IKEY_SYSTRACE_UPLAD_TO_DASHBOARD,
-                            default_value=False):
-                        try:
-                            systrace_msg = self._current_test_report_msg.systrace.add(
-                            )
+                    systrace_msg = None
+                    try:
+                        systrace_msg = self._current_test_report_msg.systrace.add(
+                        )
+                        if self._systrace_controller.process_name:
                             systrace_msg.process_name = self._systrace_controller.process_name
+
+                        if self.getUserParam(
+                                keys.ConfigKeys.
+                                IKEY_SYSTRACE_UPLAD_TO_DASHBOARD,
+                                default_value=False):
                             html = self._systrace_controller.ReadLastOutput()
                             if html is None:
                                 logging.error(
@@ -264,30 +272,49 @@ class BaseTestWithWebDbClass(base_test.BaseTestClass):
                                 logging.info(
                                     'Systrace html data added to report message. Length: %s',
                                     len(html))
-                            suc = self._systrace_controller.ClearLastOutput()
-                            if not suc:
-                                logging.error(
-                                    'failed to clear last systrace output.')
-                        except Exception as e:  # TODO(yuexima): more specific exceptions catch
-                            logging.error(
-                                'Failed to add systrace to resport message %s',
-                                e)
+                    except Exception as e:  # TODO(yuexima): more specific exceptions catch
+                        logging.exception(
+                            'Failed to add systrace to resport message %s', e)
 
                     report_path = self.getUserParam(
                         keys.ConfigKeys.IKEY_SYSTRACE_REPORT_PATH,
                         default_value=None)
                     if report_path:
-                        report_destination_file = os.path.join(
-                            report_path,
-                            '{module}_{test}_{process}_{time}.html'.format(
-                                module=self.test_module_name,
-                                test=test_name,
-                                process=self._systrace_controller.process_name,
-                                time=test_end_time))
-                        self._systrace_controller.SaveLastOutput(
-                            report_destination_file)
-                        logging.info('Systrace output saved to %s',
-                                     report_destination_file)
+                        report_destination_file_name = '{module}_{test}_{process}_{time}.html'.format(
+                            module=self.test_module_name,
+                            test=test_name,
+                            process=self._systrace_controller.process_name,
+                            time=test_end_time)
+                        report_destination_file_path = os.path.join(
+                            report_path, report_destination_file_name)
+                        if self._systrace_controller.SaveLastOutput(
+                                report_destination_file_path):
+                            logging.info('Systrace output saved to %s',
+                                         report_destination_file_path)
+                        else:
+                            logging.error('Failed to save systrace output.')
+
+                        report_url_prefix = self.getUserParam(
+                            keys.ConfigKeys.IKEY_SYSTRACE_REPORT_URL_PREFIX,
+                            default_value=None)
+                        if report_url_prefix and systrace_msg:
+                            report_url_prefix = str(report_url_prefix)
+                            report_destination_file_url = '%s%s' % (
+                                report_url_prefix,
+                                report_destination_file_name)
+
+                            try:
+                                systrace_msg.url.append(
+                                    report_destination_file_url)
+                                logging.info(
+                                    'systrace result url %s added to protobuf message.',
+                                    report_destination_file_url)
+                            except Exception as e:  # TODO(yuexima): more specific exceptions catch
+                                logging.exception(
+                                    'failed to append systrace result url "%s" to proto message: %s',
+                                    (report_destination_file_url, e))
+                    if not self._systrace_controller.ClearLastOutput():
+                        logging.error('failed to clear last systrace output.')
             else:
                 logging.info(
                     "test result of '%s' is empty and will not be uploaded.",
@@ -297,12 +324,17 @@ class BaseTestWithWebDbClass(base_test.BaseTestClass):
     def _setUpTest(self, test_name):
         """Proxy function to guarantee the base implementation of _setUpTest is called.
 
+        Systrace will be started after other setup procedures are done.
+
         Args:
             test_name: string, test name
         """
+        ret = super(BaseTestWithWebDbClass, self)._setUpTest(test_name)
+
         if self._systrace_controller:
             self._systrace_controller.Start()
-        return super(BaseTestWithWebDbClass, self)._setUpTest(test_name)
+
+        return ret
 
     def _tearDownTest(self, test_name):
         """Proxy function to guarantee the base implementation of test_name is called.
@@ -415,21 +447,23 @@ class BaseTestWithWebDbClass(base_test.BaseTestClass):
         self._profiling[name].end_timestamp = self.GetTimestamp()
         return True
 
-    def AddProfilingDataLabeledVector(
+    def AddProfilingDataVector(
             self,
             name,
             labels,
             values,
+            data_type,
             options=[],
             x_axis_label="x-axis",
             y_axis_label="y-axis",
             regression_mode=ReportMsg.VTS_REGRESSION_MODE_INCREASING):
-        """Adds the profiling data in order to upload to the web DB.
+        """Adds the vector profiling data in order to upload to the web DB.
 
         Args:
             name: string, profiling point name.
-            labels: a list of labels.
-            values: a list of values.
+            labels: a list or set of labels.
+            values: a list or set of values where each value is an integer.
+            data_type: profiling data type.
             options: a set of options.
             x-axis_label: string, the x-axis label title for a graph plot.
             y-axis_label: string, the y-axis label title for a graph plot.
@@ -446,23 +480,81 @@ class BaseTestWithWebDbClass(base_test.BaseTestClass):
 
         self._profiling[name] = self._report_msg.profiling.add()
         self._profiling[name].name = name
-        self._profiling[
-            name].type = ReportMsg.VTS_PROFILING_TYPE_LABELED_VECTOR
+        self._profiling[name].type = data_type
         self._profiling[name].regression_mode = regression_mode
-        for label, value in zip(labels, values):
-            self._profiling[name].label.append(label)
-            self._profiling[name].value.append(value)
+        if labels:
+            self._profiling[name].label.extend(labels)
+        self._profiling[name].value.extend(values)
         self._profiling[name].x_axis_label = x_axis_label
         self._profiling[name].y_axis_label = y_axis_label
-        for option in options:
-            self._profiling[name].options.append(option)
+        self._profiling[name].options.extend(options)
 
-    def AddProfilingDataLabeledPoint(self, name, value):
-        """Adds labeled point type profiling data for uploading to the web DB.
+    def AddProfilingDataLabeledVector(
+            self,
+            name,
+            labels,
+            values,
+            options=[],
+            x_axis_label="x-axis",
+            y_axis_label="y-axis",
+            regression_mode=ReportMsg.VTS_REGRESSION_MODE_INCREASING):
+        """Adds the labeled vector profiling data in order to upload to the web DB.
 
         Args:
             name: string, profiling point name.
-            value: int, the value.
+            labels: a list or set of labels.
+            values: a list or set of values where each value is an integer.
+            options: a set of options.
+            x-axis_label: string, the x-axis label title for a graph plot.
+            y-axis_label: string, the y-axis label title for a graph plot.
+            regression_mode: specifies the direction of change which indicates
+                             performance regression.
+        """
+        self.AddProfilingDataVector(
+            name, labels, values, ReportMsg.VTS_PROFILING_TYPE_LABELED_VECTOR,
+            options, x_axis_label, y_axis_label, regression_mode)
+
+    def AddProfilingDataUnlabeledVector(
+            self,
+            name,
+            values,
+            options=[],
+            x_axis_label="x-axis",
+            y_axis_label="y-axis",
+            regression_mode=ReportMsg.VTS_REGRESSION_MODE_INCREASING):
+        """Adds the unlabeled vector profiling data in order to upload to the web DB.
+
+        Args:
+            name: string, profiling point name.
+            values: a list or set of values where each value is an integer.
+            options: a set of options.
+            x-axis_label: string, the x-axis label title for a graph plot.
+            y-axis_label: string, the y-axis label title for a graph plot.
+            regression_mode: specifies the direction of change which indicates
+                             performance regression.
+        """
+        self.AddProfilingDataVector(
+            name, None, values, ReportMsg.VTS_PROFILING_TYPE_UNLABELED_VECTOR,
+            options, x_axis_label, y_axis_label, regression_mode)
+
+    def AddProfilingDataTimestamp(
+            self,
+            name,
+            value,
+            options=[],
+            x_axis_label="x-axis",
+            y_axis_label="y-axis",
+            regression_mode=ReportMsg.VTS_REGRESSION_MODE_INCREASING):
+        """Adds the named point type profiling data in order to upload to the web DB.
+
+        Args:
+            name: string, profiling point name.
+            value: integer, the value.
+            options: a set of options.
+            x-axis_label: string, the x-axis label title for a graph plot.
+            y-axis_label: string, the y-axis label title for a graph plot.
+            regression_mode: specifies the direction of change which indicates
+                             performance regression.
         """
         if not getattr(self, self.USE_GAE_DB, False):
             logging.error("'use_gae_db' config is not True.")
@@ -474,9 +566,12 @@ class BaseTestWithWebDbClass(base_test.BaseTestClass):
         self._profiling[name] = self._report_msg.profiling.add()
         self._profiling[name].name = name
         self._profiling[name].type = ReportMsg.VTS_PROFILING_TYPE_TIMESTAMP
+        self._profiling[name].regression_mode = regression_mode
         self._profiling[name].start_timestamp = 0
         self._profiling[name].end_timestamp = value
-        return True
+        self._profiling[name].x_axis_label = x_axis_label
+        self._profiling[name].y_axis_label = y_axis_label
+        self._profiling[name].options.extend(options)
 
     def IsCoverageConfigSpecified(self):
         """Determines if the config file specifies modules for coverage.
@@ -530,7 +625,8 @@ class BaseTestWithWebDbClass(base_test.BaseTestClass):
         try:
             build_client = artifact_fetcher.AndroidBuildClient(
                 service_json_path)
-        except Exception:
+        except Exception as e:
+            logging.exception('Failed to instantiate build client: %s', e)
             logging.error("Invalid service JSON file %s", service_json_path)
             return False
 
@@ -538,7 +634,8 @@ class BaseTestWithWebDbClass(base_test.BaseTestClass):
         try:
             revision_dict = build_client.GetRepoDictionary(
                 self.BRANCH, build_flavor, device_build_id)
-        except:
+        except Exception as e:
+            logging.exception('Failed to fetch repo dictionary: %s', e)
             logging.error("Could not read build info for branch: %s, " +
                           "target: %s, id: %s", self.BRANCH, build_flavor,
                           device_build_id)
@@ -550,7 +647,8 @@ class BaseTestWithWebDbClass(base_test.BaseTestClass):
                 build_client.GetCoverage("master", build_flavor,
                                          device_build_id, product))
             cov_zip = zipfile.ZipFile(cov_zip)
-        except:
+        except Exception as e:
+            logging.exception('Failed to fetch coverage zip: %s', e)
             logging.error("Could not read coverage zip for branch: %s, " +
                           "target: %s, id: %s, product: %s", self.BRANCH,
                           build_flavor, device_build_id, product)
@@ -607,7 +705,7 @@ class BaseTestWithWebDbClass(base_test.BaseTestClass):
             cov_zip = getattr(self, self.COVERAGE_ZIP)
             revision_dict = getattr(self, self.REVISION_DICT)
         except AttributeError as e:
-            logging.error("attributes not found %s", str(e))
+            logging.exception("attributes not found %s", e)
             return False
 
         if not self.IsCoverageConfigSpecified():
@@ -651,8 +749,6 @@ class BaseTestWithWebDbClass(base_test.BaseTestClass):
         """
         merged_profiling_data = profiling_utils.VTSProfilingData()
         for data in self._profiling_data:
-            if data.name:
-                merged_profiling_data.name = data.name
             for item in data.options:
                 merged_profiling_data.options.add(item)
             for api, latences in data.values.items():
@@ -661,23 +757,9 @@ class BaseTestWithWebDbClass(base_test.BaseTestClass):
                 else:
                     merged_profiling_data.values[api] = latences
         for api, latencies in merged_profiling_data.values.items():
-            if latencies:
-                merged_profiling_data.labels.append(api)
-                merged_profiling_data.aggregated_values["max"].append(
-                    max(latencies))
-                merged_profiling_data.aggregated_values["min"].append(
-                    min(latencies))
-                merged_profiling_data.aggregated_values["avg"].append(
-                    sum(latencies) / len(latencies))
-        for tag in [_MAX, _MIN, _AVG]:
-            if merged_profiling_data.name is None:
-                name = tag
-            else:
-                name = merged_profiling_data.name + "_" + tag
-            self.AddProfilingDataLabeledVector(
-                name,
-                merged_profiling_data.labels,
-                merged_profiling_data.aggregated_values[tag],
+            self.AddProfilingDataUnlabeledVector(
+                api,
+                latencies,
                 merged_profiling_data.options,
-                x_axis_label="API name",
-                y_axis_label="API processing latency (nana secs)")
+                x_axis_label="API processing latency (nano secs)",
+                y_axis_label="Frequency")

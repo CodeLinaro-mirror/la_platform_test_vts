@@ -20,11 +20,14 @@ import com.android.vts.proto.VtsReportMessage;
 import com.android.vts.proto.VtsReportMessage.AndroidDeviceInfoMessage;
 import com.android.vts.proto.VtsReportMessage.CoverageReportMessage;
 import com.android.vts.proto.VtsReportMessage.ProfilingReportMessage;
+import com.android.vts.proto.VtsReportMessage.SystraceReportMessage;
 import com.android.vts.proto.VtsReportMessage.TestCaseReportMessage;
 import com.android.vts.proto.VtsReportMessage.TestCaseResult;
 import com.android.vts.proto.VtsReportMessage.TestReportMessage;
 import com.android.vts.proto.VtsReportMessage.VtsHostInfo;
 import com.android.vts.util.BigtableHelper;
+import com.android.vts.util.FilterUtil;
+import com.android.vts.util.FilterUtil.Key;
 import com.google.gson.Gson;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.hbase.TableName;
@@ -35,6 +38,10 @@ import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -45,8 +52,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -58,109 +63,51 @@ import javax.servlet.http.HttpServletResponse;
  */
 public class ShowTableServlet extends BaseServlet {
 
+    private static final String TABLE_JSP = "WEB-INF/jsp/show_table.jsp";
+    private static final String HTTPS = "https";
     // Error message displayed on the webpage is tableName passed is null.
     private static final String TABLE_NAME_ERROR = "Error : Table name must be passed!";
     private static final String PROFILING_DATA_ALERT = "No profiling data was found.";
     private static final int MAX_BUILD_IDS_PER_PAGE = 10;
-    private static final int TIME_INFO_ROW_COUNT = 2;
-    private static final int DURATION_INFO_ROW_COUNT = 1;
-    private static final int SUMMARY_ROW_COUNT = 6;
-    private static final String[] SEARCH_KEYS = {"devicebuildid", "branch", "target", "device",
-                                                 "vtsbuildid"};
+
+    // Row labels for the test time-formatted information.
+    private static final String[] TIME_INFO_NAMES = {"Test Start", "Test End"};
+
+    // Row labels for the test duration information.
+    private static final String[] DURATION_INFO_NAMES = {"<b>Test Duration</b>"};
+
+    // Row labels for the test summary grid.
+    private static final String[] SUMMARY_NAMES = {
+            "Total", "Passing #", "Non-Passing #", "Passing %", "Covered Lines", "Coverage %"};
+
+    // Row labels for the device summary information in the table header.
+    private static final String[] HEADER_NAMES = {
+            "<b>Stats Type \\ Device Build ID</b>", "Branch", "Build Target", "Device",
+            "ABI Target", "VTS Build ID", "Hostname"};
+
     private static final String SEARCH_HELP_HEADER = "Search Help";
     private static final String SEARCH_HELP = "Data can be queried using one or more filters. " +
         "If more than one filter is provided, results will be returned that match <i>all</i>. " +
         "<br><br>Filters are delimited by spaces; to specify a multi-word token, enclose it in " +
-        "double quotes. A query may apply to any of header attributes of a column, or it may be " +
-        "a field-specific filter if specified in the format: \"field=value\".<br><br>" +
-        "<b>Supported field qualifiers:</b> " + StringUtils.join(SEARCH_KEYS, ", ") + ".";
-    private static final Set<String> SEARCH_KEYSET = new HashSet<String>(Arrays.asList(SEARCH_KEYS));
+        "double quotes. A query must be in the format: \"field:value\".<br><br>" +
+        "<b>Supported field qualifiers:</b> " + StringUtils.join(Key.values(), ", ") + ".";
     private static final byte[] FAMILY = Bytes.toBytes("test");
     private static final byte[] QUALIFIER = Bytes.toBytes("data");
 
-    /**
-     * Parse the search string to populate the searchPairs map and the generalTerms set.
-     * General terms apply to any field, while pairs in searchPairs are for a particular field.
-     *
-     * Expected format:
-     *       general1 "general string 2" vtsbuildid="local build"
-     *
-     * Search terms are delimited by spaces and may be enclosed by quotes. General terms have no
-     * prefix, while field-specific search terms are preceded by <field>= where the field is in
-     * SEARCH_KEYS.
-     *
-     * @param searchString The String search query.
-     * @param searchPairs The map to insert search keys to values parsed from the search string.
-     * @param generalTerms The map to insert general search terms (term to index).
-     */
-    private void parseSearchString(String searchString, Map<String, String> searchPairs,
-                                   Map<String, Integer> generalTerms) {
-        if (searchString != null) {
-            Matcher m = Pattern.compile("([^\"]\\S*|\".+?\")\\s*").matcher(searchString);
-            int count = 0;
-            while (m.find()) {
-                String term = m.group(1).replace("\"", "");
-                if (term.contains("=")) {
-                    String[] terms = term.split("=", 2);
-                    if (terms.length == 2 && SEARCH_KEYSET.contains(terms[0].toLowerCase())) {
-                        searchPairs.put(terms[0].toLowerCase(), terms[1]);
-                    }
-                } else {
-                    generalTerms.put(term, count++);
-                }
-            }
-        }
-    }
+    @Override
+    public List<String[]> getNavbarLinks(HttpServletRequest request) {
+        List<String[]> links = new ArrayList<>();
+        Page root = Page.HOME;
+        String[] rootEntry = new String[]{root.getUrl(), root.getName()};
+        links.add(rootEntry);
 
-    /**
-     * Determine if test report should be included in the result based on search terms.
-     * @param report The TestReportMessage object to compare to the search terms.
-     * @param searchPairs The map of search keys to values parsed from the search string.
-     * @param generalTerms General terms non-specific to a particular field.
-     * @returns boolean True if the report matches the search terms, false otherwise.
-     */
-    private boolean includeInSearch(TestReportMessage report, Map<String, String> searchPairs,
-                                    Map<String, Integer> generalTerms) {
-        if (searchPairs.size() + generalTerms.size() == 0) return true;
-
-        boolean[] fieldsSatisfied = new boolean[SEARCH_KEYS.length];
-        boolean[] generalSatisfied = new boolean[generalTerms.size()];
-        // Verify that VTS build ID matches search term.
-        String vtsBuildId = report.getBuildInfo().getId().toStringUtf8().toLowerCase();
-        if (searchPairs.containsKey(SEARCH_KEYS[4])) {
-            if (vtsBuildId.equals(searchPairs.get(SEARCH_KEYS[4]))) {
-                fieldsSatisfied[4] = true;
-            } else {
-                return false;
-            }
-        }
-
-        // Verify that device-specific search terms are satisfied between the target devices.
-        for (AndroidDeviceInfoMessage device : report.getDeviceInfoList()) {
-            String[] props = {device.getBuildId().toStringUtf8().toLowerCase(),
-                              device.getBuildAlias().toStringUtf8().toLowerCase(),
-                              device.getBuildFlavor().toStringUtf8().toLowerCase(),
-                              device.getProductVariant().toStringUtf8().toLowerCase()};
-            Set<String> propSet = new HashSet<>(Arrays.asList(props));
-            for (int i = 0; i < props.length; i++) {
-                if (searchPairs.containsKey(SEARCH_KEYS[i]) &&
-                    props[i].equals(searchPairs.get(SEARCH_KEYS[i]))) {
-                    fieldsSatisfied[i] = true;
-                }
-                for (Map.Entry<String, Integer> entry : generalTerms.entrySet()) {
-                    if (propSet.contains(entry.getKey())) {
-                        generalSatisfied[entry.getValue()] = true;
-                    }
-                }
-            }
-        }
-        for (int i = 0; i < fieldsSatisfied.length; i++) {
-            if (!fieldsSatisfied[i] && searchPairs.containsKey(SEARCH_KEYS[i])) return false;
-        }
-        for (int i = 0; i < generalSatisfied.length; i++) {
-            if (!generalSatisfied[i]) return false;
-        }
-        return true;
+        Page table = Page.TABLE;
+        String testName = request.getParameter("testName");
+        String name = table.getName() + testName;
+        String url = table.getUrl() + "?testName=" + testName;
+        String[] tableEntry = new String[]{url, name};
+        links.add(tableEntry);
+        return links;
     }
 
     @Override
@@ -229,9 +176,7 @@ public class ShowTableServlet extends BaseServlet {
             showPresubmit = true;
         }
 
-        Map<String, String> searchPairs = new HashMap<>();
-        Map<String, Integer> generalTerms = new HashMap<>();
-        parseSearchString(searchString, searchPairs, generalTerms);
+        Map<Key, String> searchPairs  = FilterUtil.parseSearchString(searchString);
 
         // Add result names to list
         List<String> resultNames = new ArrayList<>();
@@ -290,7 +235,7 @@ public class ShowTableServlet extends BaseServlet {
 
                 String firstDeviceBuildId = testReportMessage.getDeviceInfoList().get(0)
                                             .getBuildId().toStringUtf8();
-                if (!includeInSearch(testReportMessage, searchPairs, generalTerms)) continue;
+                if (!FilterUtil.includeInSearch(testReportMessage, searchPairs)) continue;
 
                 try {
                     // filter non-integer build IDs
@@ -384,40 +329,23 @@ public class ShowTableServlet extends BaseServlet {
         // Build Flavor and test build ID.
         String[] headerRow = new String[tests.size() + 1];
 
-        // the time grid on the table has two rows - Start Time and End Time.
-        // These represent the start times for the test run.
-        String[][] timeGrid = new String[TIME_INFO_ROW_COUNT][tests.size() + 1];
-
-        // the duration grid on the table has one row - test duration.
-        // These represent the length of time the test elapsed.
-        String[][] durationGrid = new String[DURATION_INFO_ROW_COUNT][tests.size() + 1];
-
-        // the summary grid has four rows - Total, Passing Count, Non-Passing Count, Passing %,
-        // Covered line count, and Coverage %.
-        String[][] summaryGrid = new String[SUMMARY_ROW_COUNT][tests.size() + 1];
-
         // the results an entry for each testcase result for each build.
         String[][] resultsGrid = new String[testCaseNameMap.size()][tests.size() + 1];
+        headerRow[0] = StringUtils.join(HEADER_NAMES, "<br>");
 
-        // first column for device grid
-        String[] headerFields = {"<b>Stats Type \\ Device Build ID</b>", "Branch", "Build Target",
-                                 "Device", "ABI Target", "VTS Build ID", "Hostname"};
-        headerRow[0] = StringUtils.join(headerFields, "<br>");
-
-        // first column for time grid
-        String[] rowNamesTimeGrid = {"Test Start", "Test End"};
-        for (int i = 0; i < rowNamesTimeGrid.length; i++) {
-            timeGrid[i][0] = "<b>" + rowNamesTimeGrid[i] + "</b>";
+        String[][] timeGrid = new String[TIME_INFO_NAMES.length][tests.size() + 1];
+        for (int i = 0; i < TIME_INFO_NAMES.length; i++) {
+            timeGrid[i][0] = "<b>" + TIME_INFO_NAMES[i] + "</b>";
         }
 
-        // first column for the duration grid
-        durationGrid[0][0] = "<b>Test Duration</b>";
+        String[][] durationGrid = new String[DURATION_INFO_NAMES.length][tests.size() + 1];
+        for (int i = 0; i < DURATION_INFO_NAMES.length; i++) {
+            durationGrid[i][0] = "<b>" + DURATION_INFO_NAMES[i] + "</b>";
+        }
 
-        // first column for summary grid
-        String[] rowNamesSummaryGrid = {"Total", "Passing #", "Non-Passing #", "Passing %",
-                                        "Covered Lines", "Coverage %"};
-        for (int i = 0; i < rowNamesSummaryGrid.length; i++) {
-            summaryGrid[i][0] = "<b>" + rowNamesSummaryGrid[i] + "</b>";
+        String[][] summaryGrid = new String[SUMMARY_NAMES.length][tests.size() + 1];
+        for (int i = 0; i < SUMMARY_NAMES.length; i++) {
+            summaryGrid[i][0] = "<b>" + SUMMARY_NAMES[i] + "</b>";
         }
 
         // first column for results grid
@@ -433,6 +361,7 @@ public class ShowTableServlet extends BaseServlet {
             List<String> productVariantList = new ArrayList<>();
             List<String> buildFlavorList = new ArrayList<>();
             List<String> abiInfoList = new ArrayList<>();
+            String systraceUrl = null;
             for (AndroidDeviceInfoMessage device : devices) {
                 buildAliasList.add(device.getBuildAlias().toStringUtf8().toLowerCase());
                 productVariantList.add(device.getProductVariant().toStringUtf8());
@@ -477,21 +406,51 @@ public class ShowTableServlet extends BaseServlet {
                     aggregateStatus = TestCaseResult.TEST_CASE_RESULT_FAIL;
                 }
                 for (CoverageReportMessage coverageReport :
-                    testCaseReport.getCoverageList()) {
+                     testCaseReport.getCoverageList()) {
                     totalLineCount += coverageReport.getTotalLineCount();
                     coveredLineCount += coverageReport.getCoveredLineCount();
                 }
 
-                int i = testCaseNameMap.get(testCaseReport.getName().toStringUtf8());
-                if (testCaseReport.getTestResult() != null) {
-                    resultsGrid[i][j + 1] = "<div class=\"" +
-                                            testCaseReport.getTestResult().toString() +
-                                            " test-case-status\">&nbsp;</div>";
-                } else {
-                    resultsGrid[i][j + 1] = "<div class=\"" +
-                                            TestCaseResult.UNKNOWN_RESULT.toString() +
-                                            " test-case-status\">&nbsp;</div>";
+                for (SystraceReportMessage systraceReport :
+                     testCaseReport.getSystraceList()) {
+                    if (systraceReport.getUrlList().size() == 0) {
+                        continue;
+                    }
+                    // Validate the url
+                    String urlString = systraceReport.getUrlList().get(0).toStringUtf8();
+                    try {
+                        URL url = new URL(urlString);
+                        String scheme = url.getProtocol();
+                        String userInfo = url.getUserInfo();
+                        String host = url.getHost();
+                        int port = url.getPort();
+                        String path = url.getPath();
+                        String query = url.getQuery();
+                        String fragment = url.getRef();
+                        if (!url.getProtocol().equals(HTTPS)) throw new MalformedURLException();
+                        URI uri = new URI(scheme, userInfo, host, port, path, query, fragment);
+                        systraceUrl = uri.toString();
+                        break;
+                    } catch (MalformedURLException | URISyntaxException e) {
+                        logger.log(Level.WARNING, "Invalid systrace URL: " + urlString);
+                    }
                 }
+
+                int i = testCaseNameMap.get(testCaseReport.getName().toStringUtf8());
+                String classNames = "test-case-status ";
+                String glyph = "";
+                if (testCaseReport.getTestResult() != null)
+                    classNames += testCaseReport.getTestResult().toString();
+                else
+                    classNames += TestCaseResult.UNKNOWN_RESULT.toString();
+
+                if (systraceUrl != null) {
+                    classNames += " width-1";
+                    glyph += "<a href=\"" + systraceUrl + "\" " +
+                             "class=\"waves-effect waves-light btn red right inline-btn\">" +
+                             "<i class=\"material-icons inline-icon\">info_outline</i></a>";
+                }
+                resultsGrid[i][j + 1] = "<div class=\"" + classNames + "\">&nbsp;</div>" + glyph;
             }
             String passInfo;
             try {
@@ -508,12 +467,10 @@ public class ShowTableServlet extends BaseServlet {
                 double coveragePct = Math.round((100 * coveredLineCount /
                                                  totalLineCount) * 100f) / 100f;
                 coveragePctInfo = Double.toString(coveragePct) + "%" +
-                        "<a href=\"/show_coverage?key=" + report.getStartTimestamp() +
-                        "&testName=" + request.getParameter("testName") +
-                        "&startTime=" + startTime +
-                        "&endTime=" + endTime +
-                        "\" class=\"waves-effect waves-light btn red right coverage-btn\">" +
-                        "<i class=\"material-icons coverage-icon\">menu</i></a>";
+                        "<a href=\"/show_coverage?testName=" + request.getParameter("testName") +
+                        "&startTime=" + (report.getStartTimestamp() * MILLI_TO_MICRO) +
+                        "\" class=\"waves-effect waves-light btn red right inline-btn\">" +
+                        "<i class=\"material-icons inline-icon\">menu</i></a>";
                 coverageInfo = coveredLineCount + "/" + totalLineCount;
             } catch (ArithmeticException e) {
                 coveragePctInfo = " - ";
@@ -579,7 +536,7 @@ public class ShowTableServlet extends BaseServlet {
         request.setAttribute("showPresubmit", showPresubmit);
         request.setAttribute("showPostsubmit", showPostsubmit);
 
-        dispatcher = request.getRequestDispatcher("/show_table.jsp");
+        dispatcher = request.getRequestDispatcher(TABLE_JSP);
         try {
             dispatcher.forward(request, response);
         } catch (ServletException e) {

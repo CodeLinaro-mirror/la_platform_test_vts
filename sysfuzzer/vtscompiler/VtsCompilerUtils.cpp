@@ -102,6 +102,8 @@ string ComponentTypeToString(int component_type) {
       return "bionic_libm";
     case TV_CEC:
       return "tv_cec";
+    case RADIO:
+      return "radio";
   }
   cerr << "error: invalid component_type " << component_type << endl;
   exit(-1);
@@ -180,7 +182,7 @@ string GetCppVariableType(const VariableSpecificationMessage& arg,
     case TYPE_ARRAY:
     {
       string element_type = GetCppVariableType(arg.vector_value(0), message);
-      return "::android::hardware::hidl_vec<" + element_type + ","
+      return "::android::hardware::hidl_array<" + element_type + ","
           + to_string(arg.vector_size()) + ">";
     }
     case TYPE_STRUCT:
@@ -237,14 +239,7 @@ string GetCppVariableType(const VariableSpecificationMessage& arg,
     }
     case TYPE_MASK:
     {
-      // Mask is a special enum type.
-      if (arg.has_predefined_type()) {
-        return arg.predefined_type();
-      } else {
-        cerr << __func__ << ":" << __LINE__
-             << " ERROR no predefined_type set for mask variable" << endl;
-        exit(-1);
-      }
+      return GetCppVariableType(arg.scalar_type());
     }
     case TYPE_HIDL_MEMORY:
     {
@@ -253,6 +248,16 @@ string GetCppVariableType(const VariableSpecificationMessage& arg,
     case TYPE_POINTER:
     {
       return "void*";
+    }
+    case TYPE_FMQ_SYNC:
+    {
+      string element_type = GetCppVariableType(arg.fmq_value(0), message);
+      return "::android::hardware::MQDescriptorSync<" + element_type + ">";
+    }
+    case TYPE_FMQ_UNSYNC:
+    {
+      string element_type = GetCppVariableType(arg.fmq_value(0), message);
+      return "::android::hardware::MQDescriptorUnsync<" + element_type + ">";
     }
     default:
     {

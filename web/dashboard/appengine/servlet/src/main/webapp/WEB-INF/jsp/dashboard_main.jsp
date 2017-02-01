@@ -1,4 +1,3 @@
-<%-- //[START all]--%>
 <%--
   ~ Copyright (c) 2016 Google Inc. All Rights Reserved.
   ~
@@ -18,41 +17,9 @@
 <%@ taglib prefix='fn' uri='http://java.sun.com/jsp/jstl/functions' %>
 <%@ taglib prefix='c' uri='http://java.sun.com/jsp/jstl/core'%>
 
-
 <html>
-  <link rel='icon' href='https://www.gstatic.com/images/branding/googleg/1x/googleg_standard_color_32dp.png' sizes='32x32'>
-  <link rel='stylesheet' href='https://fonts.googleapis.com/icon?family=Material+Icons'>
-  <link rel='stylesheet' href='https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700'>
-  <link rel='stylesheet' href='https://www.gstatic.com/external_hosted/materialize/all_styles-bundle.css'>
-  <link rel='stylesheet' href='/css/navbar.css'>
   <link rel='stylesheet' href='/css/dashboard_main.css'>
-  <script src='/js/analytics.js' type='text/javascript'></script>
-  <script src='https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js'></script>
-  <script src='https://www.gstatic.com/external_hosted/materialize/materialize.min.js'></script>
-  <script>
-      if (${analytics_id}) analytics_init(${analytics_id});
-  </script>
-  <head>
-    <title>VTS Dashboard</title>
-
-    <nav id='navbar'>
-      <div class='nav-wrapper'>
-        <span>
-          <a href='#!' class='breadcrumb'>VTS Dashboard Home</a>
-        </span>
-        <ul class='right'><li>
-          <a id='dropdown-button' class='dropdown-button btn red lighten-3' href='#' data-activates='dropdown'>
-            ${email}
-          </a>
-        </li></ul>
-        <ul id='dropdown' class='dropdown-content'>
-          <li><a href='${logoutURL}'>Log out</a></li>
-        </ul>
-        </div>
-      </div>
-    </nav>
-  </head>
-
+  <%@ include file="header.jsp" %>
   <body>
     <div class='container'>
       <div class='row' id='options'>
@@ -69,9 +36,15 @@
               <h4 id='section-header'>${headerLabel}</h4>
             </div>
             <c:forEach items='${testNames}' var='test'>
-              <a href='${pageContext.request.contextPath}/show_table?testName=${test}'>
+              <a href='/show_table?testName=${test.getName()}'>
                 <div class='col s12 card hoverable option valign-wrapper waves-effect'>
-                  <span class='entry valign'>${test}</span>
+                  <span class='entry valign'>${test.getName()}
+                    <c:if test='${test.getFailCount() > 0}'>
+                      <span class='indicator red center'>
+                        ${test.getFailCount()}
+                      </span>
+                    </c:if>
+                  </span>
                 </div>
               </a>
             </c:forEach>
@@ -91,13 +64,6 @@
         </a>
       </div>
     </c:if>
-    <footer class='page-footer'>
-      <div class='footer-copyright'>
-        <div class='container'>
-          © 2016 - The Android Open Source Project
-        </div>
-      </div>
-    </footer>
+    <%@ include file="footer.jsp" %>
   </body>
 </html>
-<%-- //[END all]--%>

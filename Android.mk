@@ -101,6 +101,12 @@ $(VTS_PYTHON_ZIP): $(SOONG_ZIP)
 	# @rm -f $@.list
 	# $(hide) unzip $@ -d $(VTS_TESTCASES_OUT)
 	#
+	@echo "build vts python package for radio HAL"
+	$(hide) find hardware/interfaces/radio/1.0/vts/functional -name '*.py' -or -name '*.config' -or -name '*.push' | sort > $@.list
+	$(hide) $(SOONG_ZIP) -d -o $@ -C hardware/interfaces/radio/1.0/vts/functional -l $@.list
+	@rm -f $@.list
+	$(hide) unzip $@ -d $(VTS_TESTCASES_OUT)
+	#
 	@echo "build vts python package for vehicle HAL"
 	$(hide) find hardware/interfaces/vehicle/2.0/vts/functional -name '*.py' -or -name '*.config' -or -name '*.push' | sort > $@.list
 	$(hide) $(SOONG_ZIP) -d -o $@ -C hardware/interfaces/vehicle/2.0/vts/functional -l $@.list
@@ -122,6 +128,12 @@ $(VTS_PYTHON_ZIP): $(SOONG_ZIP)
 	@echo "build vts python package for VR HAL"
 	$(hide) find hardware/interfaces/vr/1.0/vts/functional -name '*.py' -or -name '*.config' -or -name '*.push' | sort > $@.list
 	$(hide) $(SOONG_ZIP) -d -o $@ -C hardware/interfaces/vr/1.0/vts/functional -l $@.list
+	@rm -f $@.list
+	$(hide) unzip $@ -d $(VTS_TESTCASES_OUT)
+	#
+	@echo "build vts python package for WiFi HAL"
+	$(hide) find hardware/interfaces/wifi/1.0/vts/functional -name '*.py' -or -name '*.config' -or -name '*.push' | sort > $@.list
+	$(hide) $(SOONG_ZIP) -d -o $@ -C hardware/interfaces/wifi/1.0/vts/functional -l $@.list
 	@rm -f $@.list
 	$(hide) unzip $@ -d $(VTS_TESTCASES_OUT)
 	#
@@ -159,6 +171,8 @@ $(VTS_SYSTRACE_ZIP): $(SOONG_ZIP)
 	$(hide) find external/chromium-trace -path external/chromium-trace/.git -prune -or -print | sort > $@.list
 	$(hide) $(SOONG_ZIP) -d -o $@ -C . -l $@.list
 	@rm -f $@.list
+	$(hide) mkdir -p $(VTS_OUT_ROOT)/android-vts/tools
+	$(hide) rm -rf $(VTS_OUT_ROOT)/android-vts/tools/external/chromium-trace
 	$(hide) unzip $@ -d $(VTS_OUT_ROOT)/android-vts/tools
 
 .PHONY: vts

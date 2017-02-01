@@ -12,12 +12,6 @@
  See the License for the specific language governing permissions and
  limitations under the License.
 */
-@media only screen and (min-width: 993px) {
-    .container {
-        width: 80%;
-        max-width: 1600px;
-    }
-}
 
 table {
     font-family: Roboto !important;
@@ -135,15 +129,14 @@ table {
     margin-right: 20px;
     margin-top: 28px;
 }
-
-.btn.coverage-btn {
+.btn.inline-btn {
     border-radius: 50px;
     height: auto;
     line-height: inherit;
-    padding: 3px;
-    margin-right: 5px;
+    padding: 1px;
+    margin-left: 2px;
 }
-i.material-icons.coverage-icon {
+i.material-icons.inline-icon {
     font-size: inherit;
 }
 a.legend-circle {
@@ -181,6 +174,12 @@ div.status-icon {
 }
 .test-case-status {
     border-radius: 50px;
+    display: inline-block;
+    height: 100%;
+    width: 100%;
+}
+.test-case-status.width-1 {
+    width: calc(100% - 18px);
 }
 .TEST_CASE_RESULT_PASS {
     background-color: #7FFF00;

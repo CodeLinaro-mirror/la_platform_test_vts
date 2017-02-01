@@ -14,12 +14,9 @@
 # limitations under the License.
 #
 
-LOCAL_PATH := $(call my-dir)
-
-include $(call all-subdir-makefiles)
-
-include $(CLEAR_VARS)
-
-LOCAL_MODULE := BionicUnitTestsGcc
-VTS_CONFIG_SRC_DIR := testcases/library/bionic_unit_tests_gcc
-include test/vts/tools/build/Android.host_config.mk
+# List of variables to be clean before including Android.build.mk
+common_additional_dependencies :=
+common_cflags :=
+common_conlyflags :=
+common_cppflags :=
+common_c_includes :=

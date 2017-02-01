@@ -48,6 +48,8 @@ class ConfigKeys(object):
     IKEY_ABI_NAME = "abi_name"
     IKEY_ABI_BITNESS = "abi_bitness"
     IKEY_RUN_32BIT_ON_64BIT_ABI = "run_32bit_on_64bit_abi"
+    IKEY_SKIP_ON_32BIT_ABI = "skip_on_32bit_abi"
+    IKEY_SKIP_ON_64BIT_ABI = "skip_on_64bit_abi"
 
     IKEY_BUILD = "build"
     IKEY_DATA_FILE_PATH = "data_file_path"
@@ -67,8 +69,10 @@ class ConfigKeys(object):
     IKEY_BINARY_TEST_PROFILING_LIBRARY_PATHS = "binary_test_profiling_library_paths"
 
     # Keys for systrace (for hal tests)
+    IKEY_ENABLE_SYSTRACE = "enable_systrace"
     IKEY_SYSTRACE_PROCESS_NAME = "systrace_process_name"
     IKEY_SYSTRACE_REPORT_PATH = "systrace_report_path"
+    IKEY_SYSTRACE_REPORT_URL_PREFIX = "systrace_report_url_prefix"
     IKEY_SYSTRACE_UPLAD_TO_DASHBOARD = "systrace_upload_to_dashboard"
 
     # Keys for coverage
@@ -77,8 +81,10 @@ class ConfigKeys(object):
     IKEY_SERVICE_JSON_PATH = "service_key_json_path"
     IKEY_BIGTABLE_BASE_URL = "bigtable_base_url"
 
-    # Keys for the HAL HIDL GTest type.
-    IKEY_HWBINDER_SERVICE = "hwbinder_service"  # when a service is required.
+    # Keys for the HAL HIDL GTest type (see VtsMultiDeviceTest.java).
+    IKEY_PRECONDITION_HWBINDER_SERVICE = "precondition_hwbinder_service"
+    IKEY_PRECONDITION_FEATURE = "precondition_feature"
+    IKEY_PRECONDITION_FILE_PATH_PREFIX = "precondition_file_path_prefix"
 
     # A list of keys whose values in configs should not be passed to test
     # classes without unpacking first.

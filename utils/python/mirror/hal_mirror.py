@@ -50,6 +50,7 @@ COMPONENT_TYPE_DICT = {"audio": 1,
                        "vr": 18,
                        "graphics_allocator": 19,
                        "graphics_mapper": 20,
+                       "radio": 21,
                        "bionic_libm": 1001,
                        "bionic_libc": 1002,
                        "vndk_libcutils": 1101}
@@ -159,7 +160,7 @@ class HalMirror(object):
                     target_component_name=None,
                     target_basepaths=_DEFAULT_TARGET_BASE_PATHS,
                     handler_name=None,
-                    hw_binder_service_name=_DEFAULT_TARGET_BASE_PATHS,
+                    hw_binder_service_name=_DEFAULT_HWBINDER_SERVICE,
                     bits=64):
         """Initiates a handler for a particular HIDL HAL.
 

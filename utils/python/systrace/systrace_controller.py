@@ -35,19 +35,19 @@ class SystraceController(object):
         _subprocess: subprocess.Popen, a subprocess objects of systrace shell command
         is_valid: boolean, whether the current environment setting for
                   systrace is valid
-        process_name: string, process name to trace
+        process_name: string, process name to trace. The value can be empty.
     '''
 
-    def __init__(self, android_vts_path, process_name):
+    def __init__(self, android_vts_path, process_name=''):
         self._android_vts_path = android_vts_path
         self._path_output = None
+        self.process_name = process_name
         self._path_systrace_script = os.path.join(android_vts_path,
                                                   PATH_SYSTRACE_SCRIPT)
         self.is_valid = os.path.exists(self._path_systrace_script)
         if not self.is_valid:
             logging.error('invalid systrace script path: %s',
                           self._path_systrace_script)
-        self.process_name = process_name
 
     @property
     def is_valid(self):
@@ -58,6 +58,16 @@ class SystraceController(object):
     def is_valid(self, is_valid):
         ''''Set valid status'''
         self._is_valid = is_valid
+
+    @property
+    def process_name(self):
+        ''''returns process name'''
+        return self._process_name
+
+    @process_name.setter
+    def process_name(self, process_name):
+        ''''Set process name'''
+        self._process_name = process_name
 
     def Start(self):
         '''Start systrace process.
@@ -77,14 +87,18 @@ class SystraceController(object):
             return False
 
         # TODO: check target device for compatibility (e.g. has systrace hooks)
+        process_name_arg = ''
+        if self.process_name:
+            process_name_arg = '-a %s' % self.process_name
 
-        self._path_output = os.path.join(tempfile.mkdtemp(),
-                                         self.process_name + '.html')
+        tmp_dir = tempfile.mkdtemp()
+        tmp_filename = self.process_name if self.process_name else 'systrace'
+        self._path_output = os.path.join(tmp_dir, tmp_filename + '.html')
 
         cmd = ('python -u {script} hal sched '
-               '-a {process_name} -o {output}').format(
+               '{process_name_arg} -o {output}').format(
                    script=self._path_systrace_script,
-                   process_name=self.process_name,
+                   process_name_arg=process_name_arg,
                    output=self._path_output)
         process = subprocess.Popen(
             str(cmd),
@@ -106,7 +120,7 @@ class SystraceController(object):
 
         if not success:
             logging.error('Failed to start systrace on process %s',
-                          process_name)
+                          self.process_name)
             stdout, stderr = process.communicate()
             logging.error('stdout: %s', line + stdout)
             logging.error('stderr: %s', stderr)
@@ -134,8 +148,10 @@ class SystraceController(object):
         self._subprocess.stdin.flush()
 
         # Wait for output to be written down
-        self._subprocess.communicate()
+        out, err = self._subprocess.communicate()
         logging.info('Systrace stopped for %s', self.process_name)
+        logging.info('Systrace stdout: %s', out)
+        logging.info('Systrace stderr: %s', err)
         return True
 
     def ReadLastOutput(self):
@@ -151,7 +167,7 @@ class SystraceController(object):
             return None
 
         try:
-            with open(self._outputs[process_name], 'r') as f:
+            with open(self._path_output, 'r') as f:
                 data = f.read()
                 logging.info('Systrace output length for %s: %s', process_name,
                              len(data))
@@ -197,7 +213,7 @@ class SystraceController(object):
 
         if self._path_output:
             try:
-                shutil.rmtree(self._path_output)
+                shutil.rmtree(os.path.basename(self._path_output))
             except Exception as e:
                 logging.error('failed to remove systrace output file. %s', e)
                 return False

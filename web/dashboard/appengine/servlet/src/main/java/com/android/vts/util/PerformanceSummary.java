@@ -19,24 +19,18 @@ import com.android.vts.proto.VtsReportMessage.AndroidDeviceInfoMessage;
 import com.android.vts.proto.VtsReportMessage.ProfilingReportMessage;
 import com.android.vts.proto.VtsReportMessage.TestReportMessage;
 import com.android.vts.proto.VtsReportMessage.VtsProfilingRegressionMode;
-import com.google.protobuf.ByteString;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.apache.commons.lang.StringUtils;
 
 /**
  * PerformanceSummary, an object summarizing performance across profiling points for a test run.
  **/
 public class PerformanceSummary {
-    private static String OPTION_DELIMITER = "=";
-    private static String NAME_DELIMITER = ",";
 
     protected static Logger logger = Logger.getLogger(PerformanceSummary.class.getName());
     private Map<String, ProfilingPointSummary> summaryMap;
@@ -115,39 +109,41 @@ public class PerformanceSummary {
             }
 
             String name = profilingReportMessage.getName().toStringUtf8();
-            List<String> nameSuffixes = new ArrayList<String>();
-            for (ByteString key : profilingReportMessage.getOptionsList()) {
-                String optionString = key.toStringUtf8();
-                String[] optionParts = optionString.split(OPTION_DELIMITER);
-                if (optionParts.length != 2) {
-                    logger.log(Level.WARNING, "Invalid profiling option : " + optionString);
-                }
-                if (optionSplitKeys.contains(optionParts[0])) {
-                    nameSuffixes.add(optionParts[1]);
-                }
-            }
-            if (nameSuffixes.size() > 0) {
-                StringUtils.join(nameSuffixes, NAME_DELIMITER);
-                name += " (" + StringUtils.join(nameSuffixes, NAME_DELIMITER) + ")";
-            }
+            String optionSuffix = PerformanceUtil.getOptionKeys(
+                    profilingReportMessage.getOptionsList(), optionSplitKeys);
 
             switch (profilingReportMessage.getType()) {
-                case UNKNOWN_VTS_PROFILING_TYPE:
-                case VTS_PROFILING_TYPE_TIMESTAMP :
+                case VTS_PROFILING_TYPE_TIMESTAMP:
                     logger.log(Level.WARNING, "Timestamp profiling data skipped : " + name);
                     break;
-                case VTS_PROFILING_TYPE_LABELED_VECTOR :
+                case VTS_PROFILING_TYPE_LABELED_VECTOR:
                     if (profilingReportMessage.getLabelList().size() == 0 ||
                         profilingReportMessage.getLabelList().size() !=
                         profilingReportMessage.getValueList().size()) {
-                        continue;
+                        break;
+                    }
+                    if (!optionSuffix.equals("")) {
+                        name += " (" + optionSuffix + ")";
                     }
                     if (!summaryMap.containsKey(name)) {
                         summaryMap.put(name, new ProfilingPointSummary());
                     }
                     summaryMap.get(name).update(profilingReportMessage);
                     break;
-                default :
+                case VTS_PROFILING_TYPE_UNLABELED_VECTOR:
+                    if (profilingReportMessage.getValueList().size() == 0) {
+                        break;
+                    }
+                    // Use the option suffix as the table name.
+                    // Group all profiling points together into one table
+                    if (!summaryMap.containsKey(optionSuffix)) {
+                        summaryMap.put(optionSuffix, new ProfilingPointSummary());
+                    }
+                    summaryMap.get(optionSuffix).updateLabel(
+                            profilingReportMessage, profilingReportMessage.getName());
+                    break;
+                case UNKNOWN_VTS_PROFILING_TYPE:
+                default:
                     break;
             }
         }

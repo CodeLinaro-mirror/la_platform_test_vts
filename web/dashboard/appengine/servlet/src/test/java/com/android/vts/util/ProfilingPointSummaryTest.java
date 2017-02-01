@@ -1,3 +1,19 @@
+/*
+ * Copyright (c) 2016 Google Inc. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you
+ * may not use this file except in compliance with the License. You may
+ * obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+ * implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+
 package com.android.vts.util;
 
 import static org.junit.Assert.*;
@@ -97,6 +113,28 @@ public class ProfilingPointSummaryTest {
         int i = 0;
         for (StatSummary stats : summary) {
             assertEquals(labels[i++], stats.getLabel().toStringUtf8());
+        }
+    }
+
+    /**
+     * Test that the updateLabel method updates the StatSummary for just the label provided.
+     */
+    @Test
+    public void testUpdateLabelGrouped() {
+        summary = new ProfilingPointSummary();
+        VtsProfilingRegressionMode mode = VtsProfilingRegressionMode.VTS_REGRESSION_MODE_INCREASING;
+        ProfilingReportMessage report = createProfilingReport(labels, values, mode);
+        summary.updateLabel(report, ByteString.copyFromUtf8(labels[0]));
+
+        // Ensure the label specified is present and has been updated for each data point.
+        assertTrue(summary.hasLabel(ByteString.copyFromUtf8(labels[0])));
+        assertNotNull(summary.getStatSummary(ByteString.copyFromUtf8(labels[0])));
+        assertEquals(summary.getStatSummary(ByteString.copyFromUtf8(
+                labels[0])).getCount(), labels.length);
+
+        // Check that the other labels were not updated.
+        for (int i = 1; i < labels.length; i++) {
+            assertFalse(summary.hasLabel(ByteString.copyFromUtf8(labels[i])));
         }
     }
 }

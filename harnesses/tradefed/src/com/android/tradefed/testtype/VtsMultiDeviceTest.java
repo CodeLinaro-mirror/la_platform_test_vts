@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2017 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,6 +77,8 @@ IRuntimeHintProvider, ITestCollector, IBuildReceiver, IAbiReceiver {
     static final String VIRTUAL_ENV_PATH = "VIRTUALENVPATH";
     static final String ABI_NAME = "abi_name";
     static final String ABI_BITNESS = "abi_bitness";
+    static final String SKIP_ON_32BIT_ABI = "skip_on_32bit_abi";
+    static final String SKIP_ON_64BIT_ABI = "skip_on_64bit_abi";
     static final String RUN_32BIT_ON_64BIT_ABI = "run_32bit_on_64bit_abi";
     static final String VTS = "vts";
     static final String CONFIG_FILE_EXTENSION = ".config";
@@ -92,7 +94,10 @@ IRuntimeHintProvider, ITestCollector, IBuildReceiver, IAbiReceiver {
     static final String BINARY_TEST_TYPE_HAL_HIDL_GTEST = "hal_hidl_gtest";
     static final String ENABLE_PROFILING = "enable_profiling";
     static final String ENABLE_COVERAGE = "enable_coverage";
-    static final String HWBINDER_SERVICE = "hwbinder_service";
+    static final String PRECONDITION_HWBINDER_SERVICE = "precondition_hwbinder_service";
+    static final String PRECONDITION_FEATURE = "precondition_feature";
+    static final String PRECONDITION_FILE_PATH_PREFIX = "precondition_file_path_prefix";
+    static final String ENABLE_SYSTRACE = "enable_systrace";
     static final String SYSTRACE_PROCESS_NAME = "systrace_process_name";
     static final String TEMPLATE_BINARY_TEST_PATH = "vts/testcases/template/binary_test/binary_test";
     static final String TEMPLATE_GTEST_BINARY_TEST_PATH = "vts/testcases/template/gtest_binary_test/gtest_binary_test";
@@ -122,9 +127,17 @@ IRuntimeHintProvider, ITestCollector, IBuildReceiver, IAbiReceiver {
             description = "The path for test case config file.")
     private String mTestConfigPath = null;
 
-    @Option(name = "hwbinder-service",
+    @Option(name = "precondition-hwbinder-service",
             description = "The name of a HW binder service needed to run the test.")
-    private String mHwBinderServiceName = null;
+    private String mPreconditionHwBinderServiceName = null;
+
+    @Option(name = "precondition-feature",
+        description = "The name of a `pm`-listable feature needed to run the test.")
+    private String mPreconditionFeature = null;
+
+    @Option(name = "precondition-file-path-prefix",
+        description = "The path prefix of a file (e.g., shared lib) needed to run the test.")
+    private String mPreconditionFilePathPrefix = null;
 
     @Option(name = "use-stdout-logs",
             description = "Flag that determines whether to use std:out to parse output.")
@@ -145,14 +158,25 @@ IRuntimeHintProvider, ITestCollector, IBuildReceiver, IAbiReceiver {
     @Option(name = "enable-profiling", description = "Enable profiling for the tests.")
     private boolean mEnableProfiling = false;
 
+    @Option(name = "enable-systrace", description = "Enable systrace for the tests.")
+    private boolean mEnableSystrace = false;
+
     @Option(name = "enable-coverage",
             description = "Enable coverage for the tests. In order for coverage to be measured, " +
                           "ro.vts.coverage system must have value \"1\" to indicate the target " +
                           "build is coverage instrumented.")
     private boolean mEnableCoverage = true;
 
+    @Option(name = "skip-on-32bit-abi",
+        description = "Whether to skip tests on 32bit ABI.")
+    private boolean mSkipOn32BitAbi = false;
+
+    @Option(name = "skip-on-64bit-abi",
+        description = "Whether to skip tests on 64bit ABI.")
+    private boolean mSkipOn64BitAbi = false;
+
     @Option(name = "run-32bit-on-64bit-abi",
-            description = "Whether to run 32bit tests on 64bit abi.")
+            description = "Whether to run 32bit tests on 64bit ABI.")
     private boolean mRun32bBitOn64BitAbi = false;
 
     @Option(name = "binary-test-sources",
@@ -359,8 +383,8 @@ IRuntimeHintProvider, ITestCollector, IBuildReceiver, IAbiReceiver {
                         template = TEMPLATE_GTEST_BINARY_TEST_PATH;
                         break;
                     case BINARY_TEST_TYPE_HAL_HIDL_GTEST:
-                      template = TEMPLATE_HAL_HIDL_GTEST_PATH;
-                      break;
+                        template = TEMPLATE_HAL_HIDL_GTEST_PATH;
+                        break;
                     default:
                         template = TEMPLATE_BINARY_TEST_PATH;
                 }
@@ -532,7 +556,14 @@ IRuntimeHintProvider, ITestCollector, IBuildReceiver, IAbiReceiver {
             jsonObject.put(ABI_BITNESS, mAbi.getBitness());
             CLog.i("Added %s to the Json object", ABI_BITNESS);
         }
-        if (mRun32bBitOn64BitAbi) {
+        if (mSkipOn32BitAbi) {
+            jsonObject.put(SKIP_ON_32BIT_ABI, mSkipOn32BitAbi);
+            CLog.i("Added %s to the Json object", SKIP_ON_32BIT_ABI);
+        }
+        if (mSkipOn64BitAbi) {
+            jsonObject.put(SKIP_ON_64BIT_ABI, mSkipOn64BitAbi);
+            CLog.i("Added %s to the Json object", SKIP_ON_64BIT_ABI);
+        } else if (mRun32bBitOn64BitAbi) {
             jsonObject.put(RUN_32BIT_ON_64BIT_ABI, mRun32bBitOn64BitAbi);
             CLog.i("Added %s to the Json object", RUN_32BIT_ON_64BIT_ABI);
         }
@@ -556,6 +587,10 @@ IRuntimeHintProvider, ITestCollector, IBuildReceiver, IAbiReceiver {
             jsonObject.put(ENABLE_PROFILING, mEnableProfiling);
             CLog.i("Added %s to the Json object", ENABLE_PROFILING);
         }
+        if (mEnableSystrace) {
+            jsonObject.put(ENABLE_SYSTRACE, mEnableSystrace);
+            CLog.i("Added %s to the Json object", ENABLE_SYSTRACE);
+        }
         if (mEnableCoverage) {
             if (coverageBuild) {
                 jsonObject.put(ENABLE_COVERAGE, mEnableCoverage);
@@ -565,9 +600,19 @@ IRuntimeHintProvider, ITestCollector, IBuildReceiver, IAbiReceiver {
             }
         }
 
-        if (mHwBinderServiceName != null) {
-            jsonObject.put(HWBINDER_SERVICE, mHwBinderServiceName);
-            CLog.i("Added %s to the Json object", ENABLE_PROFILING);
+        if (mPreconditionHwBinderServiceName != null) {
+            jsonObject.put(PRECONDITION_HWBINDER_SERVICE, mPreconditionHwBinderServiceName);
+            CLog.i("Added %s to the Json object", PRECONDITION_HWBINDER_SERVICE);
+        }
+
+        if (mPreconditionFeature != null) {
+          jsonObject.put(PRECONDITION_FEATURE, mPreconditionFeature);
+          CLog.i("Added %s to the Json object", PRECONDITION_FEATURE);
+        }
+
+        if (mPreconditionFilePathPrefix != null) {
+          jsonObject.put(PRECONDITION_FILE_PATH_PREFIX, mPreconditionFilePathPrefix);
+          CLog.i("Added %s to the Json object", PRECONDITION_FILE_PATH_PREFIX);
         }
 
         if (!mBinaryTestProfilingLibraryPaths.isEmpty()) {

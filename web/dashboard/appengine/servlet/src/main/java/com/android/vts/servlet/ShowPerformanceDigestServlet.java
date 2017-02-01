@@ -16,7 +16,6 @@
 
 package com.android.vts.servlet;
 
-import com.android.vts.proto.VtsReportMessage.VtsProfilingRegressionMode;
 import com.android.vts.util.MathUtil;
 import com.android.vts.util.PerformanceSummary;
 import com.android.vts.util.PerformanceUtil;
@@ -41,93 +40,39 @@ import javax.servlet.http.HttpServletResponse;
  */
 public class ShowPerformanceDigestServlet extends BaseServlet {
 
+    private static final String PERF_DIGEST_JSP = "WEB-INF/jsp/show_performance_digest.jsp";
     private static final int N_DIGITS = 2;
-    private static final long MILLI_TO_MICRO = 1000;  // conversion factor from milli to micro units
     private static final String HIDL_HAL_OPTION = "hidl_hal_mode";
     private static final String[] splitKeysArray = new String[]{HIDL_HAL_OPTION};
     private static final Set<String> splitKeySet = new HashSet<String>(Arrays.asList(splitKeysArray));
 
     private static final String MEAN = "Mean";
     private static final String MIN = "Min";
-    private static final String MIN_DELTA = "&Delta;Min (%)";
-    private static final String MAX_DELTA = "&Delta;Max (%)";
+    private static final String MAX = "Max";
+    private static final String MEAN_DELTA = "&Delta;Mean (%)";
     private static final String HIGHER_IS_BETTER = "Note: Higher values are better. Maximum is the best-case performance.";
     private static final String LOWER_IS_BETTER = "Note: Lower values are better. Minimum is the best-case performance.";
     private static final String STD = "Std";
 
+    @Override
+    public List<String[]> getNavbarLinks(HttpServletRequest request) {
+        List<String[]> links = new ArrayList<>();
+        Page root = Page.HOME;
+        String[] rootEntry = new String[]{root.getUrl(), root.getName()};
+        links.add(rootEntry);
 
-    /**
-     * Creates the HTML for a table cell representing the percent change between two numbers.
-     *
-     * Computes the percent change (after - before)/before * 100 and inserts it into a table cell
-     * with the specified style. The color of the cell is white if 'after' is less than before.
-     * Otherwise, the cell is colored red with opacity according to the percent change (100%+
-     * delta means 100% opacity). If the before value is 0 and the after value is positive, then
-     * the color of the cell is 100% red to indicate an increase of undefined magnitude.
-     *
-     * @param baseline The baseline value observed.
-     * @param test The value to compare against the baseline.
-     * @param classNames A string containing HTML classes to apply to the table cell.
-     * @returns An HTML string for a colored table cell containing the percent change.
-     */
-    private static String getPercentChangeHTML(double baseline, double test, String classNames,
-                                               VtsProfilingRegressionMode mode) {
-        String pctChangeString = "0 %";
-        double alpha = 0;
-        double delta = test - baseline;
-        if (baseline != 0) {
-            double pctChange = delta / baseline;
-            alpha = pctChange * 2;
-            pctChangeString = MathUtil.round(pctChange * 100, N_DIGITS) + " %";
-        } else if (delta != 0){
-            // If the percent change is undefined, the cell will be solid red or white
-            alpha = (int) Math.signum(delta);  // get the sign of the delta (+1, 0, -1)
-            pctChangeString = "";
-        }
-        if (mode == VtsProfilingRegressionMode.VTS_REGRESSION_MODE_DECREASING) {
-            alpha = -alpha;
-        }
-        String color = "background-color: rgba(255, 0, 0, " + alpha + ");";
-        String html = "<td class='" + classNames + "' style='" + color + "'>";
-        html += pctChangeString + "</td>";
-        return html;
-    }
+        Page table = Page.TABLE;
+        String testName = request.getParameter("testName");
+        String name = table.getName() + testName;
+        String url = table.getUrl() + "?testName=" + testName;
+        String[] tableEntry = new String[]{url, name};
+        links.add(tableEntry);
 
-    /**
-     * Compares a test StatSummary to a baseline StatSummary and returns a formatted set of cells
-     * @param baseline The StatSummary object containing initial values to compare against
-     * @param test The StatSummary object containing test values to be compared against the baseline
-     * @return HTML string representing the performance of the test versus the baseline
-     */
-    public static String getPerformanceComparisonHTML(StatSummary baseline, StatSummary test) {
-        if (test == null || baseline == null) {
-            return "<td></td><td></td><td></td><td></td>";
-        }
-        String row = "";
-        double baselineValue;
-        double testValue;
-        switch (test.getRegressionMode()) {
-            case VTS_REGRESSION_MODE_DECREASING:
-                baselineValue = baseline.getMax();
-                testValue = test.getMax();
-                break;
-            default:
-                baselineValue = baseline.getMin();
-                testValue = test.getMin();
-                break;
-        }
-        // Intensity of red color is a function of the relative (percent) change
-        // in the new value compared to the previous day's. Intensity is a linear function
-        // of percentage change, reaching a ceiling at 100% change (e.g. a doubling).
-        row += getPercentChangeHTML(baselineValue, testValue, "cell inner-cell",
-                                    test.getRegressionMode());
-        row += "<td class='cell inner-cell'>";
-        row += MathUtil.round(baseline.getMin(), N_DIGITS);
-        row += "</td><td class='cell inner-cell'>";
-        row += MathUtil.round(baseline.getMean(), N_DIGITS);
-        row += "</td><td class='cell outer-cell'>";
-        row += MathUtil.round(baseline.getStd(), N_DIGITS) + "</td>";
-        return row;
+        Page perf = Page.PERFORMANCE;
+        url = perf.getUrl() + "?testName=" + testName;
+        String[] perfEntry = new String[]{url, perf.getName()};
+        links.add(perfEntry);
+        return links;
     }
 
     /**
@@ -147,7 +92,6 @@ public class ShowPerformanceDigestServlet extends BaseServlet {
      */
     public static String getPeformanceSummary(String profilingPoint, ProfilingPointSummary testSummary,
             List<PerformanceSummary> perfSummaries, String sectionLabels) {
-        if (perfSummaries.size() == 0) return null;
         String tableHTML = "<table>";
 
         // Format section labels
@@ -157,15 +101,13 @@ public class ShowPerformanceDigestServlet extends BaseServlet {
         tableHTML += sectionLabels;
         tableHTML += "</tr>";
 
-        String deltaString;
+        String bestCaseString;
         switch (testSummary.getRegressionMode()) {
             case VTS_REGRESSION_MODE_DECREASING:
-                deltaString = MAX_DELTA;
-                //subtext = HIGHER_IS_BETTER;
+                bestCaseString = MAX;
                 break;
             default:
-                deltaString = MIN_DELTA;
-                //subtext = LOWER_IS_BETTER;
+                bestCaseString = MIN;
                 break;
         }
 
@@ -173,13 +115,13 @@ public class ShowPerformanceDigestServlet extends BaseServlet {
         tableHTML += "<tr>";
         for (int i = 0; i <= perfSummaries.size() + 1; i++) {
             if (i > 1) {
-                tableHTML += "<th class='section-label grey lighten-2'>" + deltaString + "</th>";
+                tableHTML += "<th class='section-label grey lighten-2'>" + MEAN_DELTA + "</th>";
             }
             if (i == 0) {
                 tableHTML += "<th class='section-label grey lighten-2'>";
                 tableHTML += testSummary.xLabel.toStringUtf8() + "</th>";
             } else if (i > 0) {
-                tableHTML += "<th class='section-label grey lighten-2'>" + MIN + "</th>";
+                tableHTML += "<th class='section-label grey lighten-2'>" + bestCaseString + "</th>";
                 tableHTML += "<th class='section-label grey lighten-2'>" + MEAN + "</th>";
                 tableHTML += "<th class='section-label grey lighten-2'>" + STD + "</th>";
             }
@@ -191,17 +133,17 @@ public class ShowPerformanceDigestServlet extends BaseServlet {
             ByteString label = stats.getLabel();
             tableHTML += "<tr><td class='axis-label grey lighten-2'>" + label.toStringUtf8();
             tableHTML += "</td><td class='cell inner-cell'>";
-            tableHTML += MathUtil.round(stats.getMin(), N_DIGITS)  + "</td>";
+            tableHTML += MathUtil.round(stats.getBestCase(), N_DIGITS)  + "</td>";
             tableHTML += "<td class='cell inner-cell'>";
             tableHTML += MathUtil.round(stats.getMean(), N_DIGITS)  + "</td>";
             tableHTML += "<td class='cell outer-cell'>";
             tableHTML += MathUtil.round(stats.getStd(), N_DIGITS) + "</td>";
-            for (int i = 0; i < perfSummaries.size(); i++) {
-                PerformanceSummary prevPerformance = perfSummaries.get(i);
+            for (PerformanceSummary prevPerformance : perfSummaries) {
                 if (prevPerformance.hasProfilingPoint(profilingPoint)) {
                     StatSummary baseline = prevPerformance.getProfilingPointSummary(profilingPoint)
                                                           .getStatSummary(label);
-                    tableHTML += getPerformanceComparisonHTML(baseline, stats);
+                    tableHTML += PerformanceUtil.getAvgCasePerformanceComparisonHTML(
+                            baseline, stats, "cell inner-cell", "cell outer-cell", "", "");
                 } else tableHTML += "<td></td><td></td><td></td><td></td>";
             }
             tableHTML += "</tr>";
@@ -304,7 +246,7 @@ public class ShowPerformanceDigestServlet extends BaseServlet {
         request.setAttribute("selectedDevice", selectedDevice);
         request.setAttribute("devices", devices);
 
-        dispatcher = request.getRequestDispatcher("/show_performance_digest.jsp");
+        dispatcher = request.getRequestDispatcher(PERF_DIGEST_JSP);
         try {
             dispatcher.forward(request, response);
         } catch (ServletException e) {

@@ -1,5 +1,4 @@
 #include "hardware/interfaces/nfc/1.0/vts/types.vts.h"
-#include "vts_datatype.h"
 #include "vts_measurement.h"
 #include <iostream>
 #include <hidl/HidlSupport.h>
@@ -9,6 +8,8 @@
 using namespace android::hardware::nfc::V1_0;
 namespace android {
 namespace vts {
+namespace vtstypes {
+
 ::android::hardware::nfc::V1_0::NfcEvent EnumValue__android__hardware__nfc__V1_0__NfcEvent(const ScalarDataValueMessage& arg) {
     return (::android::hardware::nfc::V1_0::NfcEvent) arg.uint32_t();
 }
@@ -57,5 +58,6 @@ void SetResult__android__hardware__nfc__V1_0__NfcStatus(VariableSpecificationMes
     result_msg->mutable_scalar_value()->set_uint32_t(static_cast<uint32_t>(result_value));
 }
 
+}  // namespace vtstypes
 }  // namespace vts
 }  // namespace android

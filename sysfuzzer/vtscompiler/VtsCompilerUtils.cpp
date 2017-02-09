@@ -90,6 +90,8 @@ string ComponentTypeToString(int component_type) {
       return "vibrator";
     case THERMAL:
       return "thermal";
+    case CONTEXTHUB:
+      return "contexthub";
     case SENSORS:
       return "sensors";
     case VR:
@@ -98,6 +100,8 @@ string ComponentTypeToString(int component_type) {
       return "graphics_allocator";
     case GRAPHICS_MAPPER:
       return "graphics_mapper";
+    case GRAPHICS_COMPOSER:
+      return "graphics_composer";
     case BIONIC_LIBM:
       return "bionic_libm";
     case TV_CEC:
@@ -191,10 +195,13 @@ string GetCppVariableType(const VariableSpecificationMessage& arg,
         return arg.predefined_type();
       } else if (arg.has_struct_type()) {
         return arg.struct_type();
+      } else if (arg.sub_struct_size() > 0) {
+        return arg.name();
       } else {
-        cerr << __func__ << ":" << __LINE__
-             << " ERROR no predefined_type or struct_type set for struct"
-             << " variable" << endl;
+        cerr << __func__ << ":" << __LINE__ << " ERROR"
+             << " no predefined_type, struct_type, nor sub_struct set"
+             << " for struct variable"
+             << " (arg name " << arg.name() << ")" << endl;
         exit(-1);
       }
     }

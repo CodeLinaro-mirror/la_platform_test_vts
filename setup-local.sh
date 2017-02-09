@@ -82,11 +82,12 @@ function vts_multidevice_target_setup {
   adb push ${ANDROID_BUILD_TOP}/test/vts/specification/hal_conventional/BluetoothHalV1bt_interface_t.vts /data/local/tmp/spec/BluetoothHalV1bt_interface_t.vts
   # adb push ${ANDROID_BUILD_TOP}/hardware/interfaces/nfc/1.0/vts/*.vts /data/local/tmp/spec/
   # adb push ${ANDROID_BUILD_TOP}/hardware/interfaces/vr/1.0/vts/Vr.vts /data/local/tmp/spec/Vr.vts
-  # adb push ${ANDROID_BUILD_TOP}/hardware/interfaces/vehicle/2.0/vts/*.vts /data/local/tmp/spec/
+  # adb push ${ANDROID_BUILD_TOP}/hardware/interfaces/automotive/vehicle/2.0/vts/*.vts /data/local/tmp/spec/
   # adb push ${ANDROID_BUILD_TOP}/hardware/interfaces/sensors/1.0/vts/*.vts /data/local/tmp/spec/
   # adb push ${ANDROID_BUILD_TOP}/hardware/interfaces/tv/cec/1.0/vts/*.vts /data/local/tmp/spec/
   # adb push ${ANDROID_BUILD_TOP}/hardware/interfaces/vibrator/1.0/vts/Vibrator.vts /data/local/tmp/spec/
   # adb push ${ANDROID_BUILD_TOP}/hardware/interfaces/vibrator/1.0/vts/types.vts /data/local/tmp/spec/
+  adb push ${ANDROID_BUILD_TOP}/hardware/interfaces/contexthub/1.0/vts/*.vts /data/local/tmp/spec/
   adb push ${ANDROID_BUILD_TOP}/test/vts/specification/lib_bionic/libmV1.vts /data/local/tmp/spec/libmV1.vts
   adb push ${ANDROID_BUILD_TOP}/test/vts/specification/lib_bionic/libcV1.vts /data/local/tmp/spec/libcV1.vts
   adb push ${ANDROID_BUILD_TOP}/test/vts/specification/lib_bionic/libcutilsV1.vts /data/local/tmp/spec/libcutilsV1.vts
@@ -102,3 +103,5 @@ function vts_multidevice_target_setup {
   adb shell chmod 755 /data/local/tmp/32/vts_hal_agent32
   adb shell chmod 755 /data/local/tmp/64/vts_hal_agent64
 }
+
+vts_multidevice_target_setup $1

@@ -34,11 +34,18 @@ vts_spec_file_list += \
   hardware/interfaces/tv/input/1.0/vts/TvInput.vts \
   hardware/interfaces/tv/input/1.0/vts/TvInputCallback.vts \
   hardware/interfaces/tv/input/1.0/vts/types.vts \
+  hardware/interfaces/contexthub/1.0/vts/Contexthub.vts \
+  hardware/interfaces/contexthub/1.0/vts/ContexthubCallback.vts \
+  hardware/interfaces/contexthub/1.0/vts/types.vts \
   hardware/interfaces/graphics/allocator/2.0/vts/Allocator.vts \
   hardware/interfaces/graphics/allocator/2.0/vts/AllocatorClient.vts \
   hardware/interfaces/graphics/allocator/2.0/vts/types.vts \
   hardware/interfaces/graphics/mapper/2.0/vts/Mapper.vts \
   hardware/interfaces/graphics/mapper/2.0/vts/types.vts \
+  hardware/interfaces/graphics/composer/2.1/vts/Composer.vts \
+  hardware/interfaces/graphics/composer/2.1/vts/ComposerCallback.vts \
+  hardware/interfaces/graphics/composer/2.1/vts/ComposerClient.vts \
+  hardware/interfaces/graphics/composer/2.1/vts/types.vts \
   hardware/interfaces/nfc/1.0/vts/Nfc.vts \
   hardware/interfaces/nfc/1.0/vts/NfcClientCallback.vts \
   hardware/interfaces/nfc/1.0/vts/types.vts \
@@ -48,9 +55,9 @@ vts_spec_file_list += \
   hardware/interfaces/radio/1.0/vts/Sap.vts \
   hardware/interfaces/radio/1.0/vts/SapCallback.vts \
   hardware/interfaces/radio/1.0/vts/types.vts \
-  hardware/interfaces/vehicle/2.0/vts/Vehicle.vts \
-  hardware/interfaces/vehicle/2.0/vts/VehicleCallback.vts \
-  hardware/interfaces/vehicle/2.0/vts/types.vts \
+  hardware/interfaces/automotive/vehicle/2.0/vts/Vehicle.vts \
+  hardware/interfaces/automotive/vehicle/2.0/vts/VehicleCallback.vts \
+  hardware/interfaces/automotive/vehicle/2.0/vts/types.vts \
   hardware/interfaces/vibrator/1.0/vts/Vibrator.vts \
   hardware/interfaces/vibrator/1.0/vts/types.vts \
   hardware/interfaces/thermal/1.0/vts/Thermal.vts \

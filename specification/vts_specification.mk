@@ -11,17 +11,24 @@ PRODUCT_COPY_FILES += \
     test/vts/specification/hal_conventional/WifiHalV1.vts:system/etc/WifiHalV1.vts \
     test/vts/specification/hal_conventional/BluetoothHalV1.vts:system/etc/BluetoothHalV1.vts \
     test/vts/specification/hal_conventional/BluetoothHalV1bt_interface_t.vts:system/etc/BluetoothHalV1bt_interface_t.vts \
+    hardware/interfaces/contexthub/1.0/vts/Contexthub.vts:system/etc/Contexthub.vts \
+    hardware/interfaces/contexthub/1.0/vts/ContexthubCallback.vts:system/etc/ContexthubCallback.vts \
+    hardware/interfaces/contexthub/1.0/vts/types.vts:system/etc/types.vts \
     hardware/interfaces/graphics/allocator/2.0/vts/Allocator.vts:system/etc/Allocator.vts \
     hardware/interfaces/graphics/allocator/2.0/vts/AllocatorClient.vts:system/etc/AllocatorClient.vts \
     hardware/interfaces/graphics/allocator/2.0/vts/types.vts:system/etc/types.vts \
     hardware/interfaces/graphics/mapper/2.0/vts/Allocator.vts:system/etc/Mapper.vts \
     hardware/interfaces/graphics/mapper/2.0/vts/types.vts:system/etc/types.vts \
+    hardware/interfaces/graphics/composer/2.1/vts/Composer.vts:system/etc/Composer.vts \
+    hardware/interfaces/graphics/composer/2.1/vts/ComposerCallback.vts:system/etc/ComposerCallback.vts \
+    hardware/interfaces/graphics/composer/2.1/vts/ComposerClient.vts:system/etc/ComposerClient.vts \
+    hardware/interfaces/graphics/composer/2.1/vts/types.vts:system/etc/types.vts \
     hardware/interfaces/nfc/1.0/vts/Nfc.vts:system/etc/Nfc.vts \
     hardware/interfaces/nfc/1.0/vts/NfcClientCallback.vts:system/etc/NfcClientCallback.vts \
     hardware/interfaces/nfc/1.0/vts/types.vts:system/etc/types.vts \
-    hardware/interfaces/vehicle/2.0/vts/Vehicle.vts:system/etc/Vehicle.vts \
-    hardware/interfaces/vehicle/2.0/vts/VehicleCallback.vts:system/etc/VehicleCallback.vts \
-    hardware/interfaces/vehicle/2.0/vts/types.vts:system/etc/types.vts \
+    hardware/interfaces/automotive/vehicle/2.0/vts/Vehicle.vts:system/etc/Vehicle.vts \
+    hardware/interfaces/automotive/vehicle/2.0/vts/VehicleCallback.vts:system/etc/VehicleCallback.vts \
+    hardware/interfaces/automotive/vehicle/2.0/vts/types.vts:system/etc/types.vts \
     hardware/interfaces/vibrator/1.0/vts/Vibrator.vts:system/etc/Vibrator.vts \
     hardware/interfaces/vibrator/1.0/vts/types.vts:system/etc/types.vts \
     hardware/interfaces/thermal/1.0/vts/Thermal.vts:system/etc/Thermal.vts \

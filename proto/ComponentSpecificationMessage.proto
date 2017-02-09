@@ -86,6 +86,10 @@ enum ComponentType {
   GRAPHICS_MAPPER = 20;
   // For a radio submodule
   RADIO = 21;
+  // For the context hub HAL.
+  CONTEXTHUB = 22;
+  // For a graphics composer submodule.
+  GRAPHICS_COMPOSER = 23;
 
   // for bionic's libm
   BIONIC_LIBM = 1001;
@@ -129,6 +133,8 @@ enum VariableType {
   // for FMQ types
   TYPE_FMQ_SYNC = 18;
   TYPE_FMQ_UNSYNC = 19;
+  // for HIDL ref<>, a restricted native pointer type.
+  TYPE_REF = 20;
 }
 
 
@@ -328,6 +334,9 @@ message VariableSpecificationMessage {
 
   // for the definition/value of TYPE_FMQ_SYNC and TYPE_FMQ_UNSYNC.
   repeated VariableSpecificationMessage fmq_value = 161;
+
+  // for TYPE_REF.
+  optional VariableSpecificationMessage ref_value = 171;
 
   // for non HIDL HAL, to use a custom type defined in C/C++.
   optional bytes predefined_type = 201;

@@ -15,6 +15,8 @@
 
 # for platform/bionic/tests/libs
 vts_test_lib_packages += \
+    cfi_test_helper \
+    cfi_test_helper2 \
     libcfi-test \
     libcfi-test-bad \
     libfortify1-tests-clang \
@@ -70,6 +72,10 @@ vts_test_lib_packages += \
     libtest_dlsym_weak_func \
     libtest_dt_runpath_d \
     libtest_empty \
+    libtest_init_fini_order_child \
+    libtest_init_fini_order_grand_child \
+    libtest_init_fini_order_root2 \
+    libtest_init_fini_order_root \
     libtest_ifunc \
     libtest_nodelete_1 \
     libtest_nodelete_2 \
@@ -112,6 +118,7 @@ vts_test_lib_packages += \
     libnstest_root_not_isolated \
     libnstest_root \
     libnstest_public \
+    libnstest_public_internal \
 
 # for fuzz tests
 vts_test_lib_packages += \

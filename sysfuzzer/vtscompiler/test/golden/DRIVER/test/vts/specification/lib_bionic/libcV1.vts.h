@@ -1,21 +1,21 @@
-#ifndef __VTS_SPEC__libcV1.driver__
-#define __VTS_SPEC__libcV1.driver__
+#ifndef __VTS_DRIVER__libcV1.driver__
+#define __VTS_DRIVER__libcV1.driver__
 
+#undef LOG_TAG
 #define LOG_TAG "FuzzerExtended_libc"
 #include <unistd.h>
 #include <stdint.h>
 #include <sys/types.h>
 #include <linux/socket.h>
 
-
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include <utils/Log.h>
+
 #include <fuzz_tester/FuzzerBase.h>
 #include <fuzz_tester/FuzzerCallbackBase.h>
-
 
 namespace android {
 namespace vts {

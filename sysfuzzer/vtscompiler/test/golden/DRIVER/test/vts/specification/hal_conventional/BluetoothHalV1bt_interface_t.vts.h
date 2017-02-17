@@ -1,19 +1,19 @@
-#ifndef __VTS_SPEC__BluetoothHalV1bt_interface_t.driver__
-#define __VTS_SPEC__BluetoothHalV1bt_interface_t.driver__
+#ifndef __VTS_DRIVER__BluetoothHalV1bt_interface_t.driver__
+#define __VTS_DRIVER__BluetoothHalV1bt_interface_t.driver__
 
+#undef LOG_TAG
 #define LOG_TAG "FuzzerExtended_bt_interface_t"
 #include <hardware/hardware.h>
 #include <hardware/bluetooth.h>
-
 
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include <utils/Log.h>
+
 #include <fuzz_tester/FuzzerBase.h>
 #include <fuzz_tester/FuzzerCallbackBase.h>
-
 
 namespace android {
 namespace vts {

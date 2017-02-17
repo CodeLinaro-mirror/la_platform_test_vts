@@ -16,6 +16,8 @@
 
 #include <string>
 
+#include <hidl-util/FQName.h>
+
 #include "test/vts/proto/ComponentSpecificationMessage.pb.h"
 
 using namespace std;
@@ -37,7 +39,9 @@ extern string GetCppVariableType(const string primitive_type_string);
 
 // Returns the C/C++ basic variable type name of a given argument.
 string GetCppVariableType(const VariableSpecificationMessage& arg,
-                          const ComponentSpecificationMessage* message = NULL);
+                          const ComponentSpecificationMessage* message = NULL,
+                          bool generate_const = false,
+                          int var_depth = 0);
 
 // Get the C/C++ instance type name of an argument.
 extern string GetCppInstanceType(
@@ -62,5 +66,10 @@ string PathJoin(const char* dir_path, const char* file_name);
 // Returns a string which remove given base_path from file_path if included.
 string RemoveBaseDir(const string& file_path, const string& base_path);
 
+// Get the component name from message,e.g. IFoo, IFooCallback, types etc.
+string GetComponentName(const ComponentSpecificationMessage& message);
+
+// Generate the FQName of the given message..
+FQName GetFQName(const ComponentSpecificationMessage& message);
 }  // namespace vts
 }  // namespace android

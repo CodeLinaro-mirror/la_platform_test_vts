@@ -16,6 +16,7 @@
 <configuration description="Run New VTS Tests for HIDL HALs in the Staging environment">
     <include name="everything" />
     <option name="plan" value="vts" />
+    <option name="test-tag" value="vts" />
     <option name="compatibility:include-filter" value="BinderThroughputBenchmark" />
     <option name="compatibility:include-filter" value="BinderPerformanceTest" />
     <option name="compatibility:include-filter" value="HwBinderBinderizeThroughputTest" />
@@ -30,8 +31,8 @@
     <option name="compatibility:include-filter" value="VibratorHidlTest" />
     <option name="compatibility:include-filter" value="HalAudioEffectHidlTargetBasicTest" />
     <option name="compatibility:include-filter" value="ThermalHidlTargetTest" />
-    <option name="compatibility:include-filter" value="SensorsHidlTest" /><!-- need runtime stopped -->
-    <option name="compatibility:include-filter" value="SensorsHidlTargetTest" /><!-- need runtime stopped -->
+    <!-- option name="compatibility:include-filter" value="SensorsHidlTest" / --><!-- need runtime stopped -->
+    <!-- option name="compatibility:include-filter" value="SensorsHidlTargetTest" / --><!-- need runtime stopped -->
     <option name="compatibility:include-filter" value="HalPowerHidlTargetTest" />
     <option name="compatibility:include-filter" value="HidlTraceRecorder" />
     <option name="compatibility:include-filter" value="LightHidlTargetTest" />
@@ -41,12 +42,13 @@
     <option name="compatibility:include-filter" value="HalGatekeeperHidlTargetBasicTest" />
     <option name="compatibility:include-filter" value="HalSoundTriggerHidlTargetBasicTest" />
     <option name="compatibility:include-filter" value="HalBootHidlTargetTest" />
-    <!-- option name="compatibility:include-filter" value="HalGraphicsAllocatorHidlTargetTest" / --><!-- need driver support -->
-    <!-- option name="compatibility:include-filter" value="HalGraphicsMapperHidlTargetTest" / --><!-- need driver support -->
-    <!-- option name="compatibility:include-filter" value="HalGraphicsComposerHidlTargetTest" / --><!-- need driver support -->
+    <option name="compatibility:include-filter" value="HalGraphicsAllocatorHidlTargetTest" />
+    <option name="compatibility:include-filter" value="HalGraphicsMapperHidlTargetTest" />
+    <option name="compatibility:include-filter" value="HalGraphicsComposerHidlTargetTest" />
     <option name="compatibility:include-filter" value="HalIrHidlTargetTest" />
     <option name="compatibility:include-filter" value="HalWifiHidlTargetTest" />
     <option name="compatibility:include-filter" value="HalBluetoothHidlTargetBasicTest" />
     <option name="compatibility:include-filter" value="ContexthubHidlTargetTest" /><!-- need runtime stopped -->
+    <option name="compatibility:include-filter" value="ContexthubHidlTest" />
     <template-include name="reporters" default="basic-reporters" />
 </configuration>

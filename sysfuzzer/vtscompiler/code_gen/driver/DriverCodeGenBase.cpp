@@ -17,6 +17,8 @@
 #include "code_gen/driver/DriverCodeGenBase.h"
 
 #include <hidl-util/Formatter.h>
+#include <hidl-util/FQName.h>
+
 #include <fstream>
 #include <iostream>
 #include <iomanip>
@@ -49,17 +51,31 @@ void DriverCodeGenBase::GenerateHeaderFile(
          << "\n";
     exit(-1);
   }
-  string fuzzer_extended_class_name = "FuzzerExtended_" + component_name;
+  FQName component_fq_name = GetFQName(message);
+  string component_name_token = component_fq_name.tokenName();
+  string fuzzer_extended_class_name;
+  if (message.component_class() == HAL_HIDL) {
+    fuzzer_extended_class_name = "FuzzerExtended_" + component_name_token;
+  } else {
+    fuzzer_extended_class_name = "FuzzerExtended_" + GetComponentName(message);
+  }
 
-  string macroized_package_name = message.package();
-  ReplaceSubString(macroized_package_name, ".", "_");
-  out << "#ifndef __VTS_SPEC_" << macroized_package_name
-      << "_" << vts_name_ << "__" << "\n";
-  out << "#define __VTS_SPEC_" << macroized_package_name
-      << "_" << vts_name_ << "__" << "\n";
+  out << "#ifndef __VTS_DRIVER__";
+  if (message.component_class() == HAL_HIDL) {
+    out << component_name_token << "__" << "\n";
+  } else {
+    out << vts_name_ << "__" << "\n";
+  }
+  out << "#define __VTS_DRIVER__";
+  if (message.component_class() == HAL_HIDL) {
+    out << component_name_token << "__" << "\n";
+  } else {
+    out << vts_name_ << "__" << "\n";
+  }
   out << "\n";
 
-  out << "#define LOG_TAG \"" << fuzzer_extended_class_name << "\"" << "\n";
+  out << "#undef LOG_TAG\n";
+  out << "#define LOG_TAG \"" << fuzzer_extended_class_name << "\"\n";
 
   GenerateHeaderIncludeFiles(out, message, fuzzer_extended_class_name);
 
@@ -79,8 +95,14 @@ void DriverCodeGenBase::GenerateSourceFile(
          << "\n";
     exit(-1);
   }
-  string fuzzer_extended_class_name = "FuzzerExtended_" + component_name;
-
+  FQName component_fq_name = GetFQName(message);
+  string component_name_token = component_fq_name.tokenName();
+  string fuzzer_extended_class_name;
+  if (message.component_class() == HAL_HIDL) {
+    fuzzer_extended_class_name = "FuzzerExtended_" + component_name_token;
+  } else {
+    fuzzer_extended_class_name = "FuzzerExtended_" + GetComponentName(message);
+  }
   GenerateSourceIncludeFiles(out, message, fuzzer_extended_class_name);
   out << "\n\n";
   GenerateOpenNameSpaces(out, message);
@@ -147,16 +169,16 @@ void DriverCodeGenBase::GenerateHeaderIncludeFiles(Formatter& out,
   for (auto const& header : message.header()) {
     out << "#include " << header << "\n";
   }
-  out << "\n\n";
+  out << "\n";
   out << "#include <stdio.h>" << "\n";
   out << "#include <stdarg.h>" << "\n";
   out << "#include <stdlib.h>" << "\n";
   out << "#include <string.h>" << "\n";
   out << "#include <utils/Log.h>" << "\n";
-
+  out << "\n";
   out << "#include <fuzz_tester/FuzzerBase.h>" << "\n";
   out << "#include <fuzz_tester/FuzzerCallbackBase.h>" << "\n";
-  out << "\n\n";
+  out << "\n";
 }
 
 void DriverCodeGenBase::GenerateSourceIncludeFiles(Formatter& out,
@@ -192,9 +214,6 @@ void DriverCodeGenBase::GenerateCppBodyGlobalFunctions(Formatter& out,
   out << "android::vts::FuzzerBase* " << function_name_prefix << "() {\n";
   out.indent();
   out << "return (android::vts::FuzzerBase*) " << "new android::vts::";
-  if (message.component_class() == HAL_HIDL) {
-    out << "vts" << message.component_name() << "::";
-  }
   out << fuzzer_extended_class_name << "();\n";
   out.unindent();
   out << "}\n\n";
@@ -271,16 +290,10 @@ void DriverCodeGenBase::GenerateOpenNameSpaces(Formatter& out,
 
   out << "namespace android {" << "\n";
   out << "namespace vts {" << "\n";
-  if (message.component_class() == HAL_HIDL) {
-    out << "namespace vts" << message.component_name() << " {\n\n";
-  }
 }
 
 void DriverCodeGenBase::GenerateCloseNameSpaces(Formatter& out,
-    const ComponentSpecificationMessage& message) {
-  if (message.component_class() == HAL_HIDL) {
-    out << "}  // namespace vts" << message.component_name() << "\n";
-  }
+    const ComponentSpecificationMessage& /*message*/) {
   out << "}  // namespace vts" << "\n";
   out << "}  // namespace android" << "\n";
 }
@@ -295,22 +308,5 @@ void DriverCodeGenBase::GenerateCodeToStopMeasurement(Formatter& out) {
   out << "cout << \"time \" << (*measured)[0] << endl;" << "\n";
 }
 
-string DriverCodeGenBase::GetComponentName(
-    const ComponentSpecificationMessage& message) {
-  if (!message.component_name().empty()) {
-    return message.component_name();
-  }
-
-  string component_name = message.original_data_structure_name();
-  while (!component_name.empty() && (std::isspace(component_name.back()) ||
-                                     component_name.back() == '*')) {
-    component_name.pop_back();
-  }
-  const auto pos = component_name.find_last_of(" ");
-  if (pos != std::string::npos) {
-    component_name = component_name.substr(pos + 1);
-  }
-  return component_name;
-}
 }  // namespace vts
 }  // namespace android

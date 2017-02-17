@@ -5,44 +5,43 @@
 #include <android/hardware/nfc/1.0/INfc.h>
 #include "hardware/interfaces/nfc/1.0/vts/NfcClientCallback.vts.h"
 #include "hardware/interfaces/nfc/1.0/vts/types.vts.h"
+#include <android/hidl/base/1.0/types.h>
 
 
 using namespace android::hardware::nfc::V1_0;
 namespace android {
 namespace vts {
-namespace vtsINfc {
-
-bool FuzzerExtended_INfc::GetService(bool get_stub, const char* service_name) {
+bool FuzzerExtended_android_hardware_nfc_V1_0_INfc::GetService(bool get_stub, const char* service_name) {
     static bool initialized = false;
     if (!initialized) {
         cout << "[agent:hal] HIDL getService" << endl;
         if (service_name) {
           cout << "  - service name: " << service_name << endl;
         }
-        hw_binder_proxy_ = INfc::getService(service_name, get_stub);
+        hw_binder_proxy_ = ::android::hardware::nfc::V1_0::INfc::getService(service_name, get_stub);
         cout << "[agent:hal] hw_binder_proxy_ = " << hw_binder_proxy_.get() << endl;
         initialized = true;
     }
     return true;
 }
 
-bool FuzzerExtended_INfc::Fuzz(
+bool FuzzerExtended_android_hardware_nfc_V1_0_INfc::Fuzz(
     FunctionSpecificationMessage* func_msg,
     void** result, const string& callback_socket_name) {
     return true;
 }
-bool FuzzerExtended_INfc::GetAttribute(
+bool FuzzerExtended_android_hardware_nfc_V1_0_INfc::GetAttribute(
     FunctionSpecificationMessage* func_msg,
     void** result) {
   cerr << "attribute not found" << endl;
   return false;
 }
-bool FuzzerExtended_INfc::CallFunction(const FunctionSpecificationMessage& func_msg, const string& callback_socket_name, FunctionSpecificationMessage* result_msg) {
+bool FuzzerExtended_android_hardware_nfc_V1_0_INfc::CallFunction(const FunctionSpecificationMessage& func_msg, const string& callback_socket_name, FunctionSpecificationMessage* result_msg) {
     const char* func_name = func_msg.name().c_str();
     cout << "Function: " << __func__ << " " << func_name << endl;
     if (!strcmp(func_name, "open")) {
-        sp<INfcClientCallback> arg0;
-        arg0 = vtsINfcClientCallback::VtsFuzzerCreateINfcClientCallback(callback_socket_name);
+        sp<::android::hardware::nfc::V1_0::INfcClientCallback> arg0;
+        arg0 = VtsFuzzerCreateVts_android_hardware_nfc_V1_0_INfcClientCallback(callback_socket_name);
         VtsMeasurement vts_measurement;
         vts_measurement.Start();
         cout << "Call an API" << endl;
@@ -59,7 +58,7 @@ bool FuzzerExtended_INfc::CallFunction(const FunctionSpecificationMessage& func_
         return true;
     }
     if (!strcmp(func_name, "write")) {
-        ::android::hardware::hidl_vec<uint8_t> arg0;
+         ::android::hardware::hidl_vec<uint8_t> arg0;
         arg0.resize(func_msg.arg(0).vector_size());
         for (int i = 0; i <func_msg.arg(0).vector_size(); i++) {
             arg0[i] = func_msg.arg(0).vector_value(i).scalar_value().uint8_t();
@@ -81,7 +80,7 @@ bool FuzzerExtended_INfc::CallFunction(const FunctionSpecificationMessage& func_
         return true;
     }
     if (!strcmp(func_name, "coreInitialized")) {
-        ::android::hardware::hidl_vec<uint8_t> arg0;
+         ::android::hardware::hidl_vec<uint8_t> arg0;
         arg0.resize(func_msg.arg(0).vector_size());
         for (int i = 0; i <func_msg.arg(0).vector_size(); i++) {
             arg0[i] = func_msg.arg(0).vector_value(i).scalar_value().uint8_t();
@@ -175,7 +174,7 @@ bool FuzzerExtended_INfc::CallFunction(const FunctionSpecificationMessage& func_
     return false;
 }
 
-bool FuzzerExtended_INfc::VerifyResults(const FunctionSpecificationMessage& expected_result, const FunctionSpecificationMessage& actual_result) {
+bool FuzzerExtended_android_hardware_nfc_V1_0_INfc::VerifyResults(const FunctionSpecificationMessage& expected_result, const FunctionSpecificationMessage& actual_result) {
     if (!strcmp(actual_result.name().c_str(), "open")) {
         if (actual_result.return_type_hidl_size() != expected_result.return_type_hidl_size() ) { return false; }
         if(!Verify__android__hardware__nfc__V1_0__NfcStatus(expected_result.return_type_hidl(0), actual_result.return_type_hidl(0))) { return false; }
@@ -216,10 +215,9 @@ bool FuzzerExtended_INfc::VerifyResults(const FunctionSpecificationMessage& expe
 
 extern "C" {
 android::vts::FuzzerBase* vts_func_4_android_hardware_nfc_1_INfc_() {
-    return (android::vts::FuzzerBase*) new android::vts::vtsINfc::FuzzerExtended_INfc();
+    return (android::vts::FuzzerBase*) new android::vts::FuzzerExtended_android_hardware_nfc_V1_0_INfc();
 }
 
 }
-}  // namespace vtsINfc
 }  // namespace vts
 }  // namespace android

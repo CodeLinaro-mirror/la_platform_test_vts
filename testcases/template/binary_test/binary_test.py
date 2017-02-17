@@ -72,6 +72,11 @@ class BinaryTest(base_test_with_webdb.BaseTestWithWebDbClass):
         self.getUserParams(
             req_param_names=required_params, opt_param_names=opt_params)
 
+        # test-module-name is required in binary tests.
+        self.getUserParam(
+            keys.ConfigKeys.KEY_TESTBED_NAME,
+            error_if_not_found=True)
+
         self.binary_test_sources = list_utils.ExpandItemDelimiters(
             self.binary_test_sources,
             const.LIST_ITEM_DELIMITER,
@@ -156,12 +161,14 @@ class BinaryTest(base_test_with_webdb.BaseTestWithWebDbClass):
         self.exclude_filter = self.ExpandListItemTags(self.exclude_filter)
 
         # Stop Android runtime to reduce interference.
-        if getattr(self, keys.ConfigKeys.IKEY_BINARY_TEST_DISABLE_FRAMEWORK, False):
-          self._dut.stop()
+        if getattr(self, keys.ConfigKeys.IKEY_BINARY_TEST_DISABLE_FRAMEWORK,
+                   False):
+            self._dut.stop()
 
     def CreateTestCases(self):
         '''Push files to device and create test case objects.'''
         source_list = list(map(self.ParseTestSource, self.binary_test_sources))
+        source_list = filter(bool, source_list)
         logging.info('Parsed test sources: %s', source_list)
 
         # Push source files first
@@ -229,8 +236,9 @@ class BinaryTest(base_test_with_webdb.BaseTestWithWebDbClass):
     def tearDownClass(self):
         '''Perform clean-up tasks'''
         # Restart Android runtime.
-        if getattr(self, keys.ConfigKeys.IKEY_BINARY_TEST_DISABLE_FRAMEWORK, False):
-          self._dut.start()
+        if getattr(self, keys.ConfigKeys.IKEY_BINARY_TEST_DISABLE_FRAMEWORK,
+                   False):
+            self._dut.start()
 
         # Retrieve coverage if applicable
         if getattr(self, keys.ConfigKeys.IKEY_ENABLE_COVERAGE, False):
@@ -241,8 +249,9 @@ class BinaryTest(base_test_with_webdb.BaseTestWithWebDbClass):
         logging.info('Start class cleaning up jobs.')
         # Delete pushed files
 
-        sources = set(
-            self.ParseTestSource(src) for src in self.binary_test_sources)
+        sources = [self.ParseTestSource(src)
+                   for src in self.binary_test_sources]
+        sources = set(filter(bool, sources))
         paths = [dst for src, dst, tag in sources if src and dst]
         cmd = ['rm -rf %s' % dst for dst in paths]
         cmd_results = self.shell.Execute(cmd)
@@ -274,7 +283,8 @@ class BinaryTest(base_test_with_webdb.BaseTestWithWebDbClass):
             A tuple of (string, string, string), representing (host side
             absolute path, device side absolute path, tag). Returned tag
             will be None if the test source is for pushing file to working
-            directory only.
+            directory only. If source file is specified for adb push but does not
+            exist on host, None will be returned.
         '''
         tag = ''
         path = source
@@ -288,6 +298,10 @@ class BinaryTest(base_test_with_webdb.BaseTestWithWebDbClass):
 
         if src:
             src = os.path.join(self.data_file_path, src)
+            if not os.path.exists(src):
+                logging.warning('binary source file is specified '
+                                'but does not exist on host: %s', src)
+                return None
 
         push_only = dst is not None and dst == ''
 
@@ -323,9 +337,8 @@ class BinaryTest(base_test_with_webdb.BaseTestWithWebDbClass):
             tag] if tag in self.profiling_library_paths else None
 
         return binary_test_case.BinaryTestCase(
-            '',
-            ntpath.basename(path), path, tag, self.PutTag, working_directory,
-            ld_library_path, profiling_library_path)
+            '', ntpath.basename(path), path, tag, self.PutTag,
+            working_directory, ld_library_path, profiling_library_path)
 
     def VerifyTestResult(self, test_case, command_results):
         '''Parse command result.

@@ -92,18 +92,23 @@ IRuntimeHintProvider, ITestCollector, IBuildReceiver, IAbiReceiver {
     static final String BINARY_TEST_TYPE_GTEST = "gtest";
     static final String BINARY_TEST_TYPE_LLVMFUZZER = "llvmfuzzer";
     static final String BINARY_TEST_TYPE_HAL_HIDL_GTEST = "hal_hidl_gtest";
+    static final String BINARY_TEST_TYPE_HAL_HIDL_REPLAY_TEST = "hal_hidl_replay_test";
     static final String ENABLE_PROFILING = "enable_profiling";
     static final String ENABLE_COVERAGE = "enable_coverage";
+    static final String GET_STUB = "get_stub";
     static final String PRECONDITION_HWBINDER_SERVICE = "precondition_hwbinder_service";
     static final String PRECONDITION_FEATURE = "precondition_feature";
     static final String PRECONDITION_FILE_PATH_PREFIX = "precondition_file_path_prefix";
     static final String PRECONDITION_LSHAL = "precondition_lshal";
     static final String ENABLE_SYSTRACE = "enable_systrace";
+    static final String HAL_HIDL_REPLAY_TEST_TRACE_PATHS = "hal_hidl_replay_test_trace_paths";
+    static final String HAL_HIDL_PACKAGE_NAME = "hal_hidl_package_name";
     static final String SYSTRACE_PROCESS_NAME = "systrace_process_name";
     static final String TEMPLATE_BINARY_TEST_PATH = "vts/testcases/template/binary_test/binary_test";
     static final String TEMPLATE_GTEST_BINARY_TEST_PATH = "vts/testcases/template/gtest_binary_test/gtest_binary_test";
     static final String TEMPLATE_LLVMFUZZER_TEST_PATH = "vts/testcases/template/llvmfuzzer_test/llvmfuzzer_test";
     static final String TEMPLATE_HAL_HIDL_GTEST_PATH = "vts/testcases/template/hal_hidl_gtest/hal_hidl_gtest";
+    static final String TEMPLATE_HAL_HIDL_REPLAY_TEST_PATH = "vts/testcases/template/hal_hidl_replay_test/hal_hidl_replay_test";
     static final String TEST_RUN_SUMMARY_FILE_NAME = "test_run_summary.json";
     static final float DEFAULT_TARGET_VERSION = -1;
     static final String DEFAULT_TESTCASE_CONFIG_PATH = "vts/tools/vts-tradefed/res/default/DefaultTestCase.config";
@@ -171,6 +176,11 @@ IRuntimeHintProvider, ITestCollector, IBuildReceiver, IAbiReceiver {
                           "ro.vts.coverage system must have value \"1\" to indicate the target " +
                           "build is coverage instrumented.")
     private boolean mEnableCoverage = true;
+
+    @Option(name = "get-stub", description = "Set getStub to use passthrough mode. "
+        + "Value 1 means passthrough mode only; 0 for binderized mode only; -1 or not set "
+        + "means using system default.")
+    private int mGetStub = -1;
 
     @Option(name = "skip-on-32bit-abi",
         description = "Whether to skip tests on 32bit ABI.")
@@ -247,6 +257,13 @@ IRuntimeHintProvider, ITestCollector, IBuildReceiver, IAbiReceiver {
     @Option(name = "binary-test-type", description = "Binary test type. Only specify this when "
             + "running an extended binary test without a python test file. Available options: gtest")
     private String mBinaryTestType = "";
+
+    @Option(name = "hal-hidl-replay-test-trace-path", description = "The path of a trace file to replay.")
+    private Collection<String> mHalHidlReplayTestTracePaths = new ArrayList<>();
+
+    @Option(name = "hal-hidl-package-name", description = "The name of a target HIDL HAL package "
+            + "e.g., 'android.hardware.light@2.0'.")
+    private String mHalHidlPackageName = null;
 
     @Option(name = "systrace-process-name", description = "Process name for systrace.")
     private String mSystraceProcessName = null;
@@ -395,6 +412,8 @@ IRuntimeHintProvider, ITestCollector, IBuildReceiver, IAbiReceiver {
                 }
                 CLog.i("Using default test case template at %s.", template);
                 setTestCasePath(template);
+            } else if (mBinaryTestType.equals(BINARY_TEST_TYPE_HAL_HIDL_REPLAY_TEST)) {
+                setTestCasePath(TEMPLATE_HAL_HIDL_REPLAY_TEST_PATH);
             } else if (mBinaryTestType.equals(BINARY_TEST_TYPE_LLVMFUZZER)) {
                 // Fuzz test don't need test-case-path.
                 setTestCasePath(TEMPLATE_LLVMFUZZER_TEST_PATH);
@@ -636,9 +655,25 @@ IRuntimeHintProvider, ITestCollector, IBuildReceiver, IAbiReceiver {
           CLog.i("Added %s to the Json object", BINARY_TEST_DISABLE_FRAMEWORK);
         }
 
+        if (!mHalHidlReplayTestTracePaths.isEmpty()) {
+          jsonObject.put(HAL_HIDL_REPLAY_TEST_TRACE_PATHS,
+                  new JSONArray(mHalHidlReplayTestTracePaths));
+          CLog.i("Added %s to the Json object", HAL_HIDL_REPLAY_TEST_TRACE_PATHS);
+        }
+
+        if (mHalHidlPackageName != null) {
+          jsonObject.put(HAL_HIDL_PACKAGE_NAME, mHalHidlPackageName);
+          CLog.i("Added %s to the Json object", SYSTRACE_PROCESS_NAME);
+        }
+
         if (mSystraceProcessName != null) {
             jsonObject.put(SYSTRACE_PROCESS_NAME, mSystraceProcessName);
             CLog.i("Added %s to the Json object", SYSTRACE_PROCESS_NAME);
+        }
+
+        if (mGetStub >= 0) {
+            jsonObject.put(GET_STUB, mGetStub);
+            CLog.i("Added %s to the Json object", GET_STUB);
         }
     }
 

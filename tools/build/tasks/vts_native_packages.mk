@@ -23,6 +23,7 @@ include $(LOCAL_PATH)/list/vts_test_bin_package_list.mk
 include $(LOCAL_PATH)/list/vts_test_lib_package_list.mk
 include $(LOCAL_PATH)/list/vts_test_lib_hal_package_list.mk
 include $(LOCAL_PATH)/list/vts_test_lib_hidl_package_list.mk
+include $(LOCAL_PATH)/list/vts_test_lib_hidl_trace_list.mk
 
 # Packaging rule for android-vts.zip
 test_suite_name := vts
@@ -65,12 +66,28 @@ my_copy_pairs :=
 # Packaging rule for android-vts.zip's testcases dir (spec subdir).
 
 my_spec_modules := \
-    $(vts_spec_file_list) \
+  $(VTS_SPEC_FILE_LIST) \
 
 my_spec_copy_pairs :=
   $(foreach m,$(my_spec_modules),\
+    $(eval my_spec_copy_dir :=\
+      spec/hardware/interfaces/$(word 2,$(subst android/hardware/, ,$(dir $(m))))/vts)\
+    $(eval my_spec_copy_file := $(notdir $(m)))\
+    $(eval my_spec_copy_dest := $(my_spec_copy_dir)/$(my_spec_copy_file))\
+    $(eval my_spec_copy_pairs += $(m):$(VTS_TESTCASES_OUT)/$(my_spec_copy_dest)))\
+
+my_spec_copy_pairs +=
+  $(foreach m,$(vts_spec_file_list),\
     $(if $(wildcard $(m)),\
       $(eval my_spec_copy_pairs += $(m):$(VTS_TESTCASES_OUT)/spec/$(m))))\
 
+my_trace_modules := \
+    $(vts_test_lib_hidl_trace_list) \
 
-$(compatibility_zip): $(call copy-many-files,$(my_copy_pairs)) $(call copy-many-files,$(my_spec_copy_pairs))
+my_trace_copy_pairs :=
+  $(foreach m,$(my_trace_modules),\
+    $(if $(wildcard $(m)),\
+      $(eval my_trace_copy_pairs += $(m):$(VTS_TESTCASES_OUT)/hal-hidl-trace/$(m))))\
+
+$(compatibility_zip): $(call copy-many-files,$(my_copy_pairs)) $(call copy-many-files,$(my_spec_copy_pairs)) $(call copy-many-files,$(my_trace_copy_pairs))
+

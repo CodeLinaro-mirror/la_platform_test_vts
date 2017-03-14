@@ -79,23 +79,26 @@ IRuntimeHintProvider, ITestCollector, IBuildReceiver, IAbiReceiver {
     static final String ABI_BITNESS = "abi_bitness";
     static final String SKIP_ON_32BIT_ABI = "skip_on_32bit_abi";
     static final String SKIP_ON_64BIT_ABI = "skip_on_64bit_abi";
+    static final String SKIP_IF_THERMAL_THROTTLING = "skip_if_thermal_throttling";
     static final String RUN_32BIT_ON_64BIT_ABI = "run_32bit_on_64bit_abi";
     static final String VTS = "vts";
     static final String CONFIG_FILE_EXTENSION = ".config";
     static final String INCLUDE_FILTER = "include_filter";
     static final String EXCLUDE_FILTER = "exclude_filter";
-    static final String BINARY_TEST_SOURCES = "binary_test_sources";
-    static final String BINARY_TEST_WORKING_DIRECTORIES = "binary_test_working_directories";
-    static final String BINARY_TEST_LD_LIBRARY_PATHS = "binary_test_ld_library_paths";
-    static final String BINARY_TEST_PROFILING_LIBRARY_PATHS = "binary_test_profiling_library_paths";
+    static final String BINARY_TEST_SOURCE = "binary_test_source";
+    static final String BINARY_TEST_WORKING_DIRECTORY = "binary_test_working_directory";
+    static final String BINARY_TEST_LD_LIBRARY_PATH = "binary_test_ld_library_path";
+    static final String BINARY_TEST_PROFILING_LIBRARY_PATH = "binary_test_profiling_library_path";
     static final String BINARY_TEST_DISABLE_FRAMEWORK = "binary_test_disable_framework";
+    static final String BINARY_TEST_STOP_NATIVE_SERVERS = "binary_test_stop_native_servers";
     static final String BINARY_TEST_TYPE_GTEST = "gtest";
     static final String BINARY_TEST_TYPE_LLVMFUZZER = "llvmfuzzer";
     static final String BINARY_TEST_TYPE_HAL_HIDL_GTEST = "hal_hidl_gtest";
     static final String BINARY_TEST_TYPE_HAL_HIDL_REPLAY_TEST = "hal_hidl_replay_test";
+    static final String BINARY_TEST_TYPE_HOST_BINARY_TEST = "host_binary_test";
     static final String ENABLE_PROFILING = "enable_profiling";
     static final String ENABLE_COVERAGE = "enable_coverage";
-    static final String GET_STUB = "get_stub";
+    static final String PASSTHROUGH_MODE = "passthrough_mode";
     static final String PRECONDITION_HWBINDER_SERVICE = "precondition_hwbinder_service";
     static final String PRECONDITION_FEATURE = "precondition_feature";
     static final String PRECONDITION_FILE_PATH_PREFIX = "precondition_file_path_prefix";
@@ -109,6 +112,7 @@ IRuntimeHintProvider, ITestCollector, IBuildReceiver, IAbiReceiver {
     static final String TEMPLATE_LLVMFUZZER_TEST_PATH = "vts/testcases/template/llvmfuzzer_test/llvmfuzzer_test";
     static final String TEMPLATE_HAL_HIDL_GTEST_PATH = "vts/testcases/template/hal_hidl_gtest/hal_hidl_gtest";
     static final String TEMPLATE_HAL_HIDL_REPLAY_TEST_PATH = "vts/testcases/template/hal_hidl_replay_test/hal_hidl_replay_test";
+    static final String TEMPLATE_HOST_BINARY_TEST_PATH = "vts/testcases/template/host_binary_test/host_binary_test";
     static final String TEST_RUN_SUMMARY_FILE_NAME = "test_run_summary.json";
     static final float DEFAULT_TARGET_VERSION = -1;
     static final String DEFAULT_TESTCASE_CONFIG_PATH = "vts/tools/vts-tradefed/res/default/DefaultTestCase.config";
@@ -177,10 +181,13 @@ IRuntimeHintProvider, ITestCollector, IBuildReceiver, IAbiReceiver {
                           "build is coverage instrumented.")
     private boolean mEnableCoverage = true;
 
-    @Option(name = "get-stub", description = "Set getStub to use passthrough mode. "
-        + "Value 1 means passthrough mode only; 0 for binderized mode only; -1 or not set "
-        + "means using system default.")
-    private int mGetStub = -1;
+    // Another design option is to parse a string or use enum for host preference on BINDER,
+    // PASSTHROUGH and DEFAULT(which is BINDER). Also in the future, we might want to deal with
+    // the case of target preference on PASSTHROUGH (if host does not specify to use BINDER mode).
+    @Option(name = "passthrough-mode", description = "Set getStub to use passthrough mode. "
+        + "Value true means use passthrough mode if available; false for binderized mode if "
+        + "available. Default is false")
+    private boolean mPassthroughMode = false;
 
     @Option(name = "skip-on-32bit-abi",
         description = "Whether to skip tests on 32bit ABI.")
@@ -190,11 +197,15 @@ IRuntimeHintProvider, ITestCollector, IBuildReceiver, IAbiReceiver {
         description = "Whether to skip tests on 64bit ABI.")
     private boolean mSkipOn64BitAbi = false;
 
+    @Option(name = "skip-if-thermal-throttling",
+            description = "Whether to skip tests if target device suffers from thermal throttling.")
+    private boolean mSkipIfThermalThrottling = false;
+
     @Option(name = "run-32bit-on-64bit-abi",
             description = "Whether to run 32bit tests on 64bit ABI.")
     private boolean mRun32bBitOn64BitAbi = false;
 
-    @Option(name = "binary-test-sources",
+    @Option(name = "binary-test-source",
             description = "Binary test source paths relative to vts testcase directory on host."
                     + "Format of tags:"
                     + "    <source>: source without tag."
@@ -226,33 +237,37 @@ IRuntimeHintProvider, ITestCollector, IBuildReceiver, IAbiReceiver {
                     + "          override the binary test runner's CreateTestCase method in python."
                     + "    If you wish to push a source file to a specific destination and not"
                     + "    create a test case from it, please use VtsFilePusher.")
-    private Collection<String> mBinaryTestSources = new ArrayList<>();
+    private Collection<String> mBinaryTestSource = new ArrayList<>();
 
-    @Option(name = "binary-test-working-directories", description = "Working directories for binary "
+    @Option(name = "binary-test-working-directory", description = "Working directories for binary "
             + "tests. Tags can be added to the front of each directory using '::' as delimiter. "
             + "Multiple directories can be separated by ','. However, each tag should only has "
             + "one working directory. This option is optional for binary tests. If not specified, "
             + "different directories will be used for files with different tags.")
-    private Collection<String> mBinaryTestWorkingDirectories = new ArrayList<>();
+    private Collection<String> mBinaryTestWorkingDirectory = new ArrayList<>();
 
-    @Option(name = "binary-test-ld-library-paths", description = "LD_LIBRARY_PATH for binary "
+    @Option(name = "binary-test-ld-library-path", description = "LD_LIBRARY_PATH for binary "
             + "tests. Tags can be added to the front of each instance using '::' as delimiter. "
             + "Multiple directories can be added under a same tag using ':' as delimiter. "
-            + "Multiple instances of ld-library-paths rule can be separated by ','. "
-            + "There can be multiple instances of ld-library-paths for a same tag, which will "
+            + "Multiple instances of ld-library-path rule can be separated by ','. "
+            + "There can be multiple instances of ld-library-path for a same tag, which will "
             + "later automatically be combined using ':' as delimiter. Paths without a tag "
             + "will only used for binaries without tag. This option is optional for binary tests.")
-    private Collection<String> mBinaryTestLdLibraryPaths = new ArrayList<>();
+    private Collection<String> mBinaryTestLdLibraryPath = new ArrayList<>();
 
-    @Option(name = "binary-test-profiling-library-paths", description = "Path to lookup and load "
+    @Option(name = "binary-test-profiling-library-path", description = "Path to lookup and load "
             + "profiling libraries for tests with profiling enabled. Tags can be added to the "
             + "front of each directory using '::' as delimiter. Only one directory could be "
             + "specified for the same tag. This option is optional for binary tests. If not "
             + "specified, default directories will be used for files with different tags.")
-    private Collection<String> mBinaryTestProfilingLibraryPaths = new ArrayList<>();
+    private Collection<String> mBinaryTestProfilingLibraryPath = new ArrayList<>();
 
     @Option(name = "binary-test-disable-framework", description = "Adb stop/start before/after test.")
     private boolean mBinaryTestDisableFramework = false;
+
+    @Option(name = "binary-test-stop-native-servers",
+            description = "Set to stop all properly configured native servers during the testing.")
+    private boolean mBinaryTestStopNativeServers = false;
 
     @Option(name = "binary-test-type", description = "Binary test type. Only specify this when "
             + "running an extended binary test without a python test file. Available options: gtest")
@@ -398,7 +413,7 @@ IRuntimeHintProvider, ITestCollector, IBuildReceiver, IAbiReceiver {
         }
 
         if (mTestCasePath == null) {
-            if (!mBinaryTestSources.isEmpty()) {
+            if (!mBinaryTestSource.isEmpty()) {
                 String template;
                 switch (mBinaryTestType) {
                     case BINARY_TEST_TYPE_GTEST:
@@ -406,6 +421,9 @@ IRuntimeHintProvider, ITestCollector, IBuildReceiver, IAbiReceiver {
                         break;
                     case BINARY_TEST_TYPE_HAL_HIDL_GTEST:
                         template = TEMPLATE_HAL_HIDL_GTEST_PATH;
+                        break;
+                    case BINARY_TEST_TYPE_HOST_BINARY_TEST:
+                        template = TEMPLATE_HOST_BINARY_TEST_PATH;
                         break;
                     default:
                         template = TEMPLATE_BINARY_TEST_PATH;
@@ -591,20 +609,24 @@ IRuntimeHintProvider, ITestCollector, IBuildReceiver, IAbiReceiver {
             jsonObject.put(RUN_32BIT_ON_64BIT_ABI, mRun32bBitOn64BitAbi);
             CLog.i("Added %s to the Json object", RUN_32BIT_ON_64BIT_ABI);
         }
+        if (mSkipIfThermalThrottling) {
+          jsonObject.put(SKIP_IF_THERMAL_THROTTLING, mSkipIfThermalThrottling);
+          CLog.i("Added %s to the Json object", SKIP_IF_THERMAL_THROTTLING);
+        }
 
-        if (!mBinaryTestSources.isEmpty()) {
-            jsonObject.put(BINARY_TEST_SOURCES, new JSONArray(mBinaryTestSources));
-            CLog.i("Added %s to the Json object", BINARY_TEST_SOURCES);
+        if (!mBinaryTestSource.isEmpty()) {
+            jsonObject.put(BINARY_TEST_SOURCE, new JSONArray(mBinaryTestSource));
+            CLog.i("Added %s to the Json object", BINARY_TEST_SOURCE);
         }
-        if (!mBinaryTestWorkingDirectories.isEmpty()) {
-            jsonObject.put(BINARY_TEST_WORKING_DIRECTORIES,
-                    new JSONArray(mBinaryTestWorkingDirectories));
-            CLog.i("Added %s to the Json object", BINARY_TEST_WORKING_DIRECTORIES);
+        if (!mBinaryTestWorkingDirectory.isEmpty()) {
+            jsonObject.put(BINARY_TEST_WORKING_DIRECTORY,
+                    new JSONArray(mBinaryTestWorkingDirectory));
+            CLog.i("Added %s to the Json object", BINARY_TEST_WORKING_DIRECTORY);
         }
-        if (!mBinaryTestLdLibraryPaths.isEmpty()) {
-            jsonObject.put(BINARY_TEST_LD_LIBRARY_PATHS,
-                    new JSONArray(mBinaryTestLdLibraryPaths));
-            CLog.i("Added %s to the Json object", BINARY_TEST_LD_LIBRARY_PATHS);
+        if (!mBinaryTestLdLibraryPath.isEmpty()) {
+            jsonObject.put(BINARY_TEST_LD_LIBRARY_PATH,
+                    new JSONArray(mBinaryTestLdLibraryPath));
+            CLog.i("Added %s to the Json object", BINARY_TEST_LD_LIBRARY_PATH);
         }
 
         if (mEnableProfiling) {
@@ -630,40 +652,52 @@ IRuntimeHintProvider, ITestCollector, IBuildReceiver, IAbiReceiver {
         }
 
         if (mPreconditionFeature != null) {
-          jsonObject.put(PRECONDITION_FEATURE, mPreconditionFeature);
-          CLog.i("Added %s to the Json object", PRECONDITION_FEATURE);
+            jsonObject.put(PRECONDITION_FEATURE, mPreconditionFeature);
+            CLog.i("Added %s to the Json object", PRECONDITION_FEATURE);
         }
 
         if (mPreconditionFilePathPrefix != null) {
-          jsonObject.put(PRECONDITION_FILE_PATH_PREFIX, mPreconditionFilePathPrefix);
-          CLog.i("Added %s to the Json object", PRECONDITION_FILE_PATH_PREFIX);
+            jsonObject.put(PRECONDITION_FILE_PATH_PREFIX, mPreconditionFilePathPrefix);
+            CLog.i("Added %s to the Json object", PRECONDITION_FILE_PATH_PREFIX);
         }
 
         if (mPreconditionLshal != null) {
-          jsonObject.put(PRECONDITION_LSHAL, mPreconditionLshal);
-          CLog.i("Added %s to the Json object", PRECONDITION_LSHAL);
+            jsonObject.put(PRECONDITION_LSHAL, mPreconditionLshal);
+            CLog.i("Added %s to the Json object", PRECONDITION_LSHAL);
         }
 
-        if (!mBinaryTestProfilingLibraryPaths.isEmpty()) {
-          jsonObject.put(BINARY_TEST_PROFILING_LIBRARY_PATHS,
-                  new JSONArray(mBinaryTestProfilingLibraryPaths));
-          CLog.i("Added %s to the Json object", BINARY_TEST_PROFILING_LIBRARY_PATHS);
+        if (!mBinaryTestProfilingLibraryPath.isEmpty()) {
+            jsonObject.put(BINARY_TEST_PROFILING_LIBRARY_PATH,
+                    new JSONArray(mBinaryTestProfilingLibraryPath));
+            CLog.i("Added %s to the Json object", BINARY_TEST_PROFILING_LIBRARY_PATH);
+        }
+
+        if (mBinaryTestType.equals(BINARY_TEST_TYPE_HAL_HIDL_GTEST)) {
+            CLog.i("Set flags to stop the framework and native servers for %s",
+                   BINARY_TEST_TYPE_HAL_HIDL_GTEST);
+            mBinaryTestDisableFramework = true;
+            mBinaryTestStopNativeServers = true;
         }
 
         if (mBinaryTestDisableFramework) {
-          jsonObject.put(BINARY_TEST_DISABLE_FRAMEWORK, mBinaryTestDisableFramework);
-          CLog.i("Added %s to the Json object", BINARY_TEST_DISABLE_FRAMEWORK);
+            jsonObject.put(BINARY_TEST_DISABLE_FRAMEWORK, mBinaryTestDisableFramework);
+            CLog.i("Added %s to the Json object", BINARY_TEST_DISABLE_FRAMEWORK);
+        }
+
+        if (mBinaryTestStopNativeServers) {
+            jsonObject.put(BINARY_TEST_STOP_NATIVE_SERVERS, mBinaryTestStopNativeServers);
+            CLog.i("Added %s to the Json object", BINARY_TEST_STOP_NATIVE_SERVERS);
         }
 
         if (!mHalHidlReplayTestTracePaths.isEmpty()) {
-          jsonObject.put(HAL_HIDL_REPLAY_TEST_TRACE_PATHS,
-                  new JSONArray(mHalHidlReplayTestTracePaths));
-          CLog.i("Added %s to the Json object", HAL_HIDL_REPLAY_TEST_TRACE_PATHS);
+            jsonObject.put(HAL_HIDL_REPLAY_TEST_TRACE_PATHS,
+                    new JSONArray(mHalHidlReplayTestTracePaths));
+            CLog.i("Added %s to the Json object", HAL_HIDL_REPLAY_TEST_TRACE_PATHS);
         }
 
         if (mHalHidlPackageName != null) {
-          jsonObject.put(HAL_HIDL_PACKAGE_NAME, mHalHidlPackageName);
-          CLog.i("Added %s to the Json object", SYSTRACE_PROCESS_NAME);
+            jsonObject.put(HAL_HIDL_PACKAGE_NAME, mHalHidlPackageName);
+            CLog.i("Added %s to the Json object", SYSTRACE_PROCESS_NAME);
         }
 
         if (mSystraceProcessName != null) {
@@ -671,9 +705,9 @@ IRuntimeHintProvider, ITestCollector, IBuildReceiver, IAbiReceiver {
             CLog.i("Added %s to the Json object", SYSTRACE_PROCESS_NAME);
         }
 
-        if (mGetStub >= 0) {
-            jsonObject.put(GET_STUB, mGetStub);
-            CLog.i("Added %s to the Json object", GET_STUB);
+        if (mPassthroughMode) {
+            jsonObject.put(PASSTHROUGH_MODE, mPassthroughMode);
+            CLog.i("Added %s to the Json object", PASSTHROUGH_MODE);
         }
     }
 
@@ -730,14 +764,17 @@ IRuntimeHintProvider, ITestCollector, IBuildReceiver, IAbiReceiver {
 
         CommandResult commandResult = mRunUtil.runTimedCmd(mTestTimeout, cmd);
 
-        if (commandResult != null && commandResult.getStatus() !=
-                CommandStatus.SUCCESS) {
-            CLog.e("Python process failed");
-            CLog.e("Python path: %s", mPythonPath);
-            CLog.e("Stderr: %s", commandResult.getStderr());
-            CLog.e("Stdout: %s", commandResult.getStdout());
-            printVtsLogs(vtsRunnerLogDir);
-            throw new RuntimeException("Failed to run VTS test");
+        if (commandResult != null) {
+            CommandStatus commandStatus = commandResult.getStatus();
+            if (commandStatus != CommandStatus.SUCCESS
+                && commandStatus != CommandStatus.TIMED_OUT) {
+                CLog.e("Python process failed");
+                CLog.e("Python path: %s", mPythonPath);
+                CLog.e("Stderr: %s", commandResult.getStderr());
+                CLog.e("Stdout: %s", commandResult.getStdout());
+                printVtsLogs(vtsRunnerLogDir);
+                throw new RuntimeException("Failed to run VTS test");
+            }
         }
         if (commandResult != null){
             CLog.i("Standard output is: %s", commandResult.getStdout());

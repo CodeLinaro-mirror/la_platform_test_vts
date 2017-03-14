@@ -1,4 +1,3 @@
-#!/usr/bin/env python3.4
 #
 # Copyright (C) 2016 The Android Open Source Project
 #
@@ -34,7 +33,7 @@ class GtestBinaryTest(binary_test.BinaryTest):
     Attributes:
         _dut: AndroidDevice, the device under test as config
         shell: ShellMirrorObject, shell mirror
-        test_cases: list of GtestTestCase objects, list of test cases to run
+        testcases: list of GtestTestCase objects, list of test cases to run
         tags: all the tags that appeared in binary list
         DEVICE_TEST_DIR: string, temp location for storing binary
         TAG_PATH_SEPARATOR: string, separator used to separate tag and path
@@ -51,12 +50,12 @@ class GtestBinaryTest(binary_test.BinaryTest):
         Returns:
             A list of GtestTestCase objects
         '''
-        working_directory = self.working_directories[
-            tag] if tag in self.working_directories else None
-        ld_library_path = self.ld_library_paths[
-            tag] if tag in self.ld_library_paths else None
-        profiling_library_path = self.profiling_library_paths[
-            tag] if tag in self.ld_library_paths else None
+        working_directory = self.working_directory[
+            tag] if tag in self.working_directory else None
+        ld_library_path = self.ld_library_path[
+            tag] if tag in self.ld_library_path else None
+        profiling_library_path = self.profiling_library_path[
+            tag] if tag in self.ld_library_path else None
 
         list_test_case = binary_test_case.BinaryTestCase(
             'gtest_list_tests',

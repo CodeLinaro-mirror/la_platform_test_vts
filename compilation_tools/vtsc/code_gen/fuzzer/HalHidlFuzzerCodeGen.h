@@ -14,13 +14,10 @@
  * limitations under the License.
  */
 
-#ifndef VTS_COMPILATION_TOOLS_VTSC_CODE_GEN_FUZZER_HALHIDLFUZZERCODEGENBASE_H_
-#define VTS_COMPILATION_TOOLS_VTSC_CODE_GEN_FUZZER_HALHIDLFUZZERCODEGENBASE_H_
+#ifndef VTS_COMPILATION_TOOLS_VTSC_CODE_GEN_FUZZER_HALHIDLFUZZERCODEGEN_H_
+#define VTS_COMPILATION_TOOLS_VTSC_CODE_GEN_FUZZER_HALHIDLFUZZERCODEGEN_H_
 
 #include "code_gen/fuzzer/FuzzerCodeGenBase.h"
-
-using std::string;
-using std::vector;
 
 namespace android {
 namespace vts {
@@ -28,33 +25,36 @@ namespace vts {
 // Generates fuzzer code for HIDL HALs.
 class HalHidlFuzzerCodeGen : public FuzzerCodeGenBase {
  public:
-  HalHidlFuzzerCodeGen(const ComponentSpecificationMessage &comp_spec,
-                       const string &output_cpp_prefix)
-      : FuzzerCodeGenBase(comp_spec, output_cpp_prefix) {}
+  HalHidlFuzzerCodeGen(const ComponentSpecificationMessage &comp_spec)
+      : FuzzerCodeGenBase(comp_spec) {}
 
-  void GenerateBuildFile(Formatter &out) override;
   void GenerateSourceIncludeFiles(Formatter &out) override;
   void GenerateUsingDeclaration(Formatter &out) override;
-  void GenerateReturnCallback(
-      Formatter &out, const FunctionSpecificationMessage &func_spec) override;
-  void GenerateLLVMFuzzerTestOneInput(
-      Formatter &out, const FunctionSpecificationMessage &func_spec) override;
-  string GetFuzzerBinaryName(
-      const FunctionSpecificationMessage &func_spec) override;
-  string GetFuzzerSourceName(
-      const FunctionSpecificationMessage &func_spec) override;
+  void GenerateGlobalVars(Formatter &out) override;
+  void GenerateLLVMFuzzerInitialize(Formatter &out) override;
+  void GenerateLLVMFuzzerTestOneInput(Formatter &out) override;
 
  private:
-  // Returns true iff callback can be omitted.
+  // Generates return callback function for HAL function being fuzzed.
+  void GenerateReturnCallback(Formatter &out,
+                              const FunctionSpecificationMessage &func_spec);
+  // Generates function call.
+  void GenerateHalFunctionCall(Formatter &out,
+                               const FunctionSpecificationMessage &func_spec);
+  // Returns name of pointer to hal instance.
+  std::string GetHalPointerName();
+  // Returns true if we could omit the callback function and return result
+  // directly.
   bool CanElideCallback(const FunctionSpecificationMessage &func_spec);
   // Returns a vector of strings containing type names of function arguments.
-  vector<string> GetFuncArgTypes(const FunctionSpecificationMessage &func_spec);
+  std::vector<std::string> GetFuncArgTypes(
+      const FunctionSpecificationMessage &func_spec);
   // Name of return callback. Since we only fuzz one function, we'll need at
   // most one return callback.
-  const string return_cb_name = "hidl_cb";
+  const std::string return_cb_name = "hidl_cb";
 };
 
 }  // namespace vts
 }  // namespace android
 
-#endif  // VTS_COMPILATION_TOOLS_VTSC_CODE_GEN_FUZZER_HALHIDLFUZZERCODEGENBASE_H_
+#endif  // VTS_COMPILATION_TOOLS_VTSC_CODE_GEN_FUZZER_HALHIDLFUZZERCODEGEN_H_

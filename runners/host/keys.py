@@ -1,4 +1,3 @@
-#!/usr/bin/env python3.4
 #
 # Copyright (C) 2016 The Android Open Source Project
 #
@@ -36,10 +35,11 @@ class ConfigKeys(object):
     KEY_EXCLUDE_FILTER = "exclude_filter"
 
     # Keys for binary tests
-    IKEY_BINARY_TEST_SOURCES = "binary_test_sources"
-    IKEY_BINARY_TEST_WORKING_DIRECTORIES = "binary_test_working_directories"
-    IKEY_BINARY_TEST_LD_LIBRARY_PATHS = "binary_test_ld_library_paths"
+    IKEY_BINARY_TEST_SOURCE = "binary_test_source"
+    IKEY_BINARY_TEST_WORKING_DIRECTORY = "binary_test_working_directory"
+    IKEY_BINARY_TEST_LD_LIBRARY_PATH = "binary_test_ld_library_path"
     IKEY_BINARY_TEST_DISABLE_FRAMEWORK = "binary_test_disable_framework"
+    IKEY_BINARY_TEST_STOP_NATIVE_SERVERS = "binary_test_stop_native_servers"
 
     # Internal keys, used internally, not exposed to user's config files.
     IKEY_USER_PARAM = "user_params"
@@ -50,11 +50,13 @@ class ConfigKeys(object):
     IKEY_RUN_32BIT_ON_64BIT_ABI = "run_32bit_on_64bit_abi"
     IKEY_SKIP_ON_32BIT_ABI = "skip_on_32bit_abi"
     IKEY_SKIP_ON_64BIT_ABI = "skip_on_64bit_abi"
+    IKEY_SKIP_IF_THERMAL_THROTTLING = "skip_if_thermal_throttling"
 
     IKEY_BUILD = "build"
     IKEY_DATA_FILE_PATH = "data_file_path"
 
     # sub fields of test_bed
+    IKEY_ANDROID_DEVICE = "AndroidDevice"
     IKEY_PRODUCT_TYPE = "product_type"
     IKEY_PRODUCT_VARIANT = "product_variant"
     IKEY_BUILD_FLAVOR = "build_flavor"
@@ -64,9 +66,14 @@ class ConfigKeys(object):
     IKEY_API_LEVEL = "api_level"
     IKEY_SERIAL = "serial"
 
+    # Keys for web
+    IKEY_ENABLE_WEB = "enable_web"
+
     # Keys for profiling
     IKEY_ENABLE_PROFILING = "enable_profiling"
-    IKEY_BINARY_TEST_PROFILING_LIBRARY_PATHS = "binary_test_profiling_library_paths"
+    IKEY_BINARY_TEST_PROFILING_LIBRARY_PATH = "binary_test_profiling_library_path"
+    IKEY_PROFILING_TRACING_PATH = "profiling_trace_path"
+    IKEY_TRACE_FILE_TOOL_NAME = "trace_file_tool_name"
 
     # Keys for systrace (for hal tests)
     IKEY_ENABLE_SYSTRACE = "enable_systrace"
@@ -87,8 +94,8 @@ class ConfigKeys(object):
     IKEY_PRECONDITION_FILE_PATH_PREFIX = "precondition_file_path_prefix"
     IKEY_PRECONDITION_LSHAL = "precondition_lshal"
 
-    # Keys for setting passthrough or binderize mode
-    IKEY_GET_STUB = "get_stub"
+    # Keys for toggle passthrough mode
+    IKEY_PASSTHROUGH_MODE = "passthrough_mode"
 
     # Keys for the HAL HIDL Replay Test type.
     IKEY_HAL_HIDL_REPLAY_TEST_TRACE_PATHS = "hal_hidl_replay_test_trace_paths"

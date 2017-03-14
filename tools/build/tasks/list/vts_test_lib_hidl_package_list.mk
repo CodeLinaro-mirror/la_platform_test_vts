@@ -20,7 +20,9 @@ vts_test_lib_hidl_packages := \
   android.hardware.audio.vts.driver@2.0 \
   android.hardware.audio.common.vts.driver@2.0 \
   android.hardware.audio.effect.vts.driver@2.0 \
+  android.hardware.automotive.evs.vts.driver@1.0 \
   android.hardware.automotive.vehicle.vts.driver@2.0 \
+  android.hardware.automotive.vehicle.vts.driver@2.1 \
   android.hardware.biometrics.fingerprint.vts.driver@2.1 \
   android.hardware.bluetooth.vts.driver@1.0 \
   android.hardware.boot.vts.driver@1.0 \
@@ -34,7 +36,6 @@ vts_test_lib_hidl_packages := \
   android.hardware.contexthub.vts.driver@1.0 \
   android.hardware.drm.vts.driver@1.0 \
   android.hardware.dumpstate.vts.driver@1.0 \
-  android.hardware.evs.vts.driver@1.0 \
   android.hardware.gatekeeper.vts.driver@1.0 \
   android.hardware.gnss.vts.driver@1.0 \
   android.hardware.graphics.common.vts.driver@1.0 \
@@ -65,6 +66,7 @@ vts_test_lib_hidl_packages := \
   android.hardware.audio.common@2.0-vts.profiler \
   android.hardware.audio.effect@2.0-vts.profiler \
   android.hardware.automotive.vehicle@2.0-vts.profiler \
+  android.hardware.automotive.vehicle@2.1-vts.profiler \
   android.hardware.biometrics.fingerprint@2.1-vts.profiler \
   android.hardware.bluetooth@1.0-vts.profiler \
   android.hardware.boot@1.0-vts.profiler \
@@ -78,7 +80,7 @@ vts_test_lib_hidl_packages := \
   android.hardware.contexthub@1.0-vts.profiler \
   android.hardware.drm@1.0-vts.profiler \
   android.hardware.dumpstate@1.0-vts.profiler \
-  android.hardware.evs@1.0-vts.profiler \
+  android.hardware.automotive.evs@1.0-vts.profiler \
   android.hardware.gatekeeper@1.0-vts.profiler \
   android.hardware.gnss@1.0-vts.profiler \
   android.hardware.graphics.allocator@2.0-vts.profiler \
@@ -107,6 +109,7 @@ vts_test_lib_hidl_packages := \
   android.hardware.wifi.supplicant@1.0-vts.profiler \
 
 vts_test_lib_hidl_packages += \
+  VtsHalAudioV2_0TargetTest \
   VtsHalAudioEffectV2_0TargetTest \
   VtsHalBiometricsFingerprintV2_1TargetTest \
   VtsHalBluetoothV1_0TargetTest \
@@ -115,6 +118,7 @@ vts_test_lib_hidl_packages += \
   VtsHalCameraProviderV2_4TargetTest \
   VtsHalContexthubV1_0TargetTest \
   VtsHalGatekeeperV1_0TargetTest \
+  VtsHalGnssV1_0TargetTest \
   VtsHalGraphicsAllocatorV2_0TargetTest \
   VtsHalGraphicsComposerV2_1TargetTest \
   VtsHalGraphicsMapperV2_0TargetTest \

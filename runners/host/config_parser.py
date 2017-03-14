@@ -1,4 +1,3 @@
-#!/usr/bin/env python3.4
 #
 # Copyright (C) 2016 The Android Open Source Project
 #
@@ -33,7 +32,7 @@ _DEFAULT_CONFIG_TEMPLATE = {
     },
     "log_path": "/tmp/logs",
     "test_paths": ["./"],
-    "use_gae_db": False,
+    "enable_web": False,
 }
 
 

@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 #
 # Copyright (C) 2016 The Android Open Source Project
 #
@@ -186,6 +185,7 @@ class MirrorObject(object):
         return var_msg
 
     def GetHidlTypeInterface(self, interface_name):
+        """Returns a host-side mirror of a HIDL inteface."""
         result = self._client.ReadSpecification(interface_name)
         logging.info("result %s", result)
         return mirror_object_for_types.MirrorObjectForTypes(result)

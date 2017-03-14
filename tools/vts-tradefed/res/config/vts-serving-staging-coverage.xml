@@ -14,7 +14,7 @@
      limitations under the License.
 -->
 <configuration description="VTS Serving Plan for Coverage (Staging)">
-  <include name="everything" />
+  <include name="vts-base" />
   <option name="plan" value="vts" />
   <option name="test-tag" value="vts-*" />
 
@@ -23,7 +23,10 @@
   <option name="compatibility:include-filter" value="VtsHalAudioEffectV2_0Target" />
   <option name="compatibility:include-filter" value="VtsHalBootV1_0Target" />
   <option name="compatibility:include-filter" value="VtsHalGatekeeperV1_0Target" />
-  <option name="compatibility:include-filter" value="VtsHalLightV1_0Target" />
+  <option name="compatibility:include-filter" value="VtsHalGraphicsAllocatorV2_0Target" />
+  <option name="compatibility:include-filter" value="VtsHalGraphicsComposerV2_1Target" />
+  <option name="compatibility:include-filter" value="VtsHalGraphicsMapperV2_0Target" />
+  <option name="compatibility:include-filter" value="VtsHalLightV2_0Target" />
   <option name="compatibility:include-filter" value="VtsHalMemtrackV1_0Target" />
   <option name="compatibility:include-filter" value="VtsHalNfcV1_0HostPassthrough" />
   <option name="compatibility:include-filter" value="VtsHalNfcV1_0Target" />
@@ -34,5 +37,4 @@
   <option name="compatibility:include-filter" value="VtsHalVibratorV1_0Target" />
   <option name="compatibility:include-filter" value="VtsHalVrV1_0Target" />
 
-  <template-include name="reporters" default="basic-reporters" />
 </configuration>

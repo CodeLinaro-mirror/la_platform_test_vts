@@ -1,4 +1,3 @@
-#!/usr/bin/env python3.4
 #
 # Copyright (C) 2016 The Android Open Source Project
 #
@@ -19,6 +18,19 @@ import os
 import operator
 import ntpath
 
+
+def _SafeStrip(value):
+    '''Strip string value if value is not None.
+
+    Args:
+        value: string, value to strip
+
+    Returns:
+        stripped string; None if input value is None.
+    '''
+    if value is None:
+        return value
+    return value.strip()
 
 class BinaryTestCase(object):
     '''A class to represent a binary test case.
@@ -88,6 +100,7 @@ class BinaryTestCase(object):
         envp = 'env %s' % self.envp if self.envp else ''
         ld_library_path = ('LD_LIBRARY_PATH=%s ' % self.ld_library_path
                            if self.ld_library_path else '')
+
         if ld_library_path:
             envp = ('{}{}'.format(envp, ld_library_path)
                     if envp else 'env %s' % ld_library_path)
@@ -108,7 +121,7 @@ class BinaryTestCase(object):
     @test_suite.setter
     def test_suite(self, test_suite):
         '''Set test_suite'''
-        self._test_suite = test_suite
+        self._test_suite = _SafeStrip(test_suite)
 
     @property
     def test_name(self):
@@ -118,7 +131,7 @@ class BinaryTestCase(object):
     @test_name.setter
     def test_name(self, test_name):
         '''Set test_name'''
-        self._test_name = test_name
+        self._test_name = _SafeStrip(test_name)
 
     @property
     def path(self):
@@ -128,7 +141,7 @@ class BinaryTestCase(object):
     @path.setter
     def path(self, path):
         '''Set path'''
-        self._path = path
+        self._path = _SafeStrip(path)
 
     @property
     def cmd(self):
@@ -141,7 +154,7 @@ class BinaryTestCase(object):
     @cmd.setter
     def cmd(self, cmd):
         '''Set path'''
-        self._cmd = cmd
+        self._cmd = _SafeStrip(cmd)
 
     @property
     def tag(self):
@@ -151,7 +164,7 @@ class BinaryTestCase(object):
     @tag.setter
     def tag(self, tag):
         '''Set tag'''
-        self._tag = tag
+        self._tag = _SafeStrip(tag)
 
     @property
     def working_directory(self):
@@ -161,7 +174,7 @@ class BinaryTestCase(object):
     @working_directory.setter
     def working_directory(self, working_directory):
         '''Set working_directory'''
-        self._working_directory = working_directory
+        self._working_directory = _SafeStrip(working_directory)
 
     @property
     def ld_library_path(self):
@@ -171,7 +184,7 @@ class BinaryTestCase(object):
     @ld_library_path.setter
     def ld_library_path(self, ld_library_path):
         '''Set ld_library_path'''
-        self._ld_library_path = ld_library_path
+        self._ld_library_path = _SafeStrip(ld_library_path)
 
     @property
     def envp(self):
@@ -181,7 +194,7 @@ class BinaryTestCase(object):
     @envp.setter
     def envp(self, envp):
         '''Set env'''
-        self._envp = envp
+        self._envp = _SafeStrip(envp)
 
     @property
     def args(self):
@@ -191,4 +204,4 @@ class BinaryTestCase(object):
     @args.setter
     def args(self, args):
         '''Set args'''
-        self._args = args
+        self._args = _SafeStrip(args)

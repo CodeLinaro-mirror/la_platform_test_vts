@@ -1,4 +1,3 @@
-#!/usr/bin/env python3.4
 #
 # Copyright (C) 2016 The Android Open Source Project
 #
@@ -20,30 +19,35 @@ import os
 import ntpath
 
 from vts.runners.host import asserts
-from vts.runners.host import base_test_with_webdb
+from vts.runners.host import base_test
 from vts.runners.host import const
 from vts.runners.host import keys
 from vts.runners.host import test_runner
 from vts.utils.python.controllers import android_device
 from vts.utils.python.common import list_utils
-from vts.utils.python.coverage import coverage_utils
-from vts.utils.python.profiling import profiling_utils
+from vts.utils.python.web import feature_utils
 
 from vts.testcases.template.binary_test import binary_test_case
 
 
-class BinaryTest(base_test_with_webdb.BaseTestWithWebDbClass):
+class BinaryTest(base_test.BaseTestClass):
     '''Base class to run binary tests on target.
 
     Attributes:
         _dut: AndroidDevice, the device under test as config
         shell: ShellMirrorObject, shell mirror
-        test_cases: list of BinaryTestCase objects, list of test cases to run
+        testcases: list of BinaryTestCase objects, list of test cases to run
         tags: all the tags that appeared in binary list
         DEVICE_TMP_DIR: string, temp location for storing binary
         TAG_DELIMITER: string, separator used to separate tag and path
         _skip_all_testcases: boolean - True to skip all test cases.
+        SYSPROP_VTS_NATIVE_SERVER: string, the name of a system property which
+                                   tells whether to stop properly configured
+                                   native servers where properly configured
+                                   means a server's init.rc is configured to
+                                   stop when that property's value is 1.
     '''
+    SYSPROP_VTS_NATIVE_SERVER = "vts.native_server.on"
 
     DEVICE_TMP_DIR = '/data/local/tmp'
     TAG_DELIMITER = '::'
@@ -52,8 +56,8 @@ class BinaryTest(base_test_with_webdb.BaseTestWithWebDbClass):
     DEFAULT_TAG_64 = '_64bit'
     DEFAULT_LD_LIBRARY_PATH_32 = '/data/local/tmp/32/'
     DEFAULT_LD_LIBRARY_PATH_64 = '/data/local/tmp/64/'
-    DEFAULT_PROFILING_LIBRARY_PATH_32 = '/data/local/tmp/32/hw/'
-    DEFAULT_PROFILING_LIBRARY_PATH_64 = '/data/local/tmp/64/hw/'
+    DEFAULT_PROFILING_LIBRARY_PATH_32 = '/data/local/tmp/32/'
+    DEFAULT_PROFILING_LIBRARY_PATH_64 = '/data/local/tmp/64/'
 
     def setUpClass(self):
         '''Prepare class, push binaries, set permission, create test cases.'''
@@ -61,89 +65,78 @@ class BinaryTest(base_test_with_webdb.BaseTestWithWebDbClass):
 
         required_params = [
             keys.ConfigKeys.IKEY_DATA_FILE_PATH,
-            keys.ConfigKeys.IKEY_BINARY_TEST_SOURCES,
+            keys.ConfigKeys.IKEY_BINARY_TEST_SOURCE,
         ]
         opt_params = [
-            keys.ConfigKeys.IKEY_BINARY_TEST_WORKING_DIRECTORIES,
-            keys.ConfigKeys.IKEY_BINARY_TEST_LD_LIBRARY_PATHS,
-            keys.ConfigKeys.IKEY_BINARY_TEST_PROFILING_LIBRARY_PATHS,
+            keys.ConfigKeys.IKEY_BINARY_TEST_WORKING_DIRECTORY,
+            keys.ConfigKeys.IKEY_BINARY_TEST_LD_LIBRARY_PATH,
+            keys.ConfigKeys.IKEY_BINARY_TEST_PROFILING_LIBRARY_PATH,
             keys.ConfigKeys.IKEY_BINARY_TEST_DISABLE_FRAMEWORK,
+            keys.ConfigKeys.IKEY_BINARY_TEST_STOP_NATIVE_SERVERS,
         ]
         self.getUserParams(
             req_param_names=required_params, opt_param_names=opt_params)
 
         # test-module-name is required in binary tests.
         self.getUserParam(
-            keys.ConfigKeys.KEY_TESTBED_NAME,
-            error_if_not_found=True)
+            keys.ConfigKeys.KEY_TESTBED_NAME, error_if_not_found=True)
 
-        self.binary_test_sources = list_utils.ExpandItemDelimiters(
-            self.binary_test_sources,
-            const.LIST_ITEM_DELIMITER,
-            strip=True,
-            to_str=True)
+        self.binary_test_source = map(str, self.binary_test_source)
 
         logging.info("%s: %s", keys.ConfigKeys.IKEY_DATA_FILE_PATH,
                      self.data_file_path)
-        logging.info("%s: %s", keys.ConfigKeys.IKEY_BINARY_TEST_SOURCES,
-                     self.binary_test_sources)
-        self.working_directories = {}
-        if hasattr(self, keys.ConfigKeys.IKEY_BINARY_TEST_WORKING_DIRECTORIES):
-            self.binary_test_working_directories = list_utils.ExpandItemDelimiters(
-                self.binary_test_working_directories,
-                const.LIST_ITEM_DELIMITER,
-                strip=True,
-                to_str=True)
-            for token in self.binary_test_working_directories:
+        logging.info("%s: %s", keys.ConfigKeys.IKEY_BINARY_TEST_SOURCE,
+                     self.binary_test_source)
+        self.working_directory = {}
+        if hasattr(self, keys.ConfigKeys.IKEY_BINARY_TEST_WORKING_DIRECTORY):
+            self.binary_test_working_directory = map(
+                str, self.binary_test_working_directory)
+            for token in self.binary_test_working_directory:
                 tag = ''
                 path = token
                 if self.TAG_DELIMITER in token:
                     tag, path = token.split(self.TAG_DELIMITER)
-                self.working_directories[tag] = path
+                self.working_directory[tag] = path
 
-        self.ld_library_paths = {
+        self.ld_library_path = {
             self.DEFAULT_TAG_32: self.DEFAULT_LD_LIBRARY_PATH_32,
             self.DEFAULT_TAG_64: self.DEFAULT_LD_LIBRARY_PATH_64,
         }
-        if hasattr(self, keys.ConfigKeys.IKEY_BINARY_TEST_LD_LIBRARY_PATHS):
-            self.binary_test_ld_library_paths = list_utils.ExpandItemDelimiters(
-                self.binary_test_ld_library_paths,
-                const.LIST_ITEM_DELIMITER,
-                strip=True,
-                to_str=True)
-            for token in self.binary_test_ld_library_paths:
+        if hasattr(self, keys.ConfigKeys.IKEY_BINARY_TEST_LD_LIBRARY_PATH):
+            self.binary_test_ld_library_path = map(
+                str, self.binary_test_ld_library_path)
+            for token in self.binary_test_ld_library_path:
                 tag = ''
                 path = token
                 if self.TAG_DELIMITER in token:
                     tag, path = token.split(self.TAG_DELIMITER)
-                if tag in self.ld_library_paths:
-                    self.ld_library_paths[tag] = '{}:{}'.format(
-                        path, self.ld_library_paths[tag])
+                if tag in self.ld_library_path:
+                    self.ld_library_path[tag] = '{}:{}'.format(
+                        path, self.ld_library_path[tag])
                 else:
-                    self.ld_library_paths[tag] = path
+                    self.ld_library_path[tag] = path
 
-        self.profiling_library_paths = {
+        self.profiling_library_path = {
             self.DEFAULT_TAG_32: self.DEFAULT_PROFILING_LIBRARY_PATH_32,
             self.DEFAULT_TAG_64: self.DEFAULT_PROFILING_LIBRARY_PATH_64,
         }
         if hasattr(self,
-                   keys.ConfigKeys.IKEY_BINARY_TEST_PROFILING_LIBRARY_PATHS):
-            self.binary_test_profiling_library_paths = list_utils.ExpandItemDelimiters(
-                self.binary_test_profiling_library_paths,
-                const.LIST_ITEM_DELIMITER,
-                strip=True,
-                to_str=True)
-            for token in self.binary_test_profiling_library_paths:
+                   keys.ConfigKeys.IKEY_BINARY_TEST_PROFILING_LIBRARY_PATH):
+            self.binary_test_profiling_library_path = map(
+                str, self.binary_test_profiling_library_path)
+            for token in self.binary_test_profiling_library_path:
                 tag = ''
                 path = token
                 if self.TAG_DELIMITER in token:
                     tag, path = token.split(self.TAG_DELIMITER)
-                self.profiling_library_paths[tag] = path
+                self.profiling_library_path[tag] = path
         self._dut = self.registerController(android_device)[0]
         self._dut.shell.InvokeTerminal("one")
         self.shell = self._dut.shell.one
-        if getattr(self, keys.ConfigKeys.IKEY_ENABLE_COVERAGE, False):
-            coverage_utils.InitializeDeviceCoverage(self._dut)
+        if self.coverage.enabled:
+            self.coverage.LoadArtifacts()
+            self.coverage.InitializeDeviceCoverage(self._dut)
+
         # TODO: only set permissive mode for userdebug and eng build.
         self.shell.Execute("setenforce 0")  # SELinux permissive mode
         self.testcases = []
@@ -165,9 +158,14 @@ class BinaryTest(base_test_with_webdb.BaseTestWithWebDbClass):
                    False):
             self._dut.stop()
 
+        if getattr(self, keys.ConfigKeys.IKEY_BINARY_TEST_STOP_NATIVE_SERVERS,
+                   False):
+            # Stops all (properly configured) native servers.
+            results = self._dut.setProp(self.SYSPROP_VTS_NATIVE_SERVER, "1")
+
     def CreateTestCases(self):
         '''Push files to device and create test case objects.'''
-        source_list = list(map(self.ParseTestSource, self.binary_test_sources))
+        source_list = list(map(self.ParseTestSource, self.binary_test_source))
         source_list = filter(bool, source_list)
         logging.info('Parsed test sources: %s', source_list)
 
@@ -235,22 +233,26 @@ class BinaryTest(base_test_with_webdb.BaseTestWithWebDbClass):
 
     def tearDownClass(self):
         '''Perform clean-up tasks'''
+        if getattr(self, keys.ConfigKeys.IKEY_BINARY_TEST_STOP_NATIVE_SERVERS,
+                   False):
+            # Restarts all (properly configured) native servers.
+            results = self._dut.setProp(self.SYSPROP_VTS_NATIVE_SERVER, "0")
+
         # Restart Android runtime.
         if getattr(self, keys.ConfigKeys.IKEY_BINARY_TEST_DISABLE_FRAMEWORK,
                    False):
             self._dut.start()
 
         # Retrieve coverage if applicable
-        if getattr(self, keys.ConfigKeys.IKEY_ENABLE_COVERAGE, False):
-            gcda_dict = coverage_utils.GetGcdaDict(self._dut)
-            self.SetCoverageData(gcda_dict, True)
+        if self.coverage.enabled:
+            self.coverage.SetCoverageData(dut=self._dut, isGlobal=True)
 
         # Clean up the pushed binaries
         logging.info('Start class cleaning up jobs.')
         # Delete pushed files
 
         sources = [self.ParseTestSource(src)
-                   for src in self.binary_test_sources]
+                   for src in self.binary_test_source]
         sources = set(filter(bool, sources))
         paths = [dst for src, dst, tag in sources if src and dst]
         cmd = ['rm -rf %s' % dst for dst in paths]
@@ -268,8 +270,8 @@ class BinaryTest(base_test_with_webdb.BaseTestWithWebDbClass):
         if not cmd_results or any(cmd_results[const.EXIT_CODE]):
             logging.warning('Failed to remove: %s', cmd_results)
 
-        if self.enable_profiling:
-            self.ProcessAndUploadTraceData()
+        if self.profiling.enabled:
+            self.profiling.ProcessAndUploadTraceData()
 
         logging.info('Finished class cleaning up jobs.')
 
@@ -306,8 +308,8 @@ class BinaryTest(base_test_with_webdb.BaseTestWithWebDbClass):
         push_only = dst is not None and dst == ''
 
         if not dst:
-            if tag in self.working_directories:
-                dst = os.path.join(self.working_directories[tag],
+            if tag in self.working_directory:
+                dst = os.path.join(self.working_directory[tag],
                                    ntpath.basename(src))
             else:
                 dst = os.path.join(self.DEVICE_TMP_DIR, 'binary_test_temp_%s' %
@@ -329,12 +331,12 @@ class BinaryTest(base_test_with_webdb.BaseTestWithWebDbClass):
         Returns:
             A list of BinaryTestCase objects
         '''
-        working_directory = self.working_directories[
-            tag] if tag in self.working_directories else None
-        ld_library_path = self.ld_library_paths[
-            tag] if tag in self.ld_library_paths else None
-        profiling_library_path = self.profiling_library_paths[
-            tag] if tag in self.profiling_library_paths else None
+        working_directory = self.working_directory[
+            tag] if tag in self.working_directory else None
+        ld_library_path = self.ld_library_path[
+            tag] if tag in self.ld_library_path else None
+        profiling_library_path = self.profiling_library_path[
+            tag] if tag in self.profiling_library_path else None
 
         return binary_test_case.BinaryTestCase(
             '', ntpath.basename(path), path, tag, self.PutTag,
@@ -361,9 +363,9 @@ class BinaryTest(base_test_with_webdb.BaseTestWithWebDbClass):
         if self._skip_all_testcases:
             asserts.skip("All test cases skipped")
 
-        if self.enable_profiling:
-            profiling_utils.EnableVTSProfiling(
-                self.shell, test_case.profiling_library_path)
+        if self.profiling.enabled:
+            self.profiling.EnableVTSProfiling(self.shell,
+                                              test_case.profiling_library_path)
 
         cmd = test_case.GetRunCommand()
         logging.info("Executing binary test command: %s", cmd)
@@ -371,11 +373,9 @@ class BinaryTest(base_test_with_webdb.BaseTestWithWebDbClass):
 
         self.VerifyTestResult(test_case, command_results)
 
-        if self.enable_profiling:
-            profiling_trace_path = getattr(self,
-                                           self.VTS_PROFILING_TRACING_PATH, "")
-            self.ProcessTraceDataForTestCase(self._dut, profiling_trace_path)
-            profiling_utils.DisableVTSProfiling(self.shell)
+        if self.profiling.enabled:
+            self.profiling.ProcessTraceDataForTestCase(self._dut)
+            self.profiling.DisableVTSProfiling(self.shell)
 
     def generateAllTests(self):
         '''Runs all binary tests.'''

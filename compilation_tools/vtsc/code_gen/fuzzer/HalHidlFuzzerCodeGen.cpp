@@ -16,6 +16,7 @@
 
 #include "HalHidlFuzzerCodeGen.h"
 #include "VtsCompilerUtils.h"
+#include "code_gen/common/HalHidlCodeGenUtils.h"
 #include "utils/InterfaceSpecUtil.h"
 #include "utils/StringUtil.h"
 
@@ -27,42 +28,9 @@ using std::vector;
 namespace android {
 namespace vts {
 
-void HalHidlFuzzerCodeGen::GenerateBuildFile(Formatter &out) {
-  GenerateWarningComment(out);
-  for (const auto &func_spec : comp_spec_.interface().api()) {
-    if (func_spec.arg_size() == 0) {
-      continue;
-    }
-    out << "cc_binary {\n";
-    out.indent();
-    out << "name: \"" << GetFuzzerBinaryName(func_spec) << "\",\n";
-    out << "srcs: [\"" << GetFuzzerSourceName(func_spec) << ".cpp\"],\n";
-    string comp_version = GetVersionString(comp_spec_.component_type_version());
-    string hal_lib = comp_spec_.package() + "@" + comp_version;
-    out << "include_dirs: [\"external/llvm/lib/Fuzzer\"],\n";
-    out << "shared_libs: [\n";
-    out.indent();
-    out << "\"" << hal_lib << "\",\n";
-    out << "\"libutils\",\n";
-    out << "\"libhidlbase\",\n";
-    out << "\"libhidltransport\",\n";
-    out << "\"libhardware\",\n";
-    out.unindent();
-    out << "],\n";
-    out << "static_libs: [\"libLLVMFuzzer\"],\n";
-    out << "cflags: [\n";
-    out.indent();
-    out << "\"-Wno-unused-parameter\",\n";
-    out << "\"-fno-omit-frame-pointer\",\n";
-    out.unindent();
-    out << "],\n";
-    out.unindent();
-    out << "}\n\n";
-  }
-}
-
 void HalHidlFuzzerCodeGen::GenerateSourceIncludeFiles(Formatter &out) {
   out << "#include <iostream>\n\n";
+  out << "#include \"FuncFuzzerUtils.h\"\n";
   out << "#include <FuzzerInterface.h>\n";
 
   string package_path = comp_spec_.package();
@@ -77,7 +45,8 @@ void HalHidlFuzzerCodeGen::GenerateSourceIncludeFiles(Formatter &out) {
 
 void HalHidlFuzzerCodeGen::GenerateUsingDeclaration(Formatter &out) {
   out << "using std::cerr;\n";
-  out << "using std::endl;\n\n";
+  out << "using std::endl;\n";
+  out << "using std::string;\n\n";
 
   string package_path = comp_spec_.package();
   ReplaceSubString(package_path, ".", "::");
@@ -89,6 +58,56 @@ void HalHidlFuzzerCodeGen::GenerateUsingDeclaration(Formatter &out) {
   out << "\n";
 }
 
+void HalHidlFuzzerCodeGen::GenerateGlobalVars(Formatter &out) {
+  out << "static string target_func;\n\n";
+}
+
+void HalHidlFuzzerCodeGen::GenerateLLVMFuzzerInitialize(Formatter &out) {
+  out << "extern \"C\" int LLVMFuzzerInitialize(int *argc, char ***argv) "
+         "{\n";
+  out.indent();
+  out << "FuncFuzzerParams params{ExtractFuncFuzzerParams(*argc, *argv)};\n";
+  out << "target_func = params.target_func_;\n";
+  out << "return 0;\n";
+  out.unindent();
+  out << "}\n\n";
+}
+
+void HalHidlFuzzerCodeGen::GenerateLLVMFuzzerTestOneInput(Formatter &out) {
+  out << "extern \"C\" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t "
+         "size) {\n";
+  out.indent();
+  out << "static ::android::sp<" << comp_spec_.component_name() << "> "
+      << GetHalPointerName() << " = " << comp_spec_.component_name()
+      << "::getService(true);\n";
+  out << "if (" << GetHalPointerName() << " == nullptr) {\n";
+  out.indent();
+  out << "cerr << \"" << comp_spec_.component_name()
+      << "::getService() failed\" << endl;\n";
+  out << "exit(1);\n";
+  out.unindent();
+  out << "}\n\n";
+  for (const auto &func_spec : comp_spec_.interface().api()) {
+    GenerateHalFunctionCall(out, func_spec);
+  }
+  out << "{\n";
+  out.indent();
+  out << "cerr << \"No such function: \" << target_func << endl;\n";
+  out << "exit(1);\n";
+  out.unindent();
+  out << "}\n";
+
+  out.unindent();
+  out << "}\n\n";
+}
+
+string HalHidlFuzzerCodeGen::GetHalPointerName() {
+  string prefix = "android.hardware.";
+  string hal_pointer_name = comp_spec_.package().substr(prefix.size());
+  ReplaceSubString(hal_pointer_name, ".", "_");
+  return hal_pointer_name;
+}
+
 void HalHidlFuzzerCodeGen::GenerateReturnCallback(
     Formatter &out, const FunctionSpecificationMessage &func_spec) {
   if (CanElideCallback(func_spec)) {
@@ -98,30 +117,21 @@ void HalHidlFuzzerCodeGen::GenerateReturnCallback(
   out << "auto " << return_cb_name << " = [](";
   size_t num_cb_arg = func_spec.return_type_hidl_size();
   for (size_t i = 0; i < num_cb_arg; ++i) {
-    out << "auto arg" << i << ((i != num_cb_arg - 1) ? ", " : "");
+    const auto &return_val = func_spec.return_type_hidl(i);
+    out << GetCppVariableType(return_val, nullptr,
+                              IsConstType(return_val.type()));
+    out << " arg" << i << ((i != num_cb_arg - 1) ? ", " : "");
   }
   out << "){};\n\n";
 }
 
-void HalHidlFuzzerCodeGen::GenerateLLVMFuzzerTestOneInput(
+void HalHidlFuzzerCodeGen::GenerateHalFunctionCall(
     Formatter &out, const FunctionSpecificationMessage &func_spec) {
-  string prefix = "android.hardware.";
-  string hal_name = comp_spec_.package().substr(prefix.size());
-
-  out << "extern \"C\" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t "
-         "size) {\n";
+  string func_name = func_spec.name();
+  out << "if (target_func == \"" << func_name << "\") {\n";
   out.indent();
-  out << "static ::android::sp<" << comp_spec_.component_name() << "> "
-      << hal_name << " = " << comp_spec_.component_name()
-      << "::getService(true);\n";
-  out << "if (" << hal_name << " == nullptr) {\n";
-  out.indent();
-  out << "cerr << \"" << comp_spec_.component_name()
-      << "::getService() failed\" << endl;\n";
-  out << "exit(1);\n";
-  out.unindent();
-  out << "}\n\n";
 
+  GenerateReturnCallback(out, func_spec);
   vector<string> types{GetFuncArgTypes(func_spec)};
   for (size_t i = 0; i < types.size(); ++i) {
     out << "size_t type_size" << i << " = sizeof(" << types[i] << ");\n";
@@ -132,7 +142,7 @@ void HalHidlFuzzerCodeGen::GenerateLLVMFuzzerTestOneInput(
     out << "data += type_size" << i << ";\n\n";
   }
 
-  out << hal_name << "->" << func_spec.name() << "(";
+  out << GetHalPointerName() << "->" << func_spec.name() << "(";
   for (size_t i = 0; i < types.size(); ++i) {
     out << "arg" << i << ((i != types.size() - 1) ? ", " : "");
   }
@@ -144,38 +154,25 @@ void HalHidlFuzzerCodeGen::GenerateLLVMFuzzerTestOneInput(
   }
   out << ");\n";
   out << "return 0;\n";
+
   out.unindent();
-  out << "}\n\n";
-}
-
-string HalHidlFuzzerCodeGen::GetFuzzerBinaryName(
-    const FunctionSpecificationMessage &func_spec) {
-  string package = comp_spec_.package();
-  string version = GetVersionString(comp_spec_.component_type_version());
-  string iface_name = comp_spec_.component_name();
-  string func_name = func_spec.name();
-  return package + "@" + version + "-vts.func_fuzzer." + iface_name + "." +
-         func_name;
-}
-
-string HalHidlFuzzerCodeGen::GetFuzzerSourceName(
-    const FunctionSpecificationMessage &func_spec) {
-  string comp_name = comp_spec_.component_name();
-  string func_name = func_spec.name();
-  return comp_name + "_" + func_name + "_fuzzer";
+  out << "} else ";
 }
 
 bool HalHidlFuzzerCodeGen::CanElideCallback(
     const FunctionSpecificationMessage &func_spec) {
-  // Can't elide callback for void or tuple-returning methods.
+  if (func_spec.return_type_hidl_size() == 0) {
+    return true;
+  }
+  // Can't elide callback for void or tuple-returning methods
   if (func_spec.return_type_hidl_size() != 1) {
     return false;
   }
-  if (func_spec.return_type_hidl(0).type() == TYPE_SCALAR ||
-      func_spec.return_type_hidl(0).type() == TYPE_ENUM) {
-    return true;
+  const VariableType &type = func_spec.return_type_hidl(0).type();
+  if (type == TYPE_ARRAY || type == TYPE_VECTOR || type == TYPE_REF) {
+    return false;
   }
-  return false;
+  return IsElidableType(type);
 }
 
 vector<string> HalHidlFuzzerCodeGen::GetFuncArgTypes(

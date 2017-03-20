@@ -14,7 +14,7 @@
 # limitations under the License.
 
 vts_test_bin_packages := \
-    mq_benchmark_service \
+    android.hardware.tests.msgq@1.0-service-benchmark \
     mq_benchmark_client \
     libhwbinder_benchmark \
     libbinder_benchmark \
@@ -32,6 +32,10 @@ vts_test_bin_packages := \
 vts_test_bin_packages += \
     CtsAccelerationTestCases \
     CtsSensorTestCases \
+
+# APKs for app stress tests
+vts_test_bin_packages += \
+    GoogleCameraTests \
 
 # Proto fuzzer executable
 vts_test_bin_packages += \

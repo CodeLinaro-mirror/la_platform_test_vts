@@ -154,6 +154,9 @@ class ProfilingFeature(feature_utils.Feature):
                                            "*.vts.trace"))
         logging.info("enable VTS profiling.")
 
+        # give permission to write the trace file.
+        shell.Execute("chmod 777 " + TARGET_PROFILING_TRACE_PATH)
+
         shell.Execute("setprop hal.instrumentation.lib.path " +
                       hal_instrumentation_lib_path)
         shell.Execute("setprop hal.instrumentation.enable true")
@@ -194,12 +197,11 @@ class ProfilingFeature(feature_utils.Feature):
         ]
 
         results = cmd_utils.ExecuteShellCommand(trace_processor_cmd)
-        if results[const.EXIT_CODE][0] != 0:
-            logging.error(results[const.STDERR][0])
+        if any(results[cmd_utils.EXIT_CODE]):
             logging.error("Fail to execute command: %s" % trace_processor_cmd)
             return profiling_data
 
-        stdout_lines = results[const.STDOUT][0].split("\n")
+        stdout_lines = results[const.STDOUT][1].split("\n")
         first_line = True
         for line in stdout_lines:
             if not line:

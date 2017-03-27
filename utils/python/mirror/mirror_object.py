@@ -161,8 +161,15 @@ class MirrorObject(object):
         var_msg = CompSpecMsg.VariableSpecificationMessage()
         var_msg.name = interface_name
         var_msg.type = CompSpecMsg.TYPE_FUNCTION_POINTER
+        var_msg.is_callback = True
 
-        specification = self._client.ReadSpecification(interface_name)
+        msg = self._if_spec_msg
+        specification = self._client.ReadSpecification(
+            interface_name,
+            msg.component_class,
+            msg.component_type,
+            msg.component_type_version,
+            msg.package)
         logging.info("specification: %s", specification)
         interface = getattr(specification, INTERFACE, None)
         apis = getattr(interface, API, [])
@@ -184,9 +191,34 @@ class MirrorObject(object):
 
         return var_msg
 
-    def GetHidlTypeInterface(self, interface_name):
-        """Returns a host-side mirror of a HIDL inteface."""
-        result = self._client.ReadSpecification(interface_name)
+    def GetHidlTypeInterface(self, interface_name,
+                             target_class=None, target_type=None,
+                             version=None, package=None):
+        """Gets HIDL type interface's host-side mirror.
+
+        Args:
+            interface_name: string, the name of a target interface to read.
+            target_class: integer, optional used to override the loaded HAL's
+                          component_class.
+            target_type: integer, optional used to override the loaded HAL's
+                         component_type.
+            version: integer, optional used to override the loaded HAL's
+                     component_type_version.
+            package: integer, optional used to override the loaded HAL's
+                              package.
+
+        Returns:
+            a host-side mirror of a HIDL interface
+        """
+        msg = self._if_spec_msg
+        result = self._client.ReadSpecification(
+            interface_name,
+            msg.component_class if target_class is None else target_class,
+            msg.component_type if target_type is None else target_type,
+            msg.component_type_version if version is None else version,
+            msg.package if package is None else package,
+            recursive=True)
+
         logging.info("result %s", result)
         return mirror_object_for_types.MirrorObjectForTypes(result)
 

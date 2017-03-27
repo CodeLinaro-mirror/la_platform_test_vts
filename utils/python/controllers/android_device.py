@@ -580,13 +580,17 @@ class AndroidDevice(object):
 
     def start(self):
         """Starts Android runtime and waits for ACTION_BOOT_COMPLETED."""
+        logging.info("starting Android Runtime")
         self.adb.shell("start")
         self.waitForBootCompletion()
+        logging.info("Android Runtime started")
 
     def stop(self):
         """Stops Android runtime."""
+        logging.info("stopping Android Runtime")
         self.adb.shell("stop")
         self.setProp("sys.boot_completed", 0)
+        logging.info("Android Runtime stopped")
 
     def setProp(self, name, value):
         """Calls setprop shell command.
@@ -612,7 +616,7 @@ class AndroidDevice(object):
                           "is not yet supported. No property is set.")
             return
 
-        self.adb.shell("\'setprop %s \"%s\"\'" % (name, value))
+        self.adb.shell("setprop %s \"%s\"" % (name, value))
 
     def getProp(self, name):
         """Calls getprop shell command.

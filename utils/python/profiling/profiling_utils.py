@@ -23,6 +23,7 @@ from vts.runners.host import asserts
 from vts.runners.host import const
 from vts.runners.host import keys
 from vts.utils.python.common import cmd_utils
+from vts.utils.python.os import path_utils
 from vts.utils.python.web import feature_utils
 
 LOCAL_PROFILING_TRACE_PATH = "/tmp/vts-test-trace"
@@ -88,15 +89,13 @@ class ProfilingFeature(feature_utils.Feature):
         self.web = web
         logging.info("Profiling enabled: %s", self.enabled)
 
-    @staticmethod
-    def _IsEventFromBinderizedHal(event_type):
+    def _IsEventFromBinderizedHal(self, event_type):
         """Returns True if the event type is from a binderized HAL."""
         if event_type in [8, 9]:
             return False
         return True
 
-    @staticmethod
-    def GetTraceFiles(dut, host_profiling_trace_path, trace_file_tool):
+    def GetTraceFiles(self, dut, host_profiling_trace_path, trace_file_tool):
         """Pulls the trace file and save it under the profiling trace path.
 
         Args:
@@ -114,8 +113,9 @@ class ProfilingFeature(feature_utils.Feature):
             host_profiling_trace_path = LOCAL_PROFILING_TRACE_PATH
 
         dut.shell.InvokeTerminal("profiling_shell")
-        results = dut.shell.profiling_shell.Execute("ls " + os.path.join(
-            TARGET_PROFILING_TRACE_PATH, "*.vts.trace"))
+        target_trace_file = path_utils.JoinTargetPath(
+            TARGET_PROFILING_TRACE_PATH, "*.vts.trace")
+        results = dut.shell.profiling_shell.Execute("ls " + target_trace_file)
         asserts.assertTrue(results, "failed to find trace file")
         stdout_lines = results[const.STDOUT][0].split("\n")
         logging.info("stdout: %s", stdout_lines)
@@ -140,9 +140,8 @@ class ProfilingFeature(feature_utils.Feature):
                 trace_files.append(temp_file_name)
         return trace_files
 
-    @staticmethod
     def EnableVTSProfiling(
-            shell, hal_instrumentation_lib_path=HAL_INSTRUMENTATION_LIB_PATH):
+            self, shell, hal_instrumentation_lib_path=HAL_INSTRUMENTATION_LIB_PATH):
         """ Enable profiling by setting the system property.
 
         Args:
@@ -161,8 +160,7 @@ class ProfilingFeature(feature_utils.Feature):
                       hal_instrumentation_lib_path)
         shell.Execute("setprop hal.instrumentation.enable true")
 
-    @staticmethod
-    def DisableVTSProfiling(shell):
+    def DisableVTSProfiling(self, shell):
         """ Disable profiling by resetting the system property.
 
         Args:

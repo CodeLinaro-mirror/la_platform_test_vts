@@ -16,7 +16,6 @@
 
 import logging
 import os
-import ntpath
 
 from vts.runners.host import asserts
 from vts.runners.host import base_test
@@ -25,6 +24,7 @@ from vts.runners.host import keys
 from vts.runners.host import test_runner
 from vts.utils.python.controllers import android_device
 from vts.utils.python.common import list_utils
+from vts.utils.python.os import path_utils
 from vts.utils.python.web import feature_utils
 
 from vts.testcases.template.binary_test import binary_test_case
@@ -59,15 +59,15 @@ class BinaryTest(base_test.BaseTestClass):
     DEFAULT_PROFILING_LIBRARY_PATH_32 = '/data/local/tmp/32/'
     DEFAULT_PROFILING_LIBRARY_PATH_64 = '/data/local/tmp/64/'
 
+    _skip_all_testcases = False
+
     def setUpClass(self):
         '''Prepare class, push binaries, set permission, create test cases.'''
-        self._skip_all_testcases = False
-
         required_params = [
             keys.ConfigKeys.IKEY_DATA_FILE_PATH,
-            keys.ConfigKeys.IKEY_BINARY_TEST_SOURCE,
         ]
         opt_params = [
+            keys.ConfigKeys.IKEY_BINARY_TEST_SOURCE,
             keys.ConfigKeys.IKEY_BINARY_TEST_WORKING_DIRECTORY,
             keys.ConfigKeys.IKEY_BINARY_TEST_LD_LIBRARY_PATH,
             keys.ConfigKeys.IKEY_BINARY_TEST_PROFILING_LIBRARY_PATH,
@@ -81,12 +81,12 @@ class BinaryTest(base_test.BaseTestClass):
         self.getUserParam(
             keys.ConfigKeys.KEY_TESTBED_NAME, error_if_not_found=True)
 
-        self.binary_test_source = map(str, self.binary_test_source)
-
         logging.info("%s: %s", keys.ConfigKeys.IKEY_DATA_FILE_PATH,
                      self.data_file_path)
-        logging.info("%s: %s", keys.ConfigKeys.IKEY_BINARY_TEST_SOURCE,
-                     self.binary_test_source)
+
+        self.binary_test_source = self.getUserParam(
+            keys.ConfigKeys.IKEY_BINARY_TEST_SOURCE, default_value=[])
+
         self.working_directory = {}
         if hasattr(self, keys.ConfigKeys.IKEY_BINARY_TEST_WORKING_DIRECTORY):
             self.binary_test_working_directory = map(
@@ -130,9 +130,13 @@ class BinaryTest(base_test.BaseTestClass):
                 if self.TAG_DELIMITER in token:
                     tag, path = token.split(self.TAG_DELIMITER)
                 self.profiling_library_path[tag] = path
-        self._dut = self.registerController(android_device)[0]
+
+        if not hasattr(self, "_dut"):
+            self._dut = self.registerController(android_device)[0]
+
         self._dut.shell.InvokeTerminal("one")
         self.shell = self._dut.shell.one
+
         if self.coverage.enabled:
             self.coverage.LoadArtifacts()
             self.coverage.InitializeDeviceCoverage(self._dut)
@@ -261,7 +265,7 @@ class BinaryTest(base_test.BaseTestClass):
             logging.warning('Failed to clean up test class: %s', cmd_results)
 
         # Delete empty directories in working directories
-        dir_set = set(ntpath.dirname(dst) for dst in paths)
+        dir_set = set(path_utils.TargetDirName(dst) for dst in paths)
         dir_set.add(self.ParseTestSource('')[1])
         dirs = list(dir_set)
         dirs.sort(lambda x, y: cmp(len(y), len(x)))
@@ -309,12 +313,13 @@ class BinaryTest(base_test.BaseTestClass):
 
         if not dst:
             if tag in self.working_directory:
-                dst = os.path.join(self.working_directory[tag],
-                                   ntpath.basename(src))
+                dst = path_utils.JoinTargetPath(self.working_directory[tag],
+                                                os.path.basename(src))
             else:
-                dst = os.path.join(self.DEVICE_TMP_DIR, 'binary_test_temp_%s' %
-                                   self.__class__.__name__, tag,
-                                   ntpath.basename(src))
+                dst = path_utils.JoinTargetPath(self.DEVICE_TMP_DIR,
+                                                'binary_test_temp_%s' %
+                                                self.__class__.__name__, tag,
+                                                os.path.basename(src))
 
         if push_only:
             tag = None
@@ -339,7 +344,7 @@ class BinaryTest(base_test.BaseTestClass):
             tag] if tag in self.profiling_library_path else None
 
         return binary_test_case.BinaryTestCase(
-            '', ntpath.basename(path), path, tag, self.PutTag,
+            '', path_utils.TargetBaseName(path), path, tag, self.PutTag,
             working_directory, ld_library_path, profiling_library_path)
 
     def VerifyTestResult(self, test_case, command_results):

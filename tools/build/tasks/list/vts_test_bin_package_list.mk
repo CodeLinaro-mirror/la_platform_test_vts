@@ -15,7 +15,11 @@
 
 vts_test_bin_packages := \
     android.hardware.tests.msgq@1.0-service-benchmark \
+    android.hardware.tests.msgq@1.0-service-test \
+    fmq_test \
+    hidl_test_helper \
     mq_benchmark_client \
+    mq_test_client \
     libhwbinder_benchmark \
     libbinder_benchmark \
     vts_test_binary_crash_app \
@@ -32,10 +36,6 @@ vts_test_bin_packages := \
 vts_test_bin_packages += \
     CtsAccelerationTestCases \
     CtsSensorTestCases \
-
-# APKs for app stress tests
-vts_test_bin_packages += \
-    GoogleCameraTests \
 
 # Proto fuzzer executable
 vts_test_bin_packages += \

@@ -21,6 +21,7 @@ from vts.runners.host import keys
 from vts.runners.host import test_runner
 from vts.testcases.template.gtest_binary_test import gtest_binary_test
 from vts.utils.python.common import vintf_utils
+from vts.utils.python.controllers import android_device
 from vts.utils.python.cpu import cpu_frequency_scaling
 from xml.etree import ElementTree
 
@@ -41,10 +42,13 @@ class HidlHalGTest(gtest_binary_test.GtestBinaryTest):
     '''
 
     def setUpClass(self):
-        """Turns on CPU frequency scaling."""
-        super(HidlHalGTest, self).setUpClass()
+        """Checks precondition."""
+        self._dut = self.registerController(android_device)[0]
+        self._dut.shell.InvokeTerminal("hal_hidl_gtest")
+        shell = self._dut.shell.hal_hidl_gtest
 
         opt_params = [
+            keys.ConfigKeys.IKEY_ABI_BITNESS,
             keys.ConfigKeys.IKEY_PRECONDITION_HWBINDER_SERVICE,
             keys.ConfigKeys.IKEY_PRECONDITION_FEATURE,
             keys.ConfigKeys.IKEY_PRECONDITION_FILE_PATH_PREFIX,
@@ -75,7 +79,7 @@ class HidlHalGTest(gtest_binary_test.GtestBinaryTest):
                 logging.error("The given hwbinder service name %s is invalid.",
                               hwbinder_service_name)
             else:
-                cmd_results = self.shell.Execute("ps -A")
+                cmd_results = shell.Execute("ps -A")
                 hwbinder_service_name += "@"
                 if (any(cmd_results[const.EXIT_CODE]) or hwbinder_service_name
                         not in cmd_results[const.STDOUT][0]):
@@ -92,7 +96,7 @@ class HidlHalGTest(gtest_binary_test.GtestBinaryTest):
                         "The given feature name %s is invalid for HIDL HAL.",
                         feature)
                 else:
-                    cmd_results = self.shell.Execute("pm list features")
+                    cmd_results = shell.Execute("pm list features")
                     if (any(cmd_results[const.EXIT_CODE]) or
                             feature not in cmd_results[const.STDOUT][0]):
                         logging.warn("The required feature %s not found.",
@@ -104,7 +108,7 @@ class HidlHalGTest(gtest_binary_test.GtestBinaryTest):
                 getattr(self, keys.ConfigKeys.
                         IKEY_PRECONDITION_FILE_PATH_PREFIX, ""))
             if file_path_prefix:
-                cmd_results = self.shell.Execute("ls %s*" % file_path_prefix)
+                cmd_results = shell.Execute("ls %s*" % file_path_prefix)
                 if any(cmd_results[const.EXIT_CODE]):
                     logging.warn("The required file (prefix: %s) not found.",
                                  file_path_prefix)
@@ -118,18 +122,38 @@ class HidlHalGTest(gtest_binary_test.GtestBinaryTest):
                 if vintf_xml:
                     hwbinder_hals, passthrough_hals = vintf_utils.GetHalDescriptions(
                         vintf_xml)
-                    if (not hwbinder_hals) or (not passthrough_hals):
+                    if not hwbinder_hals or not passthrough_hals:
                         logging.error("can't check precondition due to a "
                                       "lshal output format error.")
-                    if (feature not in hwbinder_hals and
-                        feature not in passthrough_hals):
-                        logging.warn("The required feature %s not found.",
-                                     feature)
+                    elif (feature not in hwbinder_hals and
+                          feature not in passthrough_hals):
+                        logging.warn(
+                            "The required feature %s not found by lshal.",
+                            feature)
                         self._skip_all_testcases = True
+                    elif (feature not in hwbinder_hals and
+                          feature in passthrough_hals):
+                        if hasattr(self, keys.ConfigKeys.IKEY_ABI_BITNESS):
+                            bitness = getattr(self,
+                                              keys.ConfigKeys.IKEY_ABI_BITNESS)
+                            if (bitness not in
+                                passthrough_hals[feature].hal_archs):
+                                logging.warn(
+                                    "The required feature %s found as a "
+                                    "passthrough hal but the client bitness %s "
+                                    "not supported",
+                                    feature, self.bitness)
+                                self._skip_all_testcases = True
+                    else:
+                        logging.info(
+                            "The feature %s found in lshal-emitted vintf xml",
+                            feature)
         if not self._skip_all_testcases:
             self._cpu_freq = cpu_frequency_scaling.CpuFrequencyScalingController(
                 self._dut)
             self._cpu_freq.DisableCpuScaling()
+
+        super(HidlHalGTest, self).setUpClass()
 
     def _EnablePassthroughMode(self):
         """Enable passthrough mode by setting getStub to true.
@@ -148,22 +172,22 @@ class HidlHalGTest(gtest_binary_test.GtestBinaryTest):
                          'enable passthrough mode option.')
             self.user_params[keys.ConfigKeys.IKEY_PASSTHROUGH_MODE] = True
 
-    def setUpTest(self):
+    def setUp(self):
         """Skips the test case if thermal throttling lasts for 30 seconds."""
-        super(HidlHalGTest, self).setUpTest()
+        super(HidlHalGTest, self).setUp()
         if not self._skip_all_testcases:
             if self._cpu_freq and self._skip_if_thermal_throttling:
                 self._cpu_freq.SkipIfThermalThrottling(retry_delay_secs=30)
         else:
             logging.info("Skip a test case.")
 
-    def tearDownTest(self):
+    def tearDown(self):
         """Skips the test case if there is thermal throttling."""
         if not self._skip_all_testcases:
             if self._cpu_freq and self._skip_if_thermal_throttling:
                 self._cpu_freq.SkipIfThermalThrottling()
 
-        super(HidlHalGTest, self).tearDownTest()
+        super(HidlHalGTest, self).tearDown()
 
     def tearDownClass(self):
         """Turns off CPU frequency scaling."""

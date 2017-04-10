@@ -17,7 +17,10 @@ vts_test_bin_packages := \
     android.hardware.tests.msgq@1.0-service-benchmark \
     android.hardware.tests.msgq@1.0-service-test \
     fmq_test \
+    hidl_test \
+    hidl_test_client \
     hidl_test_helper \
+    hidl_test_servers \
     mq_benchmark_client \
     mq_test_client \
     libhwbinder_benchmark \
@@ -31,6 +34,7 @@ vts_test_bin_packages := \
     bionic-unit-tests-gcc \
     bionic-unit-tests-static \
     stressapptest \
+    libcutils_test \
 
 # some CTS packages for record-and-replay test development purpose
 vts_test_bin_packages += \
@@ -40,4 +44,28 @@ vts_test_bin_packages += \
 # Proto fuzzer executable
 vts_test_bin_packages += \
     vts_proto_fuzzer \
+
+# VTS Treble VINTF Test
+vts_test_bin_packages += \
+    vts_treble_vintf_test \
+
+# Netd tests
+vts_test_bin_packages += \
+    netd_integration_test \
+
+# Binder tests.
+vts_test_bin_packages += \
+    binderDriverInterfaceTest \
+    binderValueTypeTest \
+    binderLibTest \
+    binderTextOutputTest \
+    binderSafeInterfaceTest \
+
+# VTS security PoC tests
+vts_test_bin_packages += \
+    30149612 \
+    28838221 \
+    32219453 \
+    31707909 \
+    32402310
 

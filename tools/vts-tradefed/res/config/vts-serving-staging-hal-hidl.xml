@@ -27,6 +27,7 @@
   <option name="compatibility:include-filter" value="VtsHalDrmV1_0Target" />
   <option name="compatibility:include-filter" value="VtsHalGnssV1_0Target" />
   <option name="compatibility:include-filter" value="VtsHalGraphicsComposerV2_1Target" />
+  <option name="compatibility:include-filter" value="VtsHalKeymasterV3_0Target" />
   <option name="compatibility:include-filter" value="VtsHalNfcV1_0HostBinderize" />
   <option name="compatibility:include-filter" value="VtsHalNfcV1_0HostPassthrough" />
   <option name="compatibility:include-filter" value="VtsHalRadioV1_0Target" />
@@ -40,4 +41,5 @@
   <option name="compatibility:include-filter" value="VtsHalWifiV1_0Target" />
   <option name="compatibility:include-filter" value="VtsHalWifiNanV1_0Target" />
   <option name="compatibility:include-filter" value="VtsHalWifiSupplicantV1_0Target" />
+  <option name="compatibility:include-filter" value="VtsTrebleVintfTest" />
 </configuration>

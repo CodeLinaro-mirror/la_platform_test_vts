@@ -25,6 +25,7 @@ vts_test_bin_packages := \
     mq_test_client \
     libhwbinder_benchmark \
     libbinder_benchmark \
+    vts_codelab_target_binary \
     vts_test_binary_crash_app \
     vts_test_binary_syscall_exists \
     simpleperf_cpu_hotplug_test \
@@ -53,6 +54,10 @@ vts_test_bin_packages += \
 # Netd tests
 vts_test_bin_packages += \
     netd_integration_test \
+
+# Tun device tests.
+vts_test_bin_packages += \
+    vts_kernel_tun_test \
 
 # Binder tests.
 vts_test_bin_packages += \

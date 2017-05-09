@@ -39,6 +39,7 @@ vts_test_lib_hidl_packages := \
   android.hardware.gatekeeper@1.0-vts.driver \
   android.hardware.gnss@1.0-vts.driver \
   android.hardware.graphics.common@1.0-vts.driver \
+  android.hardware.graphics.bufferqueue@1.0-vts.driver \
   android.hardware.graphics.allocator@2.0-vts.driver \
   android.hardware.graphics.composer@2.1-vts.driver \
   android.hardware.graphics.mapper@2.0-vts.driver \
@@ -116,6 +117,7 @@ vts_test_lib_hidl_packages += \
   VtsHalBootV1_0TargetTest \
   VtsHalBroadcastradioV1_0TargetTest \
   VtsHalCameraProviderV2_4TargetTest \
+  VtsHalConfigstoreV1_0TargetTest \
   VtsHalContexthubV1_0TargetTest \
   VtsHalDrmV1_0TargetTest \
   VtsHalGatekeeperV1_0TargetTest \
@@ -123,12 +125,19 @@ vts_test_lib_hidl_packages += \
   VtsHalGraphicsComposerV2_1TargetTest \
   VtsHalGraphicsMapperV2_0TargetTest \
   VtsHalIrV1_0TargetTest \
+  VtsHalKeymasterV3_0TargetTest \
   VtsHalLightV2_0TargetTest \
+  VtsHalMediaOmxV1_0TargetComponentTest \
+  VtsHalMediaOmxV1_0TargetAudioEncTest \
+  VtsHalMediaOmxV1_0TargetAudioDecTest \
+  VtsHalMediaOmxV1_0TargetVideoEncTest \
+  VtsHalMediaOmxV1_0TargetVideoDecTest \
   VtsHalMemtrackV1_0TargetTest \
   VtsHalNfcV1_0TargetTest \
   VtsHalPowerV1_0TargetTest \
   VtsHalRadioV1_0TargetTest \
   VtsHalRenderscriptV1_0TargetTest \
+  VtsHalSapV1_0TargetTest \
   VtsHalSensorsV1_0TargetTest \
   VtsHalSoundtriggerV2_0TargetTest \
   VtsHalThermalV1_0TargetTest \

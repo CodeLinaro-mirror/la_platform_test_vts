@@ -16,6 +16,7 @@
 
 import logging
 import os
+import time
 
 from vts.runners.host import asserts
 from vts.runners.host import base_test
@@ -40,7 +41,6 @@ class BinaryTest(base_test.BaseTestClass):
         tags: all the tags that appeared in binary list
         DEVICE_TMP_DIR: string, temp location for storing binary
         TAG_DELIMITER: string, separator used to separate tag and path
-        _skip_all_testcases: boolean - True to skip all test cases.
         SYSPROP_VTS_NATIVE_SERVER: string, the name of a system property which
                                    tells whether to stop properly configured
                                    native servers where properly configured
@@ -59,20 +59,19 @@ class BinaryTest(base_test.BaseTestClass):
     DEFAULT_PROFILING_LIBRARY_PATH_32 = '/data/local/tmp/32/'
     DEFAULT_PROFILING_LIBRARY_PATH_64 = '/data/local/tmp/64/'
 
-    _skip_all_testcases = False
-
     def setUpClass(self):
         '''Prepare class, push binaries, set permission, create test cases.'''
-        required_params = [
-            keys.ConfigKeys.IKEY_DATA_FILE_PATH,
-        ]
+        required_params = [keys.ConfigKeys.IKEY_DATA_FILE_PATH, ]
         opt_params = [
             keys.ConfigKeys.IKEY_BINARY_TEST_SOURCE,
             keys.ConfigKeys.IKEY_BINARY_TEST_WORKING_DIRECTORY,
+            keys.ConfigKeys.IKEY_BINARY_TEST_ENVP,
+            keys.ConfigKeys.IKEY_BINARY_TEST_ARGS,
             keys.ConfigKeys.IKEY_BINARY_TEST_LD_LIBRARY_PATH,
             keys.ConfigKeys.IKEY_BINARY_TEST_PROFILING_LIBRARY_PATH,
             keys.ConfigKeys.IKEY_BINARY_TEST_DISABLE_FRAMEWORK,
             keys.ConfigKeys.IKEY_BINARY_TEST_STOP_NATIVE_SERVERS,
+            keys.ConfigKeys.IKEY_NATIVE_SERVER_PROCESS_NAME,
         ]
         self.getUserParams(
             req_param_names=required_params, opt_param_names=opt_params)
@@ -97,6 +96,32 @@ class BinaryTest(base_test.BaseTestClass):
                 if self.TAG_DELIMITER in token:
                     tag, path = token.split(self.TAG_DELIMITER)
                 self.working_directory[tag] = path
+
+        self.envp = {}
+        if hasattr(self, keys.ConfigKeys.IKEY_BINARY_TEST_ENVP):
+            self.binary_test_envp = map(str, self.binary_test_envp)
+            for token in self.binary_test_envp:
+                tag = ''
+                path = token
+                if self.TAG_DELIMITER in token:
+                    tag, path = token.split(self.TAG_DELIMITER)
+                if tag in self.envp:
+                    self.envp[tag] += ' %s' % path
+                else:
+                    self.envp[tag] = path
+
+        self.args = {}
+        if hasattr(self, keys.ConfigKeys.IKEY_BINARY_TEST_ARGS):
+            self.binary_test_args = map(str, self.binary_test_args)
+            for token in self.binary_test_args:
+                tag = ''
+                arg = token
+                if self.TAG_DELIMITER in token:
+                    tag, arg = token.split(self.TAG_DELIMITER)
+                if tag in self.args:
+                    self.args[tag] += ' %s' % arg
+                else:
+                    self.args[tag] = arg
 
         self.ld_library_path = {
             self.DEFAULT_TAG_32: self.DEFAULT_LD_LIBRARY_PATH_32,
@@ -134,7 +159,7 @@ class BinaryTest(base_test.BaseTestClass):
         if not hasattr(self, "_dut"):
             self._dut = self.registerController(android_device)[0]
 
-        self._dut.shell.InvokeTerminal("one")
+        self._dut.shell.InvokeTerminal("one", int(self.abi_bitness))
         self.shell = self._dut.shell.one
 
         if self.coverage.enabled:
@@ -157,15 +182,39 @@ class BinaryTest(base_test.BaseTestClass):
         self.include_filter = self.ExpandListItemTags(self.include_filter)
         self.exclude_filter = self.ExpandListItemTags(self.exclude_filter)
 
-        # Stop Android runtime to reduce interference.
+        stop_requested = False
+
         if getattr(self, keys.ConfigKeys.IKEY_BINARY_TEST_DISABLE_FRAMEWORK,
                    False):
+            # Stop Android runtime to reduce interference.
             self._dut.stop()
+            stop_requested = True
 
         if getattr(self, keys.ConfigKeys.IKEY_BINARY_TEST_STOP_NATIVE_SERVERS,
                    False):
             # Stops all (properly configured) native servers.
             results = self._dut.setProp(self.SYSPROP_VTS_NATIVE_SERVER, "1")
+            stop_requested = True
+
+        if stop_requested:
+            native_server_process_names = getattr(
+                self, keys.ConfigKeys.IKEY_NATIVE_SERVER_PROCESS_NAME, [])
+            if native_server_process_names:
+                for native_server_process_name in native_server_process_names:
+                    while True:
+                        cmd_result = self.shell.Execute("ps -A")
+                        if cmd_result[const.EXIT_CODE][0] != 0:
+                            logging.error("ps command failed (exit code: %s",
+                                          cmd_result[const.EXIT_CODE][0])
+                            break
+                        if (native_server_process_name not in
+                            cmd_result[const.STDOUT][0]):
+                            logging.info("Process %s not running",
+                                         native_server_process_name)
+                            break
+                        logging.info("Checking process %s",
+                                     native_server_process_name)
+                        time.sleep(1)
 
     def CreateTestCases(self):
         '''Push files to device and create test case objects.'''
@@ -316,10 +365,9 @@ class BinaryTest(base_test.BaseTestClass):
                 dst = path_utils.JoinTargetPath(self.working_directory[tag],
                                                 os.path.basename(src))
             else:
-                dst = path_utils.JoinTargetPath(self.DEVICE_TMP_DIR,
-                                                'binary_test_temp_%s' %
-                                                self.__class__.__name__, tag,
-                                                os.path.basename(src))
+                dst = path_utils.JoinTargetPath(
+                    self.DEVICE_TMP_DIR, 'binary_test_temp_%s' %
+                    self.__class__.__name__, tag, os.path.basename(src))
 
         if push_only:
             tag = None
@@ -338,14 +386,24 @@ class BinaryTest(base_test.BaseTestClass):
         '''
         working_directory = self.working_directory[
             tag] if tag in self.working_directory else None
+        envp = self.envp[tag] if tag in self.envp else ''
+        args = self.args[tag] if tag in self.args else ''
         ld_library_path = self.ld_library_path[
             tag] if tag in self.ld_library_path else None
         profiling_library_path = self.profiling_library_path[
             tag] if tag in self.profiling_library_path else None
 
         return binary_test_case.BinaryTestCase(
-            '', path_utils.TargetBaseName(path), path, tag, self.PutTag,
-            working_directory, ld_library_path, profiling_library_path)
+            '',
+            path_utils.TargetBaseName(path),
+            path,
+            tag,
+            self.PutTag,
+            working_directory,
+            ld_library_path,
+            profiling_library_path,
+            envp=envp,
+            args=args)
 
     def VerifyTestResult(self, test_case, command_results):
         '''Parse command result.
@@ -365,9 +423,6 @@ class BinaryTest(base_test.BaseTestClass):
         Args:
             test_case: BinaryTestCase object
         '''
-        if self._skip_all_testcases:
-            asserts.skip("All test cases skipped")
-
         if self.profiling.enabled:
             self.profiling.EnableVTSProfiling(self.shell,
                                               test_case.profiling_library_path)

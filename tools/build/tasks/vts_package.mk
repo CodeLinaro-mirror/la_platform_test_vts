@@ -150,7 +150,8 @@ host_framework_copy_pairs := \
 host_testcase_files := \
   $(call find-files-in-subdirs,test/vts-testcase,"*.py" -and -type f,.) \
   $(call find-files-in-subdirs,test/vts-testcase,"*.config" -and -type f,.) \
-  $(call find-files-in-subdirs,test/vts-testcase,"*.push" -and -type f,.)
+  $(call find-files-in-subdirs,test/vts-testcase,"*.push" -and -type f,.) \
+  $(call find-files-in-subdirs,test/vts-testcase,"android-base.cfg" -and -type f,.)
 
 host_testcase_copy_pairs := \
   $(foreach f,$(host_testcase_files),\
@@ -173,6 +174,13 @@ host_systrace_copy_pairs := \
   $(foreach f,$(host_systrace_files),\
     external/chromium-trace/$(f):$(VTS_OUT_ROOT)/android-vts/tools/external/chromium-trace/$(f))
 
+media_test_res_files := \
+  $(call find-files-in-subdirs,hardware/interfaces/media/res,"*.*" -and -type f,.) \
+
+media_test_res_copy_pairs := \
+  $(foreach f,$(media_test_res_files),\
+    hardware/interfaces/media/res/$(f):$(VTS_TESTCASES_OUT)/DATA/media/res/$(f))
+
 $(compatibility_zip): \
   $(call copy-many-files,$(target_native_copy_pairs)) \
   $(call copy-many-files,$(target_spec_copy_pairs)) \
@@ -183,7 +191,8 @@ $(compatibility_zip): \
   $(call copy-many-files,$(host_framework_copy_pairs)) \
   $(call copy-many-files,$(host_testcase_copy_pairs)) \
   $(call copy-many-files,$(host_camera_its_copy_pairs)) \
-  $(call copy-many-files,$(host_systrace_copy_pairs))
+  $(call copy-many-files,$(host_systrace_copy_pairs)) \
+  $(call copy-many-files,$(media_test_res_copy_pairs))
 
 # vendor-specific host logic
 vendor_testcase_files := \

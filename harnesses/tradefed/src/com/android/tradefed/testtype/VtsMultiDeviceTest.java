@@ -87,6 +87,8 @@ IRuntimeHintProvider, ITestCollector, IBuildReceiver, IAbiReceiver {
     static final String EXCLUDE_FILTER = "exclude_filter";
     static final String BINARY_TEST_SOURCE = "binary_test_source";
     static final String BINARY_TEST_WORKING_DIRECTORY = "binary_test_working_directory";
+    static final String BINARY_TEST_ENVP = "binary_test_envp";
+    static final String BINARY_TEST_ARGS = "binary_test_args";
     static final String BINARY_TEST_LD_LIBRARY_PATH = "binary_test_ld_library_path";
     static final String BINARY_TEST_PROFILING_LIBRARY_PATH = "binary_test_profiling_library_path";
     static final String BINARY_TEST_DISABLE_FRAMEWORK = "binary_test_disable_framework";
@@ -98,6 +100,7 @@ IRuntimeHintProvider, ITestCollector, IBuildReceiver, IAbiReceiver {
     static final String BINARY_TEST_TYPE_HOST_BINARY_TEST = "host_binary_test";
     static final String ENABLE_PROFILING = "enable_profiling";
     static final String ENABLE_COVERAGE = "enable_coverage";
+    static final String NATIVE_SERVER_PROCESS_NAME = "native_server_process_name";
     static final String PASSTHROUGH_MODE = "passthrough_mode";
     static final String PRECONDITION_HWBINDER_SERVICE = "precondition_hwbinder_service";
     static final String PRECONDITION_FEATURE = "precondition_feature";
@@ -241,19 +244,30 @@ IRuntimeHintProvider, ITestCollector, IBuildReceiver, IAbiReceiver {
     private Collection<String> mBinaryTestSource = new ArrayList<>();
 
     @Option(name = "binary-test-working-directory", description = "Working directories for binary "
-            + "tests. Tags can be added to the front of each directory using '::' as delimiter. "
-            + "Multiple directories can be separated by ','. However, each tag should only has "
-            + "one working directory. This option is optional for binary tests. If not specified, "
-            + "different directories will be used for files with different tags.")
+                    + "tests. Tags can be added to the front of each directory using '::' as delimiter. "
+                    + "However, each tag should only has one working directory. This option is optional for "
+                    + "binary tests. If not specified, different directories will be used for files with "
+                    + "different tags.")
     private Collection<String> mBinaryTestWorkingDirectory = new ArrayList<>();
 
+    @Option(name = "binary-test-envp", description = "Additional environment path for binary "
+        + "tests. Tags can be added to the front of each directory using '::' as delimiter. "
+        + "There can be multiple instances of binary-test-envp for a same tag, which will "
+        + "later automatically be combined.")
+    private Collection<String> mBinaryTestEnvp = new ArrayList<>();
+
+    @Option(name = "binary-test-args", description = "Additional args or flags for binary "
+        + "tests. Tags can be added to the front of each directory using '::' as delimiter. "
+        + "There can be multiple instances of binary-test-args for a same tag, which will "
+        + "later automatically be combined.")
+    private Collection<String> mBinaryTestArgs = new ArrayList<>();
+
     @Option(name = "binary-test-ld-library-path", description = "LD_LIBRARY_PATH for binary "
-            + "tests. Tags can be added to the front of each instance using '::' as delimiter. "
-            + "Multiple directories can be added under a same tag using ':' as delimiter. "
-            + "Multiple instances of ld-library-path rule can be separated by ','. "
-            + "There can be multiple instances of ld-library-path for a same tag, which will "
-            + "later automatically be combined using ':' as delimiter. Paths without a tag "
-            + "will only used for binaries without tag. This option is optional for binary tests.")
+                    + "tests. Tags can be added to the front of each instance using '::' as delimiter. "
+                    + "Multiple directories can be added under a same tag using ':' as delimiter. "
+                    + "There can be multiple instances of ld-library-path for a same tag, which will "
+                    + "later automatically be combined using ':' as delimiter. Paths without a tag "
+                    + "will only used for binaries without tag. This option is optional for binary tests.")
     private Collection<String> mBinaryTestLdLibraryPath = new ArrayList<>();
 
     @Option(name = "binary-test-profiling-library-path", description = "Path to lookup and load "
@@ -269,6 +283,11 @@ IRuntimeHintProvider, ITestCollector, IBuildReceiver, IAbiReceiver {
     @Option(name = "binary-test-stop-native-servers",
             description = "Set to stop all properly configured native servers during the testing.")
     private boolean mBinaryTestStopNativeServers = false;
+
+    @Option(name = "native-server-process-name",
+            description = "Name of a native server process. The runner checks to make sure "
+                    + "each specified native server process is not running after the framework stop.")
+    private Collection<String> mNativeServerProcessName = new ArrayList<>();
 
     @Option(name = "binary-test-type", description = "Binary test type. Only specify this when "
             + "running an extended binary test without a python test file. Available options: gtest")
@@ -616,8 +635,8 @@ IRuntimeHintProvider, ITestCollector, IBuildReceiver, IAbiReceiver {
             CLog.i("Added %s to the Json object", RUN_32BIT_ON_64BIT_ABI);
         }
         if (mSkipIfThermalThrottling) {
-          jsonObject.put(SKIP_IF_THERMAL_THROTTLING, mSkipIfThermalThrottling);
-          CLog.i("Added %s to the Json object", SKIP_IF_THERMAL_THROTTLING);
+            jsonObject.put(SKIP_IF_THERMAL_THROTTLING, mSkipIfThermalThrottling);
+            CLog.i("Added %s to the Json object", SKIP_IF_THERMAL_THROTTLING);
         }
 
         if (!mBinaryTestSource.isEmpty()) {
@@ -628,6 +647,14 @@ IRuntimeHintProvider, ITestCollector, IBuildReceiver, IAbiReceiver {
             jsonObject.put(BINARY_TEST_WORKING_DIRECTORY,
                     new JSONArray(mBinaryTestWorkingDirectory));
             CLog.i("Added %s to the Json object", BINARY_TEST_WORKING_DIRECTORY);
+        }
+        if (!mBinaryTestEnvp.isEmpty()) {
+            jsonObject.put(BINARY_TEST_ENVP, new JSONArray(mBinaryTestEnvp));
+            CLog.i("Added %s to the Json object", BINARY_TEST_ENVP);
+        }
+        if (!mBinaryTestArgs.isEmpty()) {
+            jsonObject.put(BINARY_TEST_ARGS, new JSONArray(mBinaryTestArgs));
+            CLog.i("Added %s to the Json object", BINARY_TEST_ARGS);
         }
         if (!mBinaryTestLdLibraryPath.isEmpty()) {
             jsonObject.put(BINARY_TEST_LD_LIBRARY_PATH,
@@ -678,13 +705,6 @@ IRuntimeHintProvider, ITestCollector, IBuildReceiver, IAbiReceiver {
             CLog.i("Added %s to the Json object", BINARY_TEST_PROFILING_LIBRARY_PATH);
         }
 
-        if (mBinaryTestType.equals(BINARY_TEST_TYPE_HAL_HIDL_GTEST)) {
-            CLog.i("Set flags to stop the framework and native servers for %s",
-                   BINARY_TEST_TYPE_HAL_HIDL_GTEST);
-            mBinaryTestDisableFramework = true;
-            mBinaryTestStopNativeServers = true;
-        }
-
         if (mBinaryTestDisableFramework) {
             jsonObject.put(BINARY_TEST_DISABLE_FRAMEWORK, mBinaryTestDisableFramework);
             CLog.i("Added %s to the Json object", BINARY_TEST_DISABLE_FRAMEWORK);
@@ -693,6 +713,11 @@ IRuntimeHintProvider, ITestCollector, IBuildReceiver, IAbiReceiver {
         if (mBinaryTestStopNativeServers) {
             jsonObject.put(BINARY_TEST_STOP_NATIVE_SERVERS, mBinaryTestStopNativeServers);
             CLog.i("Added %s to the Json object", BINARY_TEST_STOP_NATIVE_SERVERS);
+        }
+
+        if (!mNativeServerProcessName.isEmpty()) {
+            jsonObject.put(NATIVE_SERVER_PROCESS_NAME, new JSONArray(mNativeServerProcessName));
+            CLog.i("Added %s to the Json object", NATIVE_SERVER_PROCESS_NAME);
         }
 
         if (!mHalHidlReplayTestTracePaths.isEmpty()) {
@@ -715,6 +740,23 @@ IRuntimeHintProvider, ITestCollector, IBuildReceiver, IAbiReceiver {
             jsonObject.put(PASSTHROUGH_MODE, mPassthroughMode);
             CLog.i("Added %s to the Json object", PASSTHROUGH_MODE);
         }
+    }
+
+    /**
+     * Log a test module execution status to device logcat.
+     *
+     * @param status
+     * @return true if succesful, false otherwise
+     */
+    private boolean printToDeviceLogcatAboutTestModuleStatus(String status) {
+        try {
+            mDevice.executeShellCommand(String.format(
+                    "log -p i -t \"VTS\" \"[Test Module] %s %s\"", mTestModuleName, status));
+        } catch (DeviceNotAvailableException e) {
+            CLog.w("Device unavailable while trying to write a message to logcat.");
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -768,6 +810,7 @@ IRuntimeHintProvider, ITestCollector, IBuildReceiver, IAbiReceiver {
         String[] cmd;
         cmd = ArrayUtil.buildArray(baseOpts, testModule);
 
+        printToDeviceLogcatAboutTestModuleStatus("BEGIN");
         CommandResult commandResult = mRunUtil.runTimedCmd(mTestTimeout, cmd);
 
         if (commandResult != null) {
@@ -779,16 +822,18 @@ IRuntimeHintProvider, ITestCollector, IBuildReceiver, IAbiReceiver {
                 CLog.e("Stderr: %s", commandResult.getStderr());
                 CLog.e("Stdout: %s", commandResult.getStdout());
                 printVtsLogs(vtsRunnerLogDir);
+                printToDeviceLogcatAboutTestModuleStatus("ERROR");
                 throw new RuntimeException("Failed to run VTS test");
             }
-        }
-        if (commandResult != null){
             CLog.i("Standard output is: %s", commandResult.getStdout());
             CLog.i("Parsing test result: %s", commandResult.getStderr());
+            printToDeviceLogcatAboutTestModuleStatus("END");
+        } else {
+            printToDeviceLogcatAboutTestModuleStatus("FRAMEWORK_ERROR");
         }
 
-        VtsMultiDeviceTestResultParser parser = new VtsMultiDeviceTestResultParser(listener,
-                mRunName);
+        VtsMultiDeviceTestResultParser parser =
+                new VtsMultiDeviceTestResultParser(listener, mRunName);
 
         if (mUseStdoutLogs) {
             if (commandResult.getStdout() == null) {

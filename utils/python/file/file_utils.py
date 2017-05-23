@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import logging
+from vts.runners.host import asserts
 from vts.runners.host import const
 
 _PERMISSION_GROUPS = 3  # 3 permission groups: owner, group, all users
@@ -37,6 +38,32 @@ def Exists(filepath, shell):
 
     out_str = str(results[const.STDOUT][0]).strip()
     return out_str.find(filepath) == 0
+
+def FindFiles(shell, path, name_pattern):
+    """Searches a path for files on device.
+
+    Args:
+        shell: the ShellMirrorObject.
+        path: string, the path to search on device.
+        name_pattern: string, the file name pattern.
+
+    Returns:
+        list of strings, the paths to the found files.
+
+    Raises:
+        IOError if the pattern contains quotes, or the path does not exist.
+    """
+    if '"' in name_pattern or "'" in name_pattern:
+        raise IOError("File name pattern contains quotes")
+    cmd = "find %s -name \"%s\"" % (path, name_pattern)
+    results = shell.Execute(cmd)
+    logging.info("%s: Shell command '%s' results: %s", path, cmd, results)
+
+    if results[const.EXIT_CODE][0] != 0:
+        raise IOError(results[const.STDERR][0])
+
+    stdout = str(results[const.STDOUT][0])
+    return stdout.strip().split("\n")
 
 def ReadFileContent(filepath, shell):
     """Read the content of a file and perform assertions.
@@ -216,3 +243,24 @@ def IsReadWrite(permission_bits):
     Raises:
         ValueError if the group or permission bits are invalid"""
     return IsReadable(permission_bits) and IsWritable(permission_bits)
+
+def assertPermissionsAndExistence(shell, path, check_permission):
+    """Asserts that the specified path exists and has the correct permission.
+
+    Args:
+        path: string, path to validate existence and permissions
+        check_permission: function which takes unix permissions in octal
+                          format and returns True if the permissions are
+                          correct, False otherwise.
+    """
+    asserts.assertTrue(
+        Exists(path, shell),
+        "%s: File does not exist." % path)
+    try:
+        permission = GetPermission(path, shell)
+        asserts.assertTrue(
+            check_permission(permission),
+            "%s: File has invalid permissions (%s)" %
+            (path, permission))
+    except (ValueError, IOError) as e:
+        asserts.fail("Failed to assert permissions: %s" % str(e))

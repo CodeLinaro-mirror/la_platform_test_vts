@@ -124,15 +124,21 @@ vts_test_lib_hidl_packages += \
   VtsHalGnssV1_0TargetTest \
   VtsHalGraphicsComposerV2_1TargetTest \
   VtsHalGraphicsMapperV2_0TargetTest \
+  VtsHalHealthV1_0TargetTest \
   VtsHalIrV1_0TargetTest \
   VtsHalKeymasterV3_0TargetTest \
   VtsHalLightV2_0TargetTest \
   VtsHalMediaOmxV1_0TargetComponentTest \
+  VtsHalMediaOmxV1_0TargetAudioEncTest \
+  VtsHalMediaOmxV1_0TargetAudioDecTest \
+  VtsHalMediaOmxV1_0TargetVideoEncTest \
+  VtsHalMediaOmxV1_0TargetVideoDecTest \
   VtsHalMemtrackV1_0TargetTest \
   VtsHalNfcV1_0TargetTest \
   VtsHalPowerV1_0TargetTest \
   VtsHalRadioV1_0TargetTest \
   VtsHalRenderscriptV1_0TargetTest \
+  VtsHalSapV1_0TargetTest \
   VtsHalSensorsV1_0TargetTest \
   VtsHalSoundtriggerV2_0TargetTest \
   VtsHalThermalV1_0TargetTest \

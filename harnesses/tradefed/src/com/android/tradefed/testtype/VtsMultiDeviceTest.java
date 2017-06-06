@@ -100,6 +100,7 @@ IRuntimeHintProvider, ITestCollector, IBuildReceiver, IAbiReceiver {
     static final String BINARY_TEST_TYPE_HOST_BINARY_TEST = "host_binary_test";
     static final String ENABLE_PROFILING = "enable_profiling";
     static final String ENABLE_COVERAGE = "enable_coverage";
+    static final String NATIVE_SERVER_PROCESS_NAME = "native_server_process_name";
     static final String PASSTHROUGH_MODE = "passthrough_mode";
     static final String PRECONDITION_HWBINDER_SERVICE = "precondition_hwbinder_service";
     static final String PRECONDITION_FEATURE = "precondition_feature";
@@ -282,6 +283,11 @@ IRuntimeHintProvider, ITestCollector, IBuildReceiver, IAbiReceiver {
     @Option(name = "binary-test-stop-native-servers",
             description = "Set to stop all properly configured native servers during the testing.")
     private boolean mBinaryTestStopNativeServers = false;
+
+    @Option(name = "native-server-process-name",
+            description = "Name of a native server process. The runner checks to make sure "
+                    + "each specified native server process is not running after the framework stop.")
+    private Collection<String> mNativeServerProcessName = new ArrayList<>();
 
     @Option(name = "binary-test-type", description = "Binary test type. Only specify this when "
             + "running an extended binary test without a python test file. Available options: gtest")
@@ -709,6 +715,11 @@ IRuntimeHintProvider, ITestCollector, IBuildReceiver, IAbiReceiver {
             CLog.i("Added %s to the Json object", BINARY_TEST_STOP_NATIVE_SERVERS);
         }
 
+        if (!mNativeServerProcessName.isEmpty()) {
+            jsonObject.put(NATIVE_SERVER_PROCESS_NAME, new JSONArray(mNativeServerProcessName));
+            CLog.i("Added %s to the Json object", NATIVE_SERVER_PROCESS_NAME);
+        }
+
         if (!mHalHidlReplayTestTracePaths.isEmpty()) {
             jsonObject.put(HAL_HIDL_REPLAY_TEST_TRACE_PATHS,
                     new JSONArray(mHalHidlReplayTestTracePaths));
@@ -729,6 +740,23 @@ IRuntimeHintProvider, ITestCollector, IBuildReceiver, IAbiReceiver {
             jsonObject.put(PASSTHROUGH_MODE, mPassthroughMode);
             CLog.i("Added %s to the Json object", PASSTHROUGH_MODE);
         }
+    }
+
+    /**
+     * Log a test module execution status to device logcat.
+     *
+     * @param status
+     * @return true if succesful, false otherwise
+     */
+    private boolean printToDeviceLogcatAboutTestModuleStatus(String status) {
+        try {
+            mDevice.executeShellCommand(String.format(
+                    "log -p i -t \"VTS\" \"[Test Module] %s %s\"", mTestModuleName, status));
+        } catch (DeviceNotAvailableException e) {
+            CLog.w("Device unavailable while trying to write a message to logcat.");
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -782,6 +810,7 @@ IRuntimeHintProvider, ITestCollector, IBuildReceiver, IAbiReceiver {
         String[] cmd;
         cmd = ArrayUtil.buildArray(baseOpts, testModule);
 
+        printToDeviceLogcatAboutTestModuleStatus("BEGIN");
         CommandResult commandResult = mRunUtil.runTimedCmd(mTestTimeout, cmd);
 
         if (commandResult != null) {
@@ -793,16 +822,18 @@ IRuntimeHintProvider, ITestCollector, IBuildReceiver, IAbiReceiver {
                 CLog.e("Stderr: %s", commandResult.getStderr());
                 CLog.e("Stdout: %s", commandResult.getStdout());
                 printVtsLogs(vtsRunnerLogDir);
+                printToDeviceLogcatAboutTestModuleStatus("ERROR");
                 throw new RuntimeException("Failed to run VTS test");
             }
-        }
-        if (commandResult != null){
             CLog.i("Standard output is: %s", commandResult.getStdout());
             CLog.i("Parsing test result: %s", commandResult.getStderr());
+            printToDeviceLogcatAboutTestModuleStatus("END");
+        } else {
+            printToDeviceLogcatAboutTestModuleStatus("FRAMEWORK_ERROR");
         }
 
-        VtsMultiDeviceTestResultParser parser = new VtsMultiDeviceTestResultParser(listener,
-                mRunName);
+        VtsMultiDeviceTestResultParser parser =
+                new VtsMultiDeviceTestResultParser(listener, mRunName);
 
         if (mUseStdoutLogs) {
             if (commandResult.getStdout() == null) {

@@ -168,14 +168,33 @@ public class VtsPythonVirtualenvPreparer implements ITargetPreparer, ITargetClea
      */
     private boolean dirExistsAndHaveReadAccess(String path) {
         File pathDir = new File(path);
-        if (!pathDir.exists()) {
-            CLog.i("Directory %s does not exist", path);
-            return false;
-        } else if (!pathDir.canRead()) {
-            CLog.i("User does not have read access to %s", path);
+        if (!pathDir.exists() || !pathDir.isDirectory()) {
+            CLog.i("Directory %s does not exist.", pathDir);
             return false;
         }
-        return true;
+
+        if (!isOnWindows()) {
+            CommandResult c = mRunUtil.runTimedCmd(BASE_TIMEOUT * 5, "ls", path);
+            if (c.getStatus() != CommandStatus.SUCCESS) {
+                CLog.i(String.format("Failed to read dir: %s. Result %s. stdout: %s, stderr: %s",
+                        path, c.getStatus(), c.getStdout(), c.getStderr()));
+                return false;
+            }
+            return true;
+        } else {
+            try {
+                String[] pathDirList = pathDir.list();
+                if (pathDirList == null) {
+                    CLog.i("Failed to read dir: %s. Please check access permission.", pathDir);
+                    return false;
+                }
+            } catch (SecurityException e) {
+                CLog.i(String.format(
+                        "Failed to read dir %s with SecurityException %s", pathDir, e));
+                return false;
+            }
+            return true;
+        }
     }
 
     protected void installDeps(IBuildInfo buildInfo) throws TargetSetupError {

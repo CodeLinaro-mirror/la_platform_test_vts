@@ -74,7 +74,7 @@ $(foreach m,$(target_native_modules),\
       $(eval my_built_modules += $(bui))\
       $(eval my_copy_dest := $(patsubst data/%,DATA/%,\
                                $(patsubst system/%,DATA/%,\
-                                 $(patsubst $(PRODUCT_OUT)/%,%,$(ins)))))\
+                                   $(patsubst $(PRODUCT_OUT)/%,%,$(ins)))))\
       $(eval target_native_copy_pairs += $(bui):$(VTS_TESTCASES_OUT)/$(my_copy_dest)))\
   ))
 
@@ -160,7 +160,7 @@ host_testcase_files := \
   $(call find-files-in-subdirs,test/vts-testcase,"*.py" -and -type f,.) \
   $(call find-files-in-subdirs,test/vts-testcase,"*.config" -and -type f,.) \
   $(call find-files-in-subdirs,test/vts-testcase,"*.push" -and -type f,.) \
-  $(call find-files-in-subdirs,test/vts-testcase,"android-base.cfg" -and -type f,.)
+  $(call find-files-in-subdirs,test/vts-testcase,"android-base*.cfg" -and -type f,.)
 
 host_testcase_copy_pairs := \
   $(foreach f,$(host_testcase_files),\

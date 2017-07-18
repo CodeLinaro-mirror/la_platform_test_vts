@@ -23,7 +23,6 @@ from vts.runners.host import base_test
 from vts.runners.host import const
 from vts.runners.host import keys
 from vts.runners.host import test_runner
-from vts.utils.python.controllers import android_device
 from vts.utils.python.common import list_utils
 from vts.utils.python.os import path_utils
 from vts.utils.python.precondition import precondition_utils
@@ -62,7 +61,9 @@ class BinaryTest(base_test.BaseTestClass):
 
     def setUpClass(self):
         '''Prepare class, push binaries, set permission, create test cases.'''
-        required_params = [keys.ConfigKeys.IKEY_DATA_FILE_PATH, ]
+        required_params = [
+            keys.ConfigKeys.IKEY_DATA_FILE_PATH,
+        ]
         opt_params = [
             keys.ConfigKeys.IKEY_BINARY_TEST_SOURCE,
             keys.ConfigKeys.IKEY_BINARY_TEST_WORKING_DIRECTORY,
@@ -157,13 +158,10 @@ class BinaryTest(base_test.BaseTestClass):
                     tag, path = token.split(self.TAG_DELIMITER)
                 self.profiling_library_path[tag] = path
 
-        if not hasattr(self, "_dut"):
-            self._dut = self.registerController(android_device)[0]
+        self._dut = self.android_devices[0]
+        self.shell = self._dut.shell
 
-        self._dut.shell.InvokeTerminal("one", int(self.abi_bitness))
-        self.shell = self._dut.shell.one
-
-        if self.coverage.enabled:
+        if self.coverage.enabled and self.coverage.global_coverage:
             self.coverage.LoadArtifacts()
             self.coverage.InitializeDeviceCoverage(self._dut)
 
@@ -171,7 +169,7 @@ class BinaryTest(base_test.BaseTestClass):
         self.shell.Execute("setenforce 0")  # SELinux permissive mode
 
         if not precondition_utils.CanRunHidlHalTest(self, self._dut,
-                                                    self._dut.shell.one):
+                                                    self.shell):
             self._skip_all_testcases = True
 
         self.testcases = []
@@ -184,9 +182,6 @@ class BinaryTest(base_test.BaseTestClass):
         if any(cmd_results[const.EXIT_CODE]):
             logging.error('Failed to set permission to some of the binaries:\n'
                           '%s\n%s', cmd, cmd_results)
-
-        self.include_filter = self.ExpandListItemTags(self.include_filter)
-        self.exclude_filter = self.ExpandListItemTags(self.exclude_filter)
 
         stop_requested = False
 
@@ -213,8 +208,8 @@ class BinaryTest(base_test.BaseTestClass):
                             logging.error("ps command failed (exit code: %s",
                                           cmd_result[const.EXIT_CODE][0])
                             break
-                        if (native_server_process_name not in
-                            cmd_result[const.STDOUT][0]):
+                        if (native_server_process_name not in cmd_result[
+                                const.STDOUT][0]):
                             logging.info("Process %s not running",
                                          native_server_process_name)
                             break
@@ -303,19 +298,20 @@ class BinaryTest(base_test.BaseTestClass):
             self._dut.start()
 
         # Retrieve coverage if applicable
-        if self.coverage.enabled:
+        if self.coverage.enabled and self.coverage.global_coverage:
             self.coverage.SetCoverageData(dut=self._dut, isGlobal=True)
 
         # Clean up the pushed binaries
         logging.info('Start class cleaning up jobs.')
         # Delete pushed files
 
-        sources = [self.ParseTestSource(src)
-                   for src in self.binary_test_source]
+        sources = [
+            self.ParseTestSource(src) for src in self.binary_test_source
+        ]
         sources = set(filter(bool, sources))
         paths = [dst for src, dst, tag in sources if src and dst]
         cmd = ['rm -rf %s' % dst for dst in paths]
-        cmd_results = self.shell.Execute(cmd)
+        cmd_results = self.shell.Execute(cmd, no_except=True)
         if not cmd_results or any(cmd_results[const.EXIT_CODE]):
             logging.warning('Failed to clean up test class: %s', cmd_results)
 
@@ -325,7 +321,7 @@ class BinaryTest(base_test.BaseTestClass):
         dirs = list(dir_set)
         dirs.sort(lambda x, y: cmp(len(y), len(x)))
         cmd = ['rmdir %s' % d for d in dirs]
-        cmd_results = self.shell.Execute(cmd)
+        cmd_results = self.shell.Execute(cmd, no_except=True)
         if not cmd_results or any(cmd_results[const.EXIT_CODE]):
             logging.warning('Failed to remove: %s', cmd_results)
 
@@ -372,8 +368,9 @@ class BinaryTest(base_test.BaseTestClass):
                                                 os.path.basename(src))
             else:
                 dst = path_utils.JoinTargetPath(
-                    self.DEVICE_TMP_DIR, 'binary_test_temp_%s' %
-                    self.__class__.__name__, tag, os.path.basename(src))
+                    self.DEVICE_TMP_DIR,
+                    'binary_test_temp_%s' % self.__class__.__name__, tag,
+                    os.path.basename(src))
 
         if push_only:
             tag = None
@@ -412,9 +409,10 @@ class BinaryTest(base_test.BaseTestClass):
             args=args)
 
     def VerifyTestResult(self, test_case, command_results):
-        '''Parse command result.
+        '''Parse test case command result.
 
         Args:
+            test_case: BinaryTestCase object, the test case whose command
             command_results: dict of lists, shell command result
         '''
         asserts.assertTrue(command_results, 'Empty command response.')

@@ -20,7 +20,7 @@ from vts.runners.host import const
 from vts.runners.host import keys
 from vts.runners.host import test_runner
 from vts.testcases.template.gtest_binary_test import gtest_binary_test
-from vts.utils.python.controllers import android_device
+
 from vts.utils.python.cpu import cpu_frequency_scaling
 
 
@@ -44,8 +44,8 @@ class HidlHalGTest(gtest_binary_test.GtestBinaryTest):
         self.getUserParams(opt_param_names=opt_params)
 
         self._skip_if_thermal_throttling = self.getUserParam(
-                keys.ConfigKeys.IKEY_SKIP_IF_THERMAL_THROTTLING,
-                default_value=False)
+            keys.ConfigKeys.IKEY_SKIP_IF_THERMAL_THROTTLING,
+            default_value=False)
 
         if not self._skip_all_testcases:
             logging.info("Disable CPU frequency scaling")
@@ -93,19 +93,22 @@ class HidlHalGTest(gtest_binary_test.GtestBinaryTest):
         """Skips the test case if thermal throttling lasts for 30 seconds."""
         super(HidlHalGTest, self).setUp()
 
-        if self._skip_if_thermal_throttling:
+        if (self._skip_if_thermal_throttling and
+            getattr(self, "_cpu_freq", None)):
             self._cpu_freq.SkipIfThermalThrottling(retry_delay_secs=30)
 
     def tearDown(self):
         """Skips the test case if there is thermal throttling."""
-        if self._skip_if_thermal_throttling:
+        if (self._skip_if_thermal_throttling and
+            getattr(self, "_cpu_freq", None)):
             self._cpu_freq.SkipIfThermalThrottling()
 
         super(HidlHalGTest, self).tearDown()
 
     def tearDownClass(self):
         """Turns off CPU frequency scaling."""
-        if not self._skip_all_testcases:
+        if (not self._skip_all_testcases and
+            getattr(self, "_cpu_freq", None)):
             logging.info("Enable CPU frequency scaling")
             self._cpu_freq.EnableCpuScaling()
 

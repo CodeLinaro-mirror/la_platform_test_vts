@@ -33,8 +33,8 @@ namespace vts {
 
 class HalHidlCodeGen : public DriverCodeGenBase {
  public:
-  HalHidlCodeGen(const char* input_vts_file_path, const string& vts_name)
-      : DriverCodeGenBase(input_vts_file_path, vts_name) {}
+  HalHidlCodeGen(const char* input_vts_file_path)
+      : DriverCodeGenBase(input_vts_file_path) {}
 
  protected:
   void GenerateClassHeader(Formatter& out,
@@ -70,11 +70,13 @@ class HalHidlCodeGen : public DriverCodeGenBase {
       const string& fuzzer_extended_class_name) override;
 
   void GenerateHeaderGlobalFunctionDeclarations(Formatter& out,
-      const ComponentSpecificationMessage& message) override;
+      const ComponentSpecificationMessage& message,
+      const bool print_extern_block = true) override;
 
   void GenerateCppBodyGlobalFunctions(Formatter& out,
       const ComponentSpecificationMessage& message,
-      const string& fuzzer_extended_class_name) override;
+      const string& fuzzer_extended_class_name,
+      const bool print_extern_block = true) override;
 
   void GenerateHeaderIncludeFiles(Formatter& out,
       const ComponentSpecificationMessage& message,
@@ -87,6 +89,9 @@ class HalHidlCodeGen : public DriverCodeGenBase {
   void GenerateAdditionalFuctionDeclarations(Formatter& out,
       const ComponentSpecificationMessage& message,
       const string& fuzzer_extended_class_name) override;
+
+  void GeneratePublicFunctionDeclarations(
+      Formatter& out, const ComponentSpecificationMessage& message) override;
 
   void GeneratePrivateMemberDeclarations(Formatter& out,
       const ComponentSpecificationMessage& message) override;

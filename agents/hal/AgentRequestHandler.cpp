@@ -170,14 +170,14 @@ bool AgentRequestHandler::LaunchDriverService(
         if (driver_hal_spec_dir_path_.length() < 1) {
 #ifndef VTS_AGENT_DRIVER_COMM_BINDER  // socket
           asprintf(&cmd,
-                   "LD_LIBRARY_PATH=%s:$LD_LIBRARY_PATH %s --server "
+                   "LD_LIBRARY_PATH=%s:$LD_LIBRARY_PATH %s "
                    "--server_socket_path=%s "
                    "--callback_socket_name=%s",
                    ld_dir_path.c_str(), driver_binary_path.c_str(),
                    socket_port_flie_path.c_str(), callback_socket_name.c_str());
 #else  // binder
           asprintf(&cmd,
-                   "LD_LIBRARY_PATH=%s:$LD_LIBRARY_PATH %s --server "
+                   "LD_LIBRARY_PATH=%s:$LD_LIBRARY_PATH %s "
                    "--service_name=%s "
                    "--callback_socket_name=%s",
                    ld_dir_path.c_str(), driver_binary_path.c_str(),
@@ -186,18 +186,18 @@ bool AgentRequestHandler::LaunchDriverService(
         } else {
 #ifndef VTS_AGENT_DRIVER_COMM_BINDER  // socket
           asprintf(&cmd,
-                   "LD_LIBRARY_PATH=%s:$LD_LIBRARY_PATH %s --server "
+                   "LD_LIBRARY_PATH=%s:$LD_LIBRARY_PATH %s "
                    "--server_socket_path=%s "
-                   "--spec_dir=%s --callback_socket_name=%s",
+                   "--spec_dir_path=%s --callback_socket_name=%s",
                    ld_dir_path.c_str(), driver_binary_path.c_str(),
                    socket_port_flie_path.c_str(),
                    driver_hal_spec_dir_path_.c_str(),
                    callback_socket_name.c_str());
 #else  // binder
           asprintf(&cmd,
-                   "LD_LIBRARY_PATH=%s:$LD_LIBRARY_PATH %s --server "
+                   "LD_LIBRARY_PATH=%s:$LD_LIBRARY_PATH %s "
                    "--service_name=%s "
-                   "--spec_dir=%s --callback_socket_name=%s",
+                   "--spec_dir_path=%s --callback_socket_name=%s",
                    ld_dir_path.c_str(), driver_binary_path.c_str(),
                    service_name.c_str(), driver_hal_spec_dir_path_.c_str(),
                    callback_socket_name.c_str());
@@ -257,24 +257,25 @@ bool AgentRequestHandler::LaunchDriverService(
           // TODO: kill the driver?
           return VtsSocketSendMessage(response_msg);
         }
-        int32_t result;
+
         if (driver_type == VTS_DRIVER_TYPE_HAL_CONVENTIONAL ||
             driver_type == VTS_DRIVER_TYPE_HAL_LEGACY ||
             driver_type == VTS_DRIVER_TYPE_HAL_HIDL) {
           cout << "[agent->driver]: LoadHal " << module_name << endl;
-          result = client->LoadHal(file_path, target_class, target_type,
-                                   target_version, target_package,
-                                   target_component_name,
-                                   hw_binder_service_name, module_name);
-          cout << "[driver->agent]: LoadHal returns " << result << endl;
-          if (result == VTS_DRIVER_RESPONSE_SUCCESS) {
+          int32_t driver_id = client->LoadHal(
+              file_path, target_class, target_type, target_version,
+              target_package, target_component_name, hw_binder_service_name,
+              module_name);
+          cout << "[driver->agent]: LoadHal returns " << driver_id << endl;
+          if (driver_id == -1) {
+            response_msg.set_response_code(FAIL);
+            response_msg.set_reason("Failed to load the selected HAL.");
+          } else {
             response_msg.set_response_code(SUCCESS);
+            response_msg.set_result(std::to_string(driver_id));
             response_msg.set_reason("Loaded the selected HAL.");
             cout << "set service_name " << service_name << endl;
             service_name_ = service_name;
-          } else {
-            response_msg.set_response_code(FAIL);
-            response_msg.set_reason("Failed to load the selected HAL.");
           }
         } else if (driver_type == VTS_DRIVER_TYPE_SHELL) {
           response_msg.set_response_code(SUCCESS);
@@ -385,7 +386,6 @@ bool AgentRequestHandler::CallApi(const string& call_payload,
   }
 
   const char* result = client->Call(call_payload, uid);
-
   AndroidSystemControlResponseMessage response_msg;
   if (result != NULL && strlen(result) > 0) {
     cout << "[agent] Call: success" << endl;

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2017 Google Inc.
+<!-- Copyright (C) 2017 The Android Open Source Project
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
@@ -16,6 +16,9 @@
 <configuration description="VTS Main Test Plan">
   <include name="everything" />
   <option name="compatibility:skip-all-system-status-check" value="true" />
+  <option name="max-log-size" value="200" />
+  <object type="vts-vendor-config" class="com.android.tradefed.util.VtsVendorConfigFileUtil" />
   <target_preparer class="com.android.tradefed.targetprep.VtsDeviceInfoCollector" />
+  <target_preparer class="com.android.tradefed.targetprep.VtsTestPlanResultReporter" />
   <template-include name="reporters" default="basic-reporters" />
 </configuration>

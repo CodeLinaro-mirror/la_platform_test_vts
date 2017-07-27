@@ -24,6 +24,7 @@ vts_test_bin_packages := \
     mq_benchmark_client \
     mq_test_client \
     libhwbinder_benchmark \
+    libhwbinder_latency \
     libbinder_benchmark \
     vts_codelab_target_binary \
     vts_test_binary_crash_app \
@@ -74,4 +75,3 @@ vts_test_bin_packages += \
     32219453 \
     31707909 \
     32402310
-

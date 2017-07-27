@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright 2016 Google Inc. All Rights Reserved.
+# Copyright 2016 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,6 +22,8 @@ PYTHONPATH=$PYTHONPATH:.. python -m vts.testcases.host.light.conventional.Sample
 # PYTHONPATH=$PYTHONPATH:.. python -m vts.testcases.host.camera.conventional.2_1.SampleCameraV2Test
 # PYTHONPATH=$PYTHONPATH:.. python -m vts.testcases.host.camera.conventional.3_4.SampleCameraV3Test
 # PYTHONPATH=$PYTHONPATH:.. python -m vts.testcases.hal.nfc.V1_0.host.VtsHalNfcV1_0HostTest
+# PYTHONPATH=$PYTHONPATH:.. python -m vts.testcases.hal.camera.provider.V2_4.host.VtsHalCameraProviderV2_4HostTest
+# PYTHONPATH=$PYTHONPATH:.. python -m vts.testcases.hal.gnss.V1_0.host.VtsHalGnssV1_0HostTest
 # PYTHONPATH=$PYTHONPATH:.. python -m vts.testcases.hal.vibrator.V1_0.host.VtsHalVibratorV1_0HostTest
 # PYTHONPATH=$PYTHONPATH:.. python -m vts.testcases.hal.automotive.vehicle.V2_0.host.VtsHalAutomotiveVehicleV2_0HostTest
 # PYTHONPATH=$PYTHONPATH:.. python -m vts.testcases.hal.vr.V1_0.hidl.host.VtsHalVrV1_0HostTest

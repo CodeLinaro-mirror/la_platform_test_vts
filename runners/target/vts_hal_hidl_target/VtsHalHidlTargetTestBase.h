@@ -19,9 +19,12 @@
 
 #include <gtest/gtest.h>
 #include <hidl/HidlSupport.h>
+#include <utils/Log.h>
 #include <utils/RefBase.h>
 
 #define VTS_HAL_HIDL_GET_STUB "VTS_HAL_HIDL_GET_STUB"
+
+using namespace std;
 
 namespace testing {
 
@@ -31,15 +34,60 @@ using ::android::sp;
 class VtsHalHidlTargetTestBase : public ::testing::Test {
  public:
   /*
+   * Internal test class setup function.
+   */
+  virtual void SetUp() override {
+    ALOGI("[Test Case] %s.%s BEGIN", getTestSuiteName().c_str(),
+          getTestCaseName().c_str());
+    string testCaseInfo = getTestCaseInfo();
+    if (testCaseInfo.size()) {
+      ALOGD("Test case info: %s", testCaseInfo.c_str());
+    }
+
+    HalHidlSetUp();
+  }
+
+  /*
+   * Internal test class tear-down function.
+   */
+  virtual void TearDown() override {
+    HalHidlTearDown();
+
+    ALOGI("[Test Case] %s.%s END", getTestSuiteName().c_str(),
+          getTestCaseName().c_str());
+    string testCaseInfo = getTestCaseInfo();
+    if (testCaseInfo.size()) {
+      ALOGD("Test case info: %s", testCaseInfo.c_str());
+    }
+  }
+
+  /*
+   * HAL HIDL test class setup function.
+   * Will be called in the end of SetUp() function.
+   */
+  virtual void HalHidlSetUp() {}
+
+  /*
+   * HAL HIDL test class tear-down function.
+   * Will be called in the beginning of TearDown() function.
+   */
+  virtual void HalHidlTearDown() {}
+
+  /*
+   * Return test case info as string.
+   */
+  virtual string getTestCaseInfo() const { return ""; }
+
+  /*
    * Get value of system property as string on target
    */
-  static std::string PropertyGet(const char* name);
+  static string PropertyGet(const char* name);
 
   /*
    * Call interface's getService and use passthrough mode if set from host.
    */
   template <class T>
-  static sp<T> getService(const std::string& serviceName = "default") {
+  static sp<T> getService(const string& serviceName = "default") {
     return T::getService(serviceName, VtsHalHidlTargetTestBase::VtsGetStub());
   }
 
@@ -66,6 +114,16 @@ class VtsHalHidlTargetTestBase : public ::testing::Test {
    * false.
    */
   static bool VtsGetStub();
+
+  /*
+   * Return test suite name as string.
+   */
+  string getTestSuiteName() const;
+
+  /*
+   * Return test case name as string.
+   */
+  string getTestCaseName() const;
 };
 
 }  // namespace testing

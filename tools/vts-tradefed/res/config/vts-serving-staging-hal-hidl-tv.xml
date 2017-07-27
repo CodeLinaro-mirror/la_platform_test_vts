@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2017 Google Inc.
+<!-- Copyright (C) 2017 The Android Open Source Project
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
@@ -17,7 +17,10 @@
   <include name="vts-base" />
   <option name="plan" value="vts" />
   <option name="test-tag" value="vts" />
+  <option name="vts-plan-result:plan-name" value="vts-serving-staging-hal-hidl-tv" />
+  <option name="vts-plan-result:default-type" value="staging" />
 
+  <option name="compatibility:test-arg" value="com.android.tradefed.testtype.VtsMultiDeviceTest:gtest-batch-mode:true" />
   <option name="compatibility:include-filter" value="VtsHalTvCecV1_0Host" />
   <option name="compatibility:include-filter" value="VtsHalTvInputV1_0Host" />
   <option name="compatibility:include-filter" value="VtsHalTvInputV1_0Target" />

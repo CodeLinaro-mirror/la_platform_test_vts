@@ -1,5 +1,5 @@
-#ifndef __VTS_DRIVER__libcV1.driver__
-#define __VTS_DRIVER__libcV1.driver__
+#ifndef __VTS_DRIVER__lib_shared_bionic_libc_V1_0__
+#define __VTS_DRIVER__lib_shared_bionic_libc_V1_0__
 
 #undef LOG_TAG
 #define LOG_TAG "FuzzerExtended_libc"
@@ -14,14 +14,14 @@
 #include <string.h>
 #include <utils/Log.h>
 
-#include <fuzz_tester/FuzzerBase.h>
-#include <fuzz_tester/FuzzerCallbackBase.h>
+#include <driver_base/DriverBase.h>
+#include <driver_base/DriverCallbackBase.h>
 
 namespace android {
 namespace vts {
-class FuzzerExtended_libc : public FuzzerBase {
+class FuzzerExtended_libc : public DriverBase {
  public:
-    FuzzerExtended_libc() : FuzzerBase(LIB_SHARED) {}
+    FuzzerExtended_libc() : DriverBase(LIB_SHARED) {}
  protected:
     bool Fuzz(FunctionSpecificationMessage* func_msg, void** result, const string& callback_socket_name);
     bool CallFunction(const FunctionSpecificationMessage& func_msg, const string& callback_socket_name, FunctionSpecificationMessage* result_msg);
@@ -32,7 +32,7 @@ class FuzzerExtended_libc : public FuzzerBase {
 
 
 extern "C" {
-extern android::vts::FuzzerBase* vts_func_11_1002_1_();
+extern android::vts::DriverBase* vts_func_11_1002_V1_0_();
 }
 }  // namespace vts
 }  // namespace android

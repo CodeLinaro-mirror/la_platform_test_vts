@@ -142,6 +142,7 @@ vts_test_lib_hidl_packages += \
   VtsHalConfigstoreV1_1TargetTest \
   VtsHalContexthubV1_0TargetTest \
   VtsHalDrmV1_0TargetTest \
+  VtsHalDumpstateV1_0Target \
   VtsHalGatekeeperV1_0TargetTest \
   VtsHalGnssV1_0TargetTest \
   VtsHalGraphicsComposerV2_1TargetTest \
@@ -172,6 +173,7 @@ vts_test_lib_hidl_packages += \
   VtsHalUsbV1_0TargetTest \
   VtsHalUsbV1_1TargetTest \
   VtsHalVibratorV1_0TargetTest \
+  VtsHalVibratorV1_1TargetTest \
   VtsHalVrV1_0TargetTest \
   VtsHalWeaverV1_0TargetTest \
   VtsHalWifiV1_0TargetTest \

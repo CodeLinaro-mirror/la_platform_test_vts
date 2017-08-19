@@ -82,6 +82,7 @@ IRuntimeHintProvider, ITestCollector, IBuildReceiver, IAbiReceiver {
     static final String TESTMODULE = "TestModule";
     static final String TEST_PLAN_REPORT_FILE = "TEST_PLAN_REPORT_FILE";
     static final String TEST_SUITE = "test_suite";
+    static final String TEST_MAX_TIMEOUT = "test_max_timeout";
     static final String VIRTUAL_ENV_PATH = "VIRTUALENVPATH";
     static final String ABI_NAME = "abi_name";
     static final String ABI_BITNESS = "abi_bitness";
@@ -108,10 +109,11 @@ IRuntimeHintProvider, ITestCollector, IBuildReceiver, IAbiReceiver {
     static final String BINARY_TEST_TYPE_HOST_BINARY_TEST = "host_binary_test";
     static final String ENABLE_COVERAGE = "enable_coverage";
     static final String ENABLE_PROFILING = "enable_profiling";
-    static final String GTEST_BATCH_MODE = "gtest_match_mode";
+    static final String GTEST_BATCH_MODE = "gtest_batch_mode";
     static final String SAVE_TRACE_FIEL_REMOTE = "save_trace_file_remote";
     static final String OUTPUT_COVERAGE_REPORT = "output_coverage_report";
     static final String GLOBAL_COVERAGE = "global_coverage";
+    static final String LTP_NUMBER_OF_THREADS = "ltp_number_of_threads";
     static final String NATIVE_SERVER_PROCESS_NAME = "native_server_process_name";
     static final String PASSTHROUGH_MODE = "passthrough_mode";
     static final String PRECONDITION_HWBINDER_SERVICE = "precondition_hwbinder_service";
@@ -130,6 +132,7 @@ IRuntimeHintProvider, ITestCollector, IBuildReceiver, IAbiReceiver {
     static final String TEMPLATE_HAL_HIDL_GTEST_PATH = "vts/testcases/template/hal_hidl_gtest/hal_hidl_gtest";
     static final String TEMPLATE_HAL_HIDL_REPLAY_TEST_PATH = "vts/testcases/template/hal_hidl_replay_test/hal_hidl_replay_test";
     static final String TEMPLATE_HOST_BINARY_TEST_PATH = "vts/testcases/template/host_binary_test/host_binary_test";
+    static final long TEST_ABORT_TIMEOUT_MSECS = 1000 * 15;
     static final String TEST_RUN_SUMMARY_FILE_NAME = "test_run_summary.json";
     static final float DEFAULT_TARGET_VERSION = -1;
     static final String DEFAULT_TESTCASE_CONFIG_PATH = "vts/tools/vts-tradefed/res/default/DefaultTestCase.config";
@@ -137,8 +140,11 @@ IRuntimeHintProvider, ITestCollector, IBuildReceiver, IAbiReceiver {
     private ITestDevice mDevice = null;
     private IAbi mAbi = null;
 
-    @Option(name = "test-timeout", description = "maximum amount of time"
-            + "(im milliseconds) tests are allowed to run",
+    @Option(name = "test-timeout",
+            description = "The amount of time (in milliseconds) for a test invocation. "
+                    + "If the test cannot finish before timeout, it should interrupt itself and "
+                    + "clean up in " + TEST_ABORT_TIMEOUT_MSECS + "ms. Hence the actual timeout "
+                    + "is the specified value + " + TEST_ABORT_TIMEOUT_MSECS + "ms.",
             isTimeVal = true)
     private long mTestTimeout = 1000 * 60 * 60 * 3;
 
@@ -223,6 +229,11 @@ IRuntimeHintProvider, ITestCollector, IBuildReceiver, IAbiReceiver {
         + "Value true means use passthrough mode if available; false for binderized mode if "
         + "available. Default is false")
     private boolean mPassthroughMode = false;
+
+    @Option(name = "ltp-number-of-threads",
+            description = "Number of threads to run the LTP test cases. "
+                    + "0 means using number of avaiable CPU threads.")
+    private int mLtpNumberOfThreads = -1;
 
     @Option(name = "skip-on-32bit-abi",
         description = "Whether to skip tests on 32bit ABI.")
@@ -644,6 +655,9 @@ IRuntimeHintProvider, ITestCollector, IBuildReceiver, IAbiReceiver {
         jsonObject.put(TEST_SUITE, suite);
         CLog.i("Added %s to the Json object", TEST_SUITE);
 
+        jsonObject.put(TEST_MAX_TIMEOUT, mTestTimeout);
+        CLog.i("Added %s to the Json object: %d", TEST_MAX_TIMEOUT, mTestTimeout);
+
         if (mAbi != null) {
             jsonObject.put(ABI_NAME, mAbi.getName());
             CLog.i("Added %s to the Json object", ABI_NAME);
@@ -785,6 +799,11 @@ IRuntimeHintProvider, ITestCollector, IBuildReceiver, IAbiReceiver {
             jsonObject.put(GTEST_BATCH_MODE, mGtestBatchMode);
             CLog.i("Added %s to the Json object", GTEST_BATCH_MODE);
         }
+
+        if (mLtpNumberOfThreads >= 0) {
+            jsonObject.put(LTP_NUMBER_OF_THREADS, mLtpNumberOfThreads);
+            CLog.i("Added %s to the Json object", LTP_NUMBER_OF_THREADS);
+        }
     }
 
     /**
@@ -875,7 +894,8 @@ IRuntimeHintProvider, ITestCollector, IBuildReceiver, IAbiReceiver {
         cmd = ArrayUtil.buildArray(baseOpts, testModule);
 
         printToDeviceLogcatAboutTestModuleStatus("BEGIN");
-        CommandResult commandResult = mRunUtil.runTimedCmd(mTestTimeout, cmd);
+        CommandResult commandResult =
+                mRunUtil.runTimedCmd(mTestTimeout + TEST_ABORT_TIMEOUT_MSECS, cmd);
 
         if (commandResult != null) {
             CommandStatus commandStatus = commandResult.getStatus();

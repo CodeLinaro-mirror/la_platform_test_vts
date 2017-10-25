@@ -24,7 +24,6 @@
   <option name="compatibility:include-filter" value="VtsHalBootV1_0Target" />
   <option name="compatibility:include-filter" value="VtsHalDumpstateV1_0Target" />
   <option name="compatibility:include-filter" value="VtsHalIrV1_0Target" />
-  <option name="compatibility:include-filter" value="VtsHalNeuralnetworksV1_0Target" />
   <option name="compatibility:include-filter" value="VtsHalNfcV1_0HostBinderize" />
   <option name="compatibility:include-filter" value="VtsHalNfcV1_0HostPassthrough" />
   <option name="compatibility:include-filter" value="VtsHalNfcV1_0Target" />
@@ -44,6 +43,7 @@
   <option name="compatibility:include-filter" value="VtsHalBiometricsFingerprintV2_1Target" />
   <option name="compatibility:include-filter" value="VtsHalBroadcastradioV1_0Target" />
   <option name="compatibility:include-filter" value="VtsHalCameraProviderV2_4Target" />
+  <option name="compatibility:include-filter" value="VtsHalCasV1_0Target" />
   <option name="compatibility:include-filter" value="VtsHalConfigstoreV1_0Target" />
   <option name="compatibility:include-filter" value="VtsHalContexthubV1_0Target" />
   <option name="compatibility:include-filter" value="VtsHalDrmV1_0Target" />

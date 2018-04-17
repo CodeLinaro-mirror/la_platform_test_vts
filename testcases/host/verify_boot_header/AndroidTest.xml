@@ -13,11 +13,14 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-
-<configuration description="Running CTS test modules with hal trace profiling">
-    <include name="cts-base" />
-    <option name="plan" value="cts-profiling" />
-    <option name="enable-root" value="true" />
-    <target_preparer class="com.android.tradefed.targetprep.VtsTraceCollectPreparer" />
-    <metrics_collector class="com.android.tradefed.device.metric.VtsHalTraceCollector" />
+<configuration description="Config for VTS Boot Header Verification Test">
+    <option name="config-descriptor:metadata" key="plan" value="vts-firmware" />
+    <target_preparer class="com.android.compatibility.common.tradefed.targetprep.VtsFilePusher">
+      <option name="push-group" value="HostDrivenTest.push" />
+      <option name="cleanup" value="true" />
+    </target_preparer>
+    <test class="com.android.tradefed.testtype.VtsMultiDeviceTest">
+        <option name="test-module-name" value="VtsFirmwareBootHeaderVerification"/>
+        <option name="test-case-path" value="vts/testcases/host/verify_boot_header/VtsFirmwareBootHeaderVerification" />
+    </test>
 </configuration>

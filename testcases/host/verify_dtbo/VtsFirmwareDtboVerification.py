@@ -30,7 +30,7 @@ from vts.utils.python.android import api
 from vts.utils.python.file import target_file_utils
 from vts.utils.python.os import path_utils
 
-DTBO_PARTITION_PATH = "/dev/block/bootdevice/by-name/dtbo"  # path to DTBO partition.
+BLOCK_DEV_PATH = "/dev/block/platform"  # path to platform block devices
 DEVICE_TEMP_DIR = "/data/local/tmp/"  # temporary dir in device.
 FDT_PATH = "/sys/firmware/fdt"  # path to device tree.
 PROPERTY_SLOT_SUFFIX = "ro.boot.slot_suffix"  # indicates current slot suffix for A/B devices
@@ -41,6 +41,7 @@ class VtsFirmwareDtboVerification(base_test.BaseTestClass):
 
     Attributes:
         temp_dir: The temporary directory on host.
+        device_path: The temporary directory on device.
     """
 
     def setUpClass(self):
@@ -50,28 +51,13 @@ class VtsFirmwareDtboVerification(base_test.BaseTestClass):
         self.adb = self.dut.adb
         self.temp_dir = tempfile.mkdtemp()
         logging.info("Create %s", self.temp_dir)
-        device_path = str(
+        self.device_path = str(
             path_utils.JoinTargetPath(DEVICE_TEMP_DIR, self.abi_bitness))
-        self.shell.Execute("mkdir %s -p" % device_path)
+        self.shell.Execute("mkdir %s -p" % self.device_path)
 
     def setUp(self):
         """Checks if the the preconditions to run the test are met."""
         asserts.skipIf("x86" in self.dut.cpu_abi, "Skipping test for x86 ABI")
-        try:
-            api_level = int(self.dut.first_api_level)
-        except ValueError as e:
-            api_level = 0
-            logging.exception(e)
-
-        if api_level == 0:
-            try:
-                api_level = int(self.getProp("ro.build.version.sdk"))
-            except ValueError as e:
-                asserts.fail("Unexpected value returned from getprop: %s" % e)
-
-        asserts.skipIf(
-            int(api_level) <= api.PLATFORM_API_LEVEL_O_MR1,
-            "Skip test for a device launched first before Android P.")
 
     def testCheckDTBOPartition(self):
         """Validates DTBO partition using mkdtboimg.py."""
@@ -80,21 +66,26 @@ class VtsFirmwareDtboVerification(base_test.BaseTestClass):
         except ValueError as e:
             logging.exception(e)
             slot_suffix = ""
-        dtbo_path = DTBO_PARTITION_PATH + slot_suffix
+        current_dtbo_partition = "dtbo" + slot_suffix
+        dtbo_path = target_file_utils.FindFiles(
+            self.shell, BLOCK_DEV_PATH, current_dtbo_partition, "-type l")
         logging.info("DTBO path %s", dtbo_path)
-        asserts.assertTrue(
-            target_file_utils.Exists(dtbo_path, self.shell),
-            "DTBO partition does not exist")
-        self.adb.pull("%s %s/dtbo" % (dtbo_path, self.temp_dir))
+        if not dtbo_path:
+            asserts.fail("Unable to find path to dtbo image on device.")
+        host_dtbo_image = os.path.join(self.temp_dir, "dtbo")
+        self.adb.pull("%s %s" % (dtbo_path[0], host_dtbo_image))
+        mkdtboimg_bin_path = os.path.join("host", "bin", "mkdtboimg.py")
+        unpacked_dtbo_path = os.path.join(self.temp_dir, "dumped_dtbo")
         dtbo_dump_cmd = [
-            "host/bin/mkdtboimg.py", "dump",
-            "%s/dtbo" % self.temp_dir, "-b",
-            "%s/dumped_dtbo" % self.temp_dir
+            "python", "%s" % mkdtboimg_bin_path, "dump",
+            "%s" % host_dtbo_image, "-b",
+            "%s" % unpacked_dtbo_path
         ]
         try:
             subprocess.check_call(dtbo_dump_cmd)
         except Exception as e:
             logging.exception(e)
+            logging.error('dtbo_dump_cmd is: %s', dtbo_dump_cmd)
             asserts.fail("Invalid DTBO Image")
 
     def testVerifyOverlay(self):
@@ -108,16 +99,19 @@ class VtsFirmwareDtboVerification(base_test.BaseTestClass):
             "Kernel command line missing androidboot.dtbo_idx")
         overlay_idx_list = overlay_idx_string.split(",")
         overlay_arg = []
-        device_path = str(
-            path_utils.JoinTargetPath(DEVICE_TEMP_DIR, self.abi_bitness))
         for idx in overlay_idx_list:
             overlay_file = "dumped_dtbo." + idx.rstrip()
             overlay_path = os.path.join(self.temp_dir, overlay_file)
-            self.adb.push(overlay_path, device_path)
+            self.adb.push(overlay_path, self.device_path)
             overlay_arg.append(overlay_file)
-        final_dt_path = path_utils.JoinTargetPath(device_path, "final_dt")
+        final_dt_path = path_utils.JoinTargetPath(self.device_path, "final_dt")
         self.shell.Execute("cp %s %s" % (FDT_PATH, final_dt_path))
-        cd_cmd = "cd %s" % (device_path)
+        verification_test_path = path_utils.JoinTargetPath(
+            self.device_path, "ufdt_verify_overlay")
+        chmod_cmd = "chmod 755 %s" % verification_test_path
+        results = self.shell.Execute(chmod_cmd)
+        asserts.assertEqual(results[const.EXIT_CODE][0], 0, "Unable to chmod")
+        cd_cmd = "cd %s" % (self.device_path)
         verify_cmd = "./ufdt_verify_overlay final_dt %s" % (
             " ".join(overlay_arg))
         cmd = str("%s && %s" % (cd_cmd, verify_cmd))
@@ -129,9 +123,7 @@ class VtsFirmwareDtboVerification(base_test.BaseTestClass):
     def tearDownClass(self):
         """Deletes temporary directories."""
         shutil.rmtree(self.temp_dir)
-        device_path = str(
-            path_utils.JoinTargetPath(DEVICE_TEMP_DIR, self.abi_bitness))
-        self.shell.Execute("rm -rf %s" % device_path)
+        self.shell.Execute("rm -rf %s" % self.device_path)
 
 
 if __name__ == "__main__":

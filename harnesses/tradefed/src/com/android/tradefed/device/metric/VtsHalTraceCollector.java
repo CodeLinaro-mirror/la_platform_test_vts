@@ -21,6 +21,7 @@ import com.android.tradefed.config.OptionClass;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
+import com.android.tradefed.metrics.proto.MetricMeasurement.Metric;
 import com.android.tradefed.util.FileUtil;
 
 import java.io.File;
@@ -49,6 +50,8 @@ public class VtsHalTraceCollector extends BaseDeviceMetricCollector {
     public void onTestRunStart(DeviceMetricData testData) {
         for (ITestDevice device : getDevices()) {
             try {
+                // adb root.
+                device.enableAdbRoot();
                 // Set selinux permissive mode.
                 device.executeShellCommand("setenforce 0");
                 // Cleanup existing traces.
@@ -65,13 +68,16 @@ public class VtsHalTraceCollector extends BaseDeviceMetricCollector {
 
     @Override
     public void onTestRunEnd(
-            DeviceMetricData testData, final Map<String, String> currentTestCaseMetrics) {
+            DeviceMetricData testData, final Map<String, Metric> currentTestCaseMetrics) {
         String moduleName = getRunName().replace(' ', '_');
         CLog.i("Test module name: " + moduleName);
         for (ITestDevice device : getDevices()) {
             try {
                 // Pull trace files.
                 pullTraceFiles(device, moduleName);
+                // Disable profiling.
+                device.executeShellCommand(
+                        String.format("%s disable", VTS_TMP_DIR + PROFILING_CONFIGURE_BINARY));
                 // Cleanup the trace files.
                 device.executeShellCommand(String.format("rm -rf %s/*.vts.trace", VTS_TMP_DIR));
             } catch (DeviceNotAvailableException | IOException e) {
@@ -102,9 +108,10 @@ public class VtsHalTraceCollector extends BaseDeviceMetricCollector {
         CLog.i("Storing trace files to: " + localTracedDir.getAbsolutePath());
         String out = device.executeShellCommand(String.format("ls %s/*.vts.trace", VTS_TMP_DIR));
         for (String line : out.split("\n")) {
+            line = line.trim();
             File trace_file = new File(
                     localTracedDir.getAbsolutePath(), line.substring(VTS_TMP_DIR.length()));
-            device.pullFile(line.trim(), trace_file);
+            device.pullFile(line, trace_file);
         }
     }
 }

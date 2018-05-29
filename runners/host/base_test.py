@@ -33,6 +33,7 @@ from vts.utils.python.common import filter_utils
 from vts.utils.python.common import list_utils
 from vts.utils.python.coverage import coverage_utils
 from vts.utils.python.coverage import sancov_utils
+from vts.utils.python.precondition import precondition_utils
 from vts.utils.python.profiling import profiling_utils
 from vts.utils.python.reporting import log_uploading_utils
 from vts.utils.python.systrace import systrace_utils
@@ -53,6 +54,7 @@ _LOGCAT_FILE_PREFIX = "logcat"
 _LOGCAT_FILE_EXTENSION = ".txt"
 _ANDROID_DEVICES = '_android_devices'
 _REASON_TO_SKIP_ALL_TESTS = '_reason_to_skip_all_tests'
+_SETUP_RETRY_NUMBER = 5
 
 LOGCAT_BUFFERS = [
     'radio',
@@ -302,6 +304,9 @@ class BaseTestClass(object):
         """Proxy function to guarantee the base implementation of setUpClass
         is called.
         """
+        if not precondition_utils.MeetFirstApiLevelPrecondition(self):
+            self.skipAllTests("The device's first API level doesn't meet the "
+                              "precondition.")
         return self.setUpClass()
 
     def setUpClass(self):
@@ -412,7 +417,7 @@ class BaseTestClass(object):
             self.DumpBugReport(
                 '%s-%s' % (self.test_module_name, record.test_name))
         if self._logcat_on_failure:
-            self.DumpLogcat('%s-%s' % (self.TAG, record.test_name))
+            self.DumpLogcat('%s-%s' % (self.test_module_name, record.test_name))
 
     def onFail(self, test_name, begin_time):
         """A function that is executed upon a test case failure.
@@ -508,7 +513,7 @@ class BaseTestClass(object):
             self.DumpBugReport(
                 '%s-%s' % (self.test_module_name, record.test_name))
         if self._logcat_on_failure:
-            self.DumpLogcat('%s-%s' % (self.TAG, record.test_name))
+            self.DumpLogcat('%s-%s' % (self.test_module_name, record.test_name))
 
     def onException(self, test_name, begin_time):
         """A function that is executed upon an unhandled exception from a test
@@ -900,16 +905,26 @@ class BaseTestClass(object):
         Returns:
             The test results object of this class.
         """
-        # Setup for the class.
-        try:
-            if self._setUpClass() is False:
-                raise signals.TestFailure(
-                    "Failed to setup %s." % self.test_module_name)
-        except Exception as e:
-            logging.exception("Failed to setup %s.", self.test_module_name)
-            self.results.failClass(self.test_module_name, e)
-            self._exec_func(self._tearDownClass)
-            return self.results
+        # Setup for the class with retry.
+        for i in xrange(_SETUP_RETRY_NUMBER):
+            try:
+                if self._setUpClass() is False:
+                    raise signals.TestFailure(
+                        "Failed to setup %s." % self.test_module_name)
+                else:
+                    break
+            except Exception as e:
+                logging.exception("Failed to setup %s.", self.test_module_name)
+                if i + 1 == _SETUP_RETRY_NUMBER:
+                    self.results.failClass(self.test_module_name, e)
+                    self._exec_func(self._tearDownClass)
+                    return self.results
+                else:
+                    # restart services before retry setup.
+                    for device in self.android_devices:
+                        logging.info("restarting service on device %s", device.serial)
+                        device.stopServices()
+                        device.startServices()
 
         # Run tests in order.
         try:

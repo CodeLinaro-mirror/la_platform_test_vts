@@ -65,7 +65,7 @@ class HidlHalGTest(gtest_binary_test.GtestBinaryTest):
             self._cpu_freq = cpu_frequency_scaling.CpuFrequencyScalingController(
                 self._dut)
             if self._disable_cpu_frequency_scaling:
-                logging.info("Disable CPU frequency scaling")
+                logging.debug("Disabling CPU frequency scaling")
                 self._cpu_freq.DisableCpuScaling()
         else:
             self._cpu_freq = None
@@ -82,6 +82,7 @@ class HidlHalGTest(gtest_binary_test.GtestBinaryTest):
         if self.coverage.enabled and self._target_hals:
             self.coverage.SetHalNames(self._target_hals)
             self.coverage.SetCoverageReportFilePrefix(self.test_module_name + self.abi_bitness)
+            self.coverage.InitializeDeviceCoverage(self._dut)
 
     def CreateTestCases(self):
         """Create testcases and conditionally enable passthrough mode.
@@ -165,8 +166,8 @@ class HidlHalGTest(gtest_binary_test.GtestBinaryTest):
                 return initial_test_cases
             else:
                 service_instances[service] = service_names
-        logging.info("registered service instances: %s", service_instances)
-        logging.info("service comb mode: %d", comb_mode)
+        logging.debug("registered service instances: %s", service_instances)
+        logging.debug("service comb mode: %d", comb_mode)
 
         # If request NO_COMBINATION mode, return the initial test cases directly.
         if comb_mode == hal_service_name_utils.CombMode.NO_COMBINATION:
@@ -229,7 +230,7 @@ class HidlHalGTest(gtest_binary_test.GtestBinaryTest):
         """Turns off CPU frequency scaling."""
         if (not self.isSkipAllTests() and getattr(self, "_cpu_freq", None)
             and self._disable_cpu_frequency_scaling):
-            logging.info("Enable CPU frequency scaling")
+            logging.debug("Enabling CPU frequency scaling")
             self._cpu_freq.EnableCpuScaling()
 
         if self.sancov.enabled and self._target_hals:

@@ -29,6 +29,7 @@
 #include "SocketServerForDriver.h"
 #include "test/vts/proto/AndroidSystemControlMessage.pb.h"
 #include "test/vts/proto/VtsDriverControlMessage.pb.h"
+#include "test/vts/proto/VtsResourceControllerMessage.pb.h"
 
 using namespace std;
 using namespace google::protobuf;
@@ -105,7 +106,8 @@ bool AgentRequestHandler::LaunchDriverService(
   const string& file_path = command_msg.file_path();
   int target_class = command_msg.target_class();
   int target_type = command_msg.target_type();
-  float target_version = command_msg.target_version() / 100.0;
+  int target_version_major = command_msg.target_version_major();
+  int target_version_minor = command_msg.target_version_minor();
   const string& target_package = command_msg.target_package();
   const string& target_component_name = command_msg.target_component_name();
   const string& module_name = command_msg.module_name();
@@ -247,9 +249,9 @@ bool AgentRequestHandler::LaunchDriverService(
             driver_type == VTS_DRIVER_TYPE_HAL_HIDL) {
           LOG(DEBUG) << "LoadHal " << module_name;
           int32_t driver_id = client->LoadHal(
-              file_path, target_class, target_type, target_version,
-              target_package, target_component_name, hw_binder_service_name,
-              module_name);
+              file_path, target_class, target_type, target_version_major,
+              target_version_minor, target_package, target_component_name,
+              hw_binder_service_name, module_name);
           if (driver_id == -1) {
             response_msg.set_response_code(FAIL);
             response_msg.set_reason("Failed to load the selected HAL.");
@@ -296,8 +298,8 @@ bool AgentRequestHandler::ReadSpecification(
 
   const string& result = client->ReadSpecification(
       command_message.service_name(), command_message.target_class(),
-      command_message.target_type(), command_message.target_version() / 100.0f,
-      command_message.target_package());
+      command_message.target_type(), command_message.target_version_major(),
+      command_message.target_version_minor(), command_message.target_package());
 
   return SendApiResult("ReadSpecification", result);
 }
@@ -438,6 +440,37 @@ void AgentRequestHandler::CreateSystemControlResponseFromDriverControlResponse(
   }
 }
 
+bool AgentRequestHandler::ProcessFmqCommand(
+    const AndroidSystemControlCommandMessage& command_msg) {
+#ifndef VTS_AGENT_DRIVER_COMM_BINDER  // socket
+  VtsDriverSocketClient* client = driver_client_;
+  if (!client) {
+#else  // binder
+  android::sp<android::vts::IVtsFuzzer> client =
+      android::vts::GetBinderClient(service_name_);
+  if (!client.get()) {
+#endif
+    LOG(ERROR) << "Driver socket client is uninitialized.";
+    return false;
+  }
+
+  AndroidSystemControlResponseMessage response_msg;
+  FmqResponseMessage* fmq_response = response_msg.mutable_fmq_response();
+  FmqRequestMessage fmq_request = command_msg.fmq_request();
+  // send the request message
+  bool success = client->ProcessFmqCommand(fmq_request, fmq_response);
+
+  // prepare for response back to host
+  if (success) {
+    response_msg.set_response_code(SUCCESS);
+  } else {
+    response_msg.set_response_code(FAIL);
+    response_msg.set_reason("Failed to call api to process FMQ command.");
+  }
+
+  return VtsSocketSendMessage(response_msg);
+}
+
 bool AgentRequestHandler::ProcessOneCommand() {
   AndroidSystemControlCommandMessage command_msg;
   if (!VtsSocketRecvMessage(&command_msg)) return false;
@@ -464,6 +497,8 @@ bool AgentRequestHandler::ProcessOneCommand() {
     case VTS_AGENT_COMMAND_EXECUTE_SHELL_COMMAND:
       ExecuteShellCommand(command_msg);
       return true;
+    case VTS_FMQ_COMMAND:
+      return ProcessFmqCommand(command_msg);
     default:
       LOG(ERROR) << " ERROR unknown command " << command_msg.command_type();
       return DefaultResponse();

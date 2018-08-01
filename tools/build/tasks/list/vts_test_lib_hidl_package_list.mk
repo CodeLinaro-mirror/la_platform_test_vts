@@ -17,6 +17,9 @@ vts_hal_driver_libs := \
   android.hardware.audio@2.0-vts.driver \
   android.hardware.audio.common@2.0-vts.driver \
   android.hardware.audio.effect@2.0-vts.driver \
+  android.hardware.audio@4.0-vts.driver \
+  android.hardware.audio.common@4.0-vts.driver \
+  android.hardware.audio.effect@4.0-vts.driver \
   android.hardware.authsecret@1.0-vts.driver \
   android.hardware.automotive.audiocontrol@1.0-vts.driver \
   android.hardware.automotive.evs@1.0-vts.driver \
@@ -72,6 +75,7 @@ vts_hal_driver_libs := \
   android.hardware.power@1.0-vts.driver \
   android.hardware.power@1.1-vts.driver \
   android.hardware.power@1.2-vts.driver \
+  android.hardware.power@1.3-vts.driver \
   android.hardware.radio@1.0-vts.driver \
   android.hardware.radio@1.1-vts.driver \
   android.hardware.radio@1.2-vts.driver \
@@ -110,6 +114,9 @@ vts_hal_profiler_libs := \
   android.hardware.audio@2.0-vts.profiler \
   android.hardware.audio.common@2.0-vts.profiler \
   android.hardware.audio.effect@2.0-vts.profiler \
+  android.hardware.audio@4.0-vts.profiler \
+  android.hardware.audio.common@4.0-vts.profiler \
+  android.hardware.audio.effect@4.0-vts.profiler \
   android.hardware.authsecret@1.0-vts.profiler \
   android.hardware.automotive.audiocontrol@1.0-vts.profiler \
   android.hardware.automotive.evs@1.0-vts.profiler \
@@ -165,6 +172,7 @@ vts_hal_profiler_libs := \
   android.hardware.power@1.0-vts.profiler \
   android.hardware.power@1.1-vts.profiler \
   android.hardware.power@1.2-vts.profiler \
+  android.hardware.power@1.3-vts.profiler \
   android.hardware.radio@1.0-vts.profiler \
   android.hardware.radio@1.1-vts.profiler \
   android.hardware.radio@1.2-vts.profiler \
@@ -248,6 +256,7 @@ vts_hal_test_bins := \
   VtsHalPowerV1_0TargetTest \
   VtsHalPowerV1_1TargetTest \
   VtsHalPowerV1_2TargetTest \
+  VtsHalPowerV1_3TargetTest \
   VtsHalRadioV1_0TargetTest \
   VtsHalRadioV1_1TargetTest \
   VtsHalRadioV1_2TargetTest \
@@ -278,6 +287,7 @@ vts_hal_test_bins := \
   VtsHalWifiOffloadV1_0TargetTest \
   VtsHalWifiSupplicantV1_0TargetTest \
   VtsHalWifiSupplicantV1_1TargetTest \
+  VtsHidlAllocatorV1_0TargetTest \
 
 # Binaries which are part of VNDK but in the form of HIDL.
 vts_hal_test_bins += \

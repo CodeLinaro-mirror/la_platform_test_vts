@@ -4,11 +4,11 @@
 #undef LOG_TAG
 #define LOG_TAG "FuzzerExtended_android_hardware_tests_msgq_V1_0_ITestMsgQ"
 
-#include <stdio.h>
+#include <log/log.h>
 #include <stdarg.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <utils/Log.h>
 
 #include <driver_base/DriverBase.h>
 #include <driver_base/DriverCallbackBase.h>
@@ -35,8 +35,8 @@ class Vts_android_hardware_tests_msgq_V1_0_ITestMsgQ : public ::android::hardwar
 
     virtual ~Vts_android_hardware_tests_msgq_V1_0_ITestMsgQ() = default;
 
-    ::android::hardware::Return<void> configureFmqSyncReadWrite(
-        std::function<void(bool arg0,const ::android::hardware::MQDescriptorSync<uint16_t>& arg1)> cb) override;
+    ::android::hardware::Return<bool> configureFmqSyncReadWrite(
+        const ::android::hardware::MQDescriptorSync<uint16_t>& arg0) override;
 
     ::android::hardware::Return<void> getFmqUnsyncWrite(
         bool arg0, std::function<void(bool arg0,const ::android::hardware::MQDescriptorUnsync<uint16_t>& arg1)> cb) override;

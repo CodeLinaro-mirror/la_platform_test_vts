@@ -23,6 +23,7 @@ import types
 
 from vts.proto import AndroidSystemControlMessage_pb2 as SysMsg_pb2
 from vts.proto import ComponentSpecificationMessage_pb2 as CompSpecMsg_pb2
+from vts.proto import VtsResourceControllerMessage_pb2 as ResControlMsg_pb2
 from vts.runners.host import const
 from vts.runners.host import errors
 from vts.utils.python.mirror import mirror_object
@@ -43,7 +44,8 @@ COMMAND_TYPE_NAME = {
     201: "LIST_APIS",
     202: "CALL_API",
     203: "VTS_AGENT_COMMAND_GET_ATTRIBUTE",
-    301: "VTS_AGENT_COMMAND_EXECUTE_SHELL_COMMAND"
+    301: "VTS_AGENT_COMMAND_EXECUTE_SHELL_COMMAND",
+    401: "VTS_FMQ_COMMAND"
 }
 
 
@@ -171,15 +173,33 @@ class VtsTcpClient(object):
                             file_path=None,
                             target_class=None,
                             target_type=None,
-                            target_version=None,
+                            target_version_major=None,
+                            target_version_minor=None,
                             target_package=None,
                             target_component_name=None,
                             hw_binder_service_name=None):
-        """RPC to LAUNCH_DRIVER_SERVICE."""
-        logging.info("service_name: %s", service_name)
-        logging.info("file_path: %s", file_path)
-        logging.info("bits: %s", bits)
-        logging.info("driver_type: %s", driver_type)
+        """RPC to LAUNCH_DRIVER_SERVICE.
+
+           Args:
+               driver_type: enum, type of the driver (shared lib, shell).
+               service_name: string, binder service name.
+               bits: int, whether a target driver binary is 64-bits or 32-bits.
+               file_path: string, the name of a target.
+               target_class: int, target class.
+               target_type: int, target type.
+               target_version_major: int, HAL major version, e.g. 1.0 -> 1.
+               target_version_minor: int, HAL minor version, e.g. 1.0 -> 0.
+               target_package: string, package name of a HIDL HAL.
+               target_component_name: string, name of a target component.
+               hw_binder_service_name: name of a HW Binder service to use.
+
+           Returns:
+               response code, -1 or 0 on failure, other values on success.
+        """
+        logging.debug("service_name: %s", service_name)
+        logging.debug("file_path: %s", file_path)
+        logging.debug("bits: %s", bits)
+        logging.debug("driver_type: %s", driver_type)
         self.SendCommand(
             SysMsg_pb2.LAUNCH_DRIVER_SERVICE,
             driver_type=driver_type,
@@ -188,12 +208,13 @@ class VtsTcpClient(object):
             file_path=file_path,
             target_class=target_class,
             target_type=target_type,
-            target_version=target_version,
+            target_version_major=target_version_major,
+            target_version_minor=target_version_minor,
             target_package=target_package,
             target_component_name=target_component_name,
             hw_binder_service_name=hw_binder_service_name)
         resp = self.RecvResponse()
-        logging.info("resp for LAUNCH_DRIVER_SERVICE: %s", resp)
+        logging.debug("resp for LAUNCH_DRIVER_SERVICE: %s", resp)
         if driver_type == SysMsg_pb2.VTS_DRIVER_TYPE_HAL_HIDL \
                 or driver_type == SysMsg_pb2.VTS_DRIVER_TYPE_HAL_CONVENTIONAL \
                 or driver_type == SysMsg_pb2.VTS_DRIVER_TYPE_HAL_LEGACY:
@@ -208,7 +229,7 @@ class VtsTcpClient(object):
         """RPC to LIST_APIS."""
         self.SendCommand(SysMsg_pb2.LIST_APIS)
         resp = self.RecvResponse()
-        logging.info("resp for LIST_APIS: %s", resp)
+        logging.debug("resp for LIST_APIS: %s", resp)
         if (resp.response_code == SysMsg_pb2.SUCCESS):
             return resp.spec
         return None
@@ -269,8 +290,8 @@ class VtsTcpClient(object):
                                union_value)
                 index += 1
             return result
-        elif (var_spec_msg.type == CompSpecMsg_pb2.TYPE_VECTOR or
-              var_spec_msg.type == CompSpecMsg_pb2.TYPE_ARRAY):
+        elif (var_spec_msg.type == CompSpecMsg_pb2.TYPE_VECTOR
+              or var_spec_msg.type == CompSpecMsg_pb2.TYPE_ARRAY):
             result = []
             for vector_value in var_spec_msg.vector_value:
                 result.append(
@@ -280,8 +301,8 @@ class VtsTcpClient(object):
             logging.debug("var_spec_msg: %s", var_spec_msg)
             return var_spec_msg
 
-        raise errors.VtsUnsupportedTypeError("unsupported type %s" %
-                                             var_spec_msg.type)
+        raise errors.VtsUnsupportedTypeError(
+            "unsupported type %s" % var_spec_msg.type)
 
     def CallApi(self, arg, caller_uid=None):
         """RPC to CALL_API."""
@@ -299,27 +320,20 @@ class VtsTcpClient(object):
                 logging.exception(e)
                 logging.error("Paring error\n%s", resp.result)
             if result.return_type.type == CompSpecMsg_pb2.TYPE_SUBMODULE:
-                logging.info("returned a submodule spec")
-                logging.info("spec: %s", result.return_type_submodule_spec)
+                logging.debug("returned a submodule spec")
+                logging.debug("spec: %s", result.return_type_submodule_spec)
                 return mirror_object.MirrorObject(
                     self, result.return_type_submodule_spec, None)
 
-            logging.info("result: %s", result.return_type_hidl)
-            if len(result.return_type_hidl) == 1:
-                result_value = self.GetPythonDataOfVariableSpecMsg(
-                    result.return_type_hidl[0])
-            elif len(result.return_type_hidl) > 1:
+            if result.HasField("return_type"):  # For non-HIDL return value
+                result_value = result
+            else:
                 result_value = []
                 for return_type_hidl in result.return_type_hidl:
                     result_value.append(
                         self.GetPythonDataOfVariableSpecMsg(return_type_hidl))
-            else:  # For non-HIDL return value
-                if hasattr(result, "return_type"):
-                    result_value = result
-                else:
-                    result_value = None
 
-            if hasattr(result, "raw_coverage_data"):
+            if len(result.raw_coverage_data) > 0:
                 return result_value, {"coverage": result.raw_coverage_data}
             else:
                 return result_value
@@ -345,8 +359,8 @@ class VtsTcpClient(object):
                 logging.exception(e)
                 logging.error("Paring error\n%s", resp.result)
             if result.return_type.type == CompSpecMsg_pb2.TYPE_SUBMODULE:
-                logging.info("returned a submodule spec")
-                logging.info("spec: %s", result.return_type_submodule_spec)
+                logging.debug("returned a submodule spec")
+                logging.debug("spec: %s", result.return_type_submodule_spec)
                 return mirror_object.MirrorObject(
                     self, result.return_type_submodule_spec, None)
             elif result.return_type.type == CompSpecMsg_pb2.TYPE_SCALAR:
@@ -425,6 +439,29 @@ class VtsTcpClient(object):
             const.EXIT_CODE: exit_code
         }
 
+    def SendFmqRequest(self, message):
+        """Sends a command to the FMQ driver and receives the response.
+
+        Args:
+            message: FmqRequestMessage, message that contains the arguments
+                     in the FMQ request.
+
+        Returns:
+            FmqResponseMessage, which includes all possible return value types,
+            including int, bool, and data read from the queue.
+        """
+        self.SendCommand(SysMsg_pb2.VTS_FMQ_COMMAND, fmq_request=message)
+        resp = self.RecvResponse()
+        logging.debug("resp for VTS_FMQ_COMMAND: %s", resp)
+
+        if not resp:
+            logging.error("TCP client did not receive a response from agent.")
+        elif resp.response_code != SysMsg_pb2.SUCCESS:
+            logging.error(
+                "TCP client received unsuccessful response code from agent.")
+        else:
+            return resp.fmq_response
+
     def Ping(self):
         """RPC to send a PING request.
 
@@ -433,7 +470,7 @@ class VtsTcpClient(object):
         """
         self.SendCommand(SysMsg_pb2.PING)
         resp = self.RecvResponse()
-        logging.info("resp for PING: %s", resp)
+        logging.debug("resp for PING: %s", resp)
         if resp is not None and resp.response_code == SysMsg_pb2.SUCCESS:
             return True
         return False
@@ -442,7 +479,8 @@ class VtsTcpClient(object):
                           interface_name,
                           target_class,
                           target_type,
-                          target_version,
+                          target_version_major,
+                          target_version_minor,
                           target_package,
                           recursive=False):
         """RPC to VTS_AGENT_COMMAND_READ_SPECIFICATION.
@@ -457,12 +495,13 @@ class VtsTcpClient(object):
             service_name=interface_name,
             target_class=target_class,
             target_type=target_type,
-            target_version=target_version,
+            target_version_major=target_version_major,
+            target_version_minor=target_version_minor,
             target_package=target_package)
         resp = self.RecvResponse(retries=2)
-        logging.info("resp for VTS_AGENT_COMMAND_EXECUTE_READ_INTERFACE: %s",
-                     resp)
-        logging.info("proto: %s", resp.result)
+        logging.debug("resp for VTS_AGENT_COMMAND_EXECUTE_READ_INTERFACE: %s",
+                      resp)
+        logging.debug("proto: %s", resp.result)
         result = CompSpecMsg_pb2.ComponentSpecificationMessage()
         if resp.result == "error":
             raise errors.VtsTcpCommunicationError(
@@ -478,6 +517,9 @@ class VtsTcpClient(object):
                 if imported_interface == "android.hidl.base@1.0::types":
                     logging.warn("import android.hidl.base@1.0::types skipped")
                     continue
+                [package, version_str] = imported_interface.split("@")
+                [version_major,
+                 version_minor] = (version_str.split("::")[0]).split(".")
                 imported_result = self.ReadSpecification(
                     imported_interface.split("::")[1],
                     # TODO(yim): derive target_class and
@@ -485,9 +527,13 @@ class VtsTcpClient(object):
                     msg.component_class
                     if target_class is None else target_class,
                     msg.component_type if target_type is None else target_type,
-                    float(imported_interface.split("@")[1].split("::")[0]),
-                    imported_interface.split("@")[0])
-                result.MergeFrom(imported_result)
+                    int(version_major),
+                    int(version_minor),
+                    package)
+                # Merge the attributes from imported interface.
+                for attribute in imported_result.attribute:
+                    imported_attribute = result.attribute.add()
+                    imported_attribute.CopyFrom(attribute)
 
         return result
 
@@ -498,7 +544,8 @@ class VtsTcpClient(object):
                     bits=None,
                     target_class=None,
                     target_type=None,
-                    target_version=None,
+                    target_version_major=None,
+                    target_version_minor=None,
                     target_package=None,
                     target_component_name=None,
                     hw_binder_service_name=None,
@@ -508,7 +555,8 @@ class VtsTcpClient(object):
                     driver_type=None,
                     shell_command=None,
                     caller_uid=None,
-                    arg=None):
+                    arg=None,
+                    fmq_request=None):
         """Sends a command.
 
         Args:
@@ -522,10 +570,10 @@ class VtsTcpClient(object):
 
         command_msg = SysMsg_pb2.AndroidSystemControlCommandMessage()
         command_msg.command_type = command_type
-        logging.info("sending a command (type %s)",
-                     COMMAND_TYPE_NAME[command_type])
+        logging.debug("sending a command (type %s)",
+                      COMMAND_TYPE_NAME[command_type])
         if command_type == 202:
-            logging.info("target API: %s", arg)
+            logging.debug("target API: %s", arg)
 
         if target_class is not None:
             command_msg.target_class = target_class
@@ -533,8 +581,11 @@ class VtsTcpClient(object):
         if target_type is not None:
             command_msg.target_type = target_type
 
-        if target_version is not None:
-            command_msg.target_version = int(target_version * 100)
+        if target_version_major is not None:
+            command_msg.target_version_major = target_version_major
+
+        if target_version_minor is not None:
+            command_msg.target_version_minor = target_version_minor
 
         if target_package is not None:
             command_msg.target_package = target_package
@@ -578,7 +629,10 @@ class VtsTcpClient(object):
             else:
                 command_msg.shell_command.append(shell_command)
 
-        logging.info("command %s" % command_msg)
+        if fmq_request is not None:
+            command_msg.fmq_request.CopyFrom(fmq_request)
+
+        logging.debug("command %s" % command_msg)
         message = command_msg.SerializeToString()
         message_len = len(message)
         logging.debug("sending %d bytes", message_len)
@@ -599,13 +653,14 @@ class VtsTcpClient(object):
                     logging.info("retrying...")
                 header = self.channel.readline().strip("\n")
                 length = int(header) if header else 0
-                logging.info("resp %d bytes", length)
+                logging.debug("resp %d bytes", length)
                 data = self.channel.read(length)
                 response_msg = SysMsg_pb2.AndroidSystemControlResponseMessage()
                 response_msg.ParseFromString(data)
-                logging.debug("Response %s", "success" if
-                              response_msg.response_code == SysMsg_pb2.SUCCESS
-                              else "fail")
+                logging.debug(
+                    "Response %s", "success"
+                    if response_msg.response_code == SysMsg_pb2.SUCCESS else
+                    "fail")
                 return response_msg
             except socket.timeout as e:
                 logging.exception(e)

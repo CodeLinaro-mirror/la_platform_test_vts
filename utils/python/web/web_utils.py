@@ -33,7 +33,7 @@ class WebFeature(feature_utils.Feature):
     """Feature object for web functionality.
 
     Attributes:
-        enabled: boolean, True if systrace is enabled, False otherwise
+        enabled: boolean, True if web feature is enabled, False otherwise
         report_msg: TestReportMessage, Proto summarizing the test run
         current_test_report_msg: TestCaseReportMessage, Proto summarizing the current test case
         rest_client: DashboardRestClient, client to which data will be posted
@@ -47,7 +47,10 @@ class WebFeature(feature_utils.Feature):
         keys.ConfigKeys.IKEY_ANDROID_DEVICE, keys.ConfigKeys.IKEY_ABI_NAME,
         keys.ConfigKeys.IKEY_ABI_BITNESS
     ]
-    _OPTIONAL_PARAMS = [keys.ConfigKeys.RUN_AS_VTS_SELFTEST]
+    _OPTIONAL_PARAMS = [
+        keys.ConfigKeys.RUN_AS_VTS_SELFTEST,
+        keys.ConfigKeys.IKEY_ENABLE_PROFILING,
+    ]
 
     def __init__(self, user_params):
         """Initializes the web feature.
@@ -77,6 +80,10 @@ class WebFeature(feature_utils.Feature):
         self.report_msg = ReportMsg.TestReportMessage()
         self.report_msg.test = str(
             getattr(self, keys.ConfigKeys.KEY_TESTBED_NAME))
+
+        if getattr(self, keys.ConfigKeys.IKEY_ENABLE_PROFILING, False):
+            self.report_msg.test += "Profiling"
+
         self.report_msg.test_type = ReportMsg.VTS_HOST_DRIVEN_STRUCTURAL
         self.report_msg.start_timestamp = feature_utils.GetTimestamp()
         self.report_msg.host_info.hostname = socket.gethostname()
@@ -360,6 +367,25 @@ class WebFeature(feature_utils.Feature):
             log_msg.url = url
             log_msg.name = os.path.basename(url)
 
+    def AddLogGcsUrls(self, urls):
+        """Creates a log message with log file GCS_URLs.
+
+        Adds a log message to the current test module report and supplies the
+        url to the log files.
+
+        Requires the feature to be enabled; no-op otherwise.
+
+        Args:
+            gcs_urls: list of string, the GCS_URLs of the logs.
+        """
+        if not self.enabled or urls is None:
+            return
+
+        for url in urls:
+            log_msg = self.report_msg.log.add()
+            log_msg.url = url
+            log_msg.name = "gcs_" + os.path.basename(url)
+
     def GetTestModuleKeys(self):
         """Returns the test module name and start timestamp.
 
@@ -387,7 +413,7 @@ class WebFeature(feature_utils.Feature):
 
         # Handle case when runner fails, tests aren't executed
         if (not getattr(self, keys.ConfigKeys.RUN_AS_VTS_SELFTEST, False)
-            and executed and executed[-1].test_name == "setup_class"):
+                and executed and executed[-1].test_name == "setup_class"):
             # Test failed during setup, all tests were not executed
             start_index = 0
         else:
@@ -408,11 +434,11 @@ class WebFeature(feature_utils.Feature):
             build_id = str(build[keys.ConfigKeys.IKEY_BUILD_ID])
             self.report_msg.build_info.id = build_id
 
-        logging.info("_tearDownClass hook: start (username: %s)",
-                     getpass.getuser())
+        logging.debug("_tearDownClass hook: start (username: %s)",
+                      getpass.getuser())
 
         if len(self.report_msg.test_case) == 0:
-            logging.info("_tearDownClass hook: skip uploading (no test case)")
+            logging.warn("_tearDownClass hook: skip uploading (no test case)")
             return ''
 
         post_msg = ReportMsg.DashboardPostMessage()
@@ -422,10 +448,10 @@ class WebFeature(feature_utils.Feature):
 
         message_b = base64.b64encode(post_msg.SerializeToString())
 
-        logging.info('Result proto message generated. size: %s',
-                     len(message_b))
+        logging.debug('Result proto message generated. size: %s',
+                      len(message_b))
 
-        logging.info("_tearDownClass hook: status upload time stamp %s",
-                     str(self.report_msg.start_timestamp))
+        logging.debug("_tearDownClass hook: status upload time stamp %s",
+                      str(self.report_msg.start_timestamp))
 
         return message_b

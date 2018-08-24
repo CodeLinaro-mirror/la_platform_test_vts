@@ -30,6 +30,7 @@ class ConfigKeys(object):
     KEY_TESTBED_NAME = "name"
     KEY_TEST_PATHS = "test_paths"
     KEY_TEST_SUITE = "test_suite"
+    KEY_TEST_TIMEOUT = "test_timeout"
 
     # Keys in test suite
     KEY_INCLUDE_FILTER = "include_filter"
@@ -131,6 +132,8 @@ class ConfigKeys(object):
 
     # Keys for special test cases
     IKEY_FFMPEG_BINARY_PATH = "ffmpeg_binary_path"
+    IKEY_SYZKALLER_PACKAGES_PATH = "syzkaller_packages_path"
+    IKEY_SYZKALLER_TEMPLATE_PATH = "syzkaller_template_path"
 
     # Keys for log uploading
     IKEY_ENABLE_LOG_UPLOADING = "enable_log_uploading"

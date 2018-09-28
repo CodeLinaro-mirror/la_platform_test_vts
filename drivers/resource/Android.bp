@@ -26,10 +26,16 @@ cc_defaults {
     local_include_dirs: ["include"],
 
     shared_libs: [
+        "android.hardware.audio@4.0",
+        "android.hardware.audio.effect@2.0",
+        "android.hardware.audio.effect@4.0",
+        "android.hidl.allocator@1.0",
+        "android.hidl.memory@1.0",
         "libbase",
         "libcutils",
         "libfmq",
         "libhidlbase",
+        "libhidlmemory",
         "liblog",
         "libprotobuf-cpp-full",
         "libutils",
@@ -38,6 +44,11 @@ cc_defaults {
     export_include_dirs: ["include"],
 
     export_shared_lib_headers: [
+        "android.hardware.audio@4.0",
+        "android.hardware.audio.effect@2.0",
+        "android.hardware.audio.effect@4.0",
+        "android.hidl.allocator@1.0",
+        "android.hidl.memory@1.0",
         "libcutils",
         "libfmq",
         "libhidlbase",
@@ -50,10 +61,9 @@ cc_library_shared {
 
     defaults: ["libvts_resource-defaults"],
 
-    rtti: true,
-
     srcs: [
-        "fmq_driver/VtsFmqDriver.cpp",
+        "hidl_handle_driver/VtsHidlHandleDriver.cpp",
+        "hidl_memory_driver/VtsHidlMemoryDriver.cpp",
     ],
 }
 
@@ -80,7 +90,28 @@ cc_test {
     rtti: true,
 
     srcs: [
-        "fmq_driver/VtsFmqDriver.cpp",
         "fmq_driver/VtsFmqDriverTest.cpp"
     ],
+}
+
+cc_test {
+    name: "vts_resource_hidl_memory_test",
+
+    defaults: ["libvts_resource-defaults"],
+
+    srcs: [
+        "hidl_memory_driver/VtsHidlMemoryDriver.cpp",
+        "hidl_memory_driver/VtsHidlMemoryDriverTest.cpp",
+    ]
+}
+
+cc_test {
+    name: "vts_resource_hidl_handle_test",
+
+    defaults: ["libvts_resource-defaults"],
+
+    srcs: [
+        "hidl_handle_driver/VtsHidlHandleDriver.cpp",
+        "hidl_handle_driver/VtsHidlHandleDriverTest.cpp",
+    ]
 }

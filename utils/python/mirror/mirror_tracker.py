@@ -97,9 +97,9 @@ class MirrorTracker(object):
                 blocking=False,
                 reset_pointers=True,
                 client=None):
-        """Initiates a fast message queue object.
+        """Initializes a fast message queue object.
 
-        This method will initiate a fast message queue object on the target side,
+        This method will initialize a fast message queue object on the target side,
         create a mirror object for the FMQ, and register it in the tracker.
 
         Args:
@@ -120,9 +120,136 @@ class MirrorTracker(object):
                 If not specified, creates a new one.
 
         Returns:
-            ResourceMirror object, it allows users to directly call methods on
-                                   ResourceMirror object.
+            ResourcFmqMirror object,
+            it allows users to directly call methods on the mirror object.
         """
+        # Check if queue name already exists in tracker.
+        if new_queue_name is not None and new_queue_name in self._registered_mirrors:
+            logging.error("Queue name already exists in tracker.")
+            return None
+
+        # Need to initialize a client if caller doesn't provide one.
+        if client is None:
+            client = vts_tcp_client.VtsTcpClient()
+            client.Connect(
+                command_port=self._host_command_port,
+                callback_port=self._host_callback_port)
+
+        # Create a new queue by default.
+        existing_queue_id = -1
+        # Check if caller wants to create a queue object based on
+        # an existing queue object.
+        if existing_queue is not None:
+            # Check if caller provides a string.
+            if type(existing_queue) == str:
+                if existing_queue in self._registered_mirrors:
+                    data_type = self._registered_mirrors[
+                        existing_queue].dataType
+                    sync = self._registered_mirrors[
+                        existing_queue].sync
+                    existing_queue_id = self._registered_mirrors[
+                        existing_queue].queueId
+                else:
+                    logging.error("Nonexisting queue name in mirror_tracker.")
+                    return None
+            # Check if caller provides a resource mirror object.
+            elif isinstance(existing_queue, resource_mirror.ResourceFmqMirror):
+                data_type = existing_queue.dataType
+                sync = existing_queue.sync
+                existing_queue_id = existing_queue.queueId
+            else:
+                logging.error(
+                    "Unsupported way of finding an existing queue object.")
+                return None
+
+        # Create a resource mirror object.
+        mirror = resource_mirror.ResourceFmqMirror(data_type, sync, client)
+        mirror._create(existing_queue_id, queue_size, blocking, reset_pointers)
+        if mirror.queueId == -1:
+            # Failed to create queue object, error logged in resource_mirror.
+            return None
+
+        # Needs to dynamically generate queue name if caller doesn't provide one
+        if new_queue_name is None:
+            new_queue_name = "queue_id_" + str(mirror._queue_id)
+        self._registered_mirrors[new_queue_name] = mirror
+        return mirror
+
+    def InitHidlMemory(self, mem_size=0, client=None, mem_name=None):
+        """Initialize a hidl_memory object.
+
+        This method will initialize a hidl_memory object on the target side,
+        create a mirror object, and register it in the tracker.
+
+        Args:
+            mem_size: int, size of the memory region.
+            client: VtsTcpClient, if an existing session should be used.
+                If not specified, creates a new one.
+            mem_name: string, name of the memory region.
+                If not specified, dynamically assign the memory region a name.
+
+        Returns:
+            ResourceHidlMemoryMirror object,
+            it allows users to directly call methods on the mirror object.
+        """
+        # Check if mem_name already exists in tracker.
+        if mem_name is not None and mem_name in self._registered_mirrors:
+            logging.error("Memory name already exists in tracker.")
+            return None
+
+        # Need to initialize a client if caller doesn't provide one.
+        if client is None:
+            client = vts_tcp_client.VtsTcpClient()
+            client.Connect(
+                command_port=self._host_command_port,
+                callback_port=self._host_callback_port)
+
+        # Create a resource_mirror object.
+        mirror = resource_mirror.ResourceHidlMemoryMirror(client)
+        mirror._allocate(mem_size)
+        if mirror.memId == -1:
+            # Failed to create memory object, error logged in resource_mirror.
+            return None
+
+        # Need to dynamically assign a memory name
+        # if caller doesn't provide one.
+        if mem_name is None:
+            mem_name = "mem_id_" + str(mirror._mem_id)
+        self._registered_mirrors[mem_name] = mirror
+        return mirror
+
+    def InitHidlHandleForSingleFile(self,
+                                    filepath,
+                                    mode,
+                                    ints=[],
+                                    client=None,
+                                    handle_name=None):
+        """Initialize a hidl_handle object.
+
+        This method will initialize a hidl_handle object on the target side,
+        create a mirror object, and register it in the tracker.
+        TODO: Currently only support creating a handle for a single file.
+        In the future, need to support arbitrary file descriptor types
+        (e.g. socket, pipe), and more than one file.
+
+        Args:
+            filepath: string, path to the file.
+            mode: string, specifying the mode to open the file.
+            ints: int list, useful integers to be stored in handle object.
+            client: VtsTcpClient, if an existing session should be used.
+                If not specified, create a new one.
+            handle_name: string, name of the handle object.
+                If not specified, dynamically assign the handle object a name.
+
+        Returns:
+            ResourceHidlHandleMirror object,
+            it allows users to directly call methods on the mirror object.
+        """
+        # Check if handle_name already exists in tracker.
+        if handle_name is not None and handle_name in self._registered_mirrors:
+            logging.error("Handle name already exists in tracker.")
+            return None
+
         # Need to initialize a client if caller doesn't provide one.
         if not client:
             client = vts_tcp_client.VtsTcpClient()
@@ -130,41 +257,18 @@ class MirrorTracker(object):
                 command_port=self._host_command_port,
                 callback_port=self._host_callback_port)
 
-        # Create a resource mirror object.
-        mirror = resource_mirror.ResourceMirror(client)
+        # Create a resource_mirror object.
+        mirror = resource_mirror.ResourceHidlHandleMirror(client)
+        mirror._createHandleForSingleFile(filepath, mode, ints)
+        if mirror.handleId == -1:
+            # Failed to create handle object, error logged in resource_mirror.
+            return None
 
-        # Create a new queue by default.
-        existing_queue_id = -1
-        # Check if caller wants to create a queue object based on
-        # an existing queue object.
-        if (existing_queue != None):
-            # Check if caller provides a string.
-            if (type(existing_queue) == str):
-                if existing_queue in self._registered_mirrors:
-                    data_type = self._registered_mirrors[
-                        existing_queue]._data_type
-                    sync = self._registered_mirrors[existing_queue]._sync
-                    existing_queue_id = self._registered_mirrors[
-                        existing_queue]._driver_id
-                else:
-                    raise errors.USERError(
-                        "Nonexisting queue name in mirror_tracker.")
-            # Check if caller provides a resource mirror object.
-            elif (isinstance(existing_queue, resource_mirror.ResourceMirror)
-                  and existing_queue._res_type == "fmq"):
-                data_type = existing_queue._data_type
-                sync = existing_queue._sync
-                existing_queue_id = existing_queue._driver_id
-            else:
-                raise errors.USERError(
-                    "Unsupported way of finding an existing queue object.")
-
-        mirror.initFmq(data_type, sync, existing_queue_id, queue_size,
-                       blocking, reset_pointers)
-        # Needs to dynamically generate queue name if caller doesn't provide one
-        if (new_queue_name == None):
-            new_queue_name = "queue_id_" + str(mirror._driver_id)
-        self._registered_mirrors[new_queue_name] = mirror
+        # Need to dynamically assign a handle name
+        # if caller doesn't provide one.
+        if handle_name is None:
+            handle_name = "handle_id_" + str(mirror._handle_id)
+        self._registered_mirrors[handle_name] = mirror
         return mirror
 
     def InitHidlHal(self,
@@ -177,7 +281,8 @@ class MirrorTracker(object):
                     hw_binder_service_name=_DEFAULT_HWBINDER_SERVICE,
                     bits=64,
                     target_version_major=None,
-                    target_version_minor=None):
+                    target_version_minor=None,
+                    is_test_hal=False):
         """Initiates a handler for a particular HIDL HAL.
 
         This will initiate a driver service for a HAL on the target side, create
@@ -198,8 +303,10 @@ class MirrorTracker(object):
               int, the target component major version (e.g., 1.0 -> 1).
             target_version_minor:
               int, the target component minor version (e.g., 1.0 -> 0).
-            If host doesn't provide major and minor versions separately,
-            parse it from the float version of target_version.
+              If host doesn't provide major and minor versions separately,
+              parse it from the float version of target_version.
+            is_test_hal: bool, whether the HAL service is a test HAL
+                         (e.g. msgq).
 
         Raises:
             USERError if user doesn't provide a version of the HAL service.
@@ -216,7 +323,7 @@ class MirrorTracker(object):
         mirror.InitHalDriver(target_type, target_version_major,
                              target_version_minor, target_package,
                              target_component_name, hw_binder_service_name,
-                             handler_name, bits)
+                             handler_name, bits, is_test_hal)
         self._registered_mirrors[target_type] = mirror
 
     def InitSharedLib(self,

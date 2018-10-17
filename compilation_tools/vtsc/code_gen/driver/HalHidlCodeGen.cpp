@@ -248,49 +248,23 @@ void HalHidlCodeGen::GenerateDriverImplForMethod(Formatter& out,
   out << "LOG(DEBUG) << \"local_device = \" << " << kInstanceVariableName
       << ".get();\n";
 
-  // Define the return results and call the HAL function.
-  for (int index = 0; index < func_msg.return_type_hidl_size(); index++) {
-    const auto& return_val = func_msg.return_type_hidl(index);
-    if (return_val.type() == TYPE_FMQ_SYNC ||
-        return_val.type() == TYPE_FMQ_UNSYNC) {
-      // Use pointer to store return results with fmq type as copy assignment
-      // is not allowed for fmq descriptor.
-      out << "unique_ptr<" << GetCppVariableType(return_val) << "> result"
-          << index << ";\n";
-    } else {
-      out << GetCppVariableType(return_val) << " result" << index << ";\n";
-    }
-  }
+  // Call the HAL function.
   if (CanElideCallback(func_msg)) {
-    out << "result0 = ";
+    out << GetCppVariableType(func_msg.return_type_hidl(0)) << " result0 = ";
     GenerateHalFunctionCall(out, func_msg);
-  } else {
-    GenerateHalFunctionCall(out, func_msg);
-  }
-
-  // Set the return results value to the proto message.
-  out << "result_msg->set_name(\"" << func_msg.name() << "\");\n";
-  for (int index = 0; index < func_msg.return_type_hidl_size(); index++) {
-    out << "VariableSpecificationMessage* result_val_" << index << " = "
-        << "result_msg->add_return_type_hidl();\n";
-    const auto& return_val = func_msg.return_type_hidl(index);
-    if (return_val.type() == TYPE_FMQ_SYNC ||
-        return_val.type() == TYPE_FMQ_UNSYNC) {
-      // Get the raw pointer for FMQ descriptor, because inside SetResult
-      // we need to allocate a new FMQ descriptor in the heap (without smart
-      // pointer), to make the memory persistent. The memory will not get freed
-      // when we register the queue in resource_manager.
-      GenerateSetResultCodeForTypedVariable(
-          out, func_msg.return_type_hidl(index),
-          "result_val_" + std::to_string(index),
-          "*result" + std::to_string(index) + ".get()");
-    } else {
+    // Set the return results value to the proto message.
+    for (int index = 0; index < func_msg.return_type_hidl_size(); index++) {
+      out << "VariableSpecificationMessage* result_val_" << index << " = "
+          << "result_msg->add_return_type_hidl();\n";
       GenerateSetResultCodeForTypedVariable(
           out, func_msg.return_type_hidl(index),
           "result_val_" + std::to_string(index),
           "result" + std::to_string(index));
     }
+  } else {
+    GenerateHalFunctionCall(out, func_msg);
   }
+
   out << "return true;\n";
   out.unindent();
   out << "}\n";
@@ -311,6 +285,7 @@ void HalHidlCodeGen::GenerateHalFunctionCall(Formatter& out,
   }
   if (func_msg.return_type_hidl_size()== 0 || CanElideCallback(func_msg)) {
     out << ");\n";
+    out << "result_msg->set_name(\"" << func_msg.name() << "\");\n";
   } else {
     out << (func_msg.arg_size() != 0 ? ", " : "");
     GenerateSyncCallbackFunctionImpl(out, func_msg);
@@ -324,7 +299,7 @@ void HalHidlCodeGen::GenerateSyncCallbackFunctionImpl(Formatter& out,
   for (int index = 0; index < func_msg.return_type_hidl_size(); index++) {
     const auto& return_val = func_msg.return_type_hidl(index);
     out << GetCppVariableType(return_val, IsConstType(return_val.type()))
-        << " arg" << index;
+        << " arg" << index << " __attribute__((__unused__))";
     if (index != (func_msg.return_type_hidl_size() - 1)) out << ",";
   }
   out << "){\n";
@@ -332,17 +307,14 @@ void HalHidlCodeGen::GenerateSyncCallbackFunctionImpl(Formatter& out,
   out << "LOG(INFO) << \"callback " << func_msg.name() << " called\""
       << ";\n";
 
+  // Set the return results value to the proto message.
+  out << "result_msg->set_name(\"" << func_msg.name() << "\");\n";
   for (int index = 0; index < func_msg.return_type_hidl_size(); index++) {
-    const auto& return_val = func_msg.return_type_hidl(index);
-    if (return_val.type() == TYPE_FMQ_SYNC ||
-        return_val.type() == TYPE_FMQ_UNSYNC) {
-      // Need a smart pointer to store FMQ descriptor in hidl callback,
-      // since FMQ descriptor doesn't have copy constructor.
-      out << "result" << index << ".reset(new (std::nothrow) "
-          << GetCppVariableType(return_val) << "(arg" << index << "));\n";
-    } else {
-      out << "result" << index << " = arg" << index << ";\n";
-    }
+    out << "VariableSpecificationMessage* result_val_" << index << " = "
+        << "result_msg->add_return_type_hidl();\n";
+    GenerateSetResultCodeForTypedVariable(out, func_msg.return_type_hidl(index),
+                                          "result_val_" + std::to_string(index),
+                                          "arg" + std::to_string(index));
   }
   out.unindent();
   out << "}";
@@ -691,13 +663,17 @@ void HalHidlCodeGen::GenerateRandomFunctionImplForAttribute(Formatter& out,
 
 void HalHidlCodeGen::GenerateDriverDeclForAttribute(Formatter& out,
     const VariableSpecificationMessage& attribute) {
-  if (attribute.type() == TYPE_STRUCT || attribute.type() == TYPE_UNION) {
+  if (attribute.type() == TYPE_STRUCT || attribute.type() == TYPE_UNION ||
+      attribute.type() == TYPE_SAFE_UNION) {
     // Recursively generate SetResult method implementation for all sub_types.
     for (const auto sub_struct : attribute.sub_struct()) {
       GenerateDriverDeclForAttribute(out, sub_struct);
     }
     for (const auto sub_union : attribute.sub_union()) {
       GenerateDriverDeclForAttribute(out, sub_union);
+    }
+    for (const auto sub_safe_union : attribute.sub_safe_union()) {
+      GenerateDriverDeclForAttribute(out, sub_safe_union);
     }
     string func_name = "MessageTo"
         + ClearStringWithNameSpaceAccess(attribute.name());
@@ -799,6 +775,26 @@ void HalHidlCodeGen::GenerateDriverImplForAttribute(Formatter& out,
         out.unindent();
         out << "}" << "\n";
       }
+      out.unindent();
+      out << "}\n";
+      break;
+    }
+    case TYPE_SAFE_UNION: {
+      // Recursively generate driver implementation method for all sub_types.
+      for (const auto sub_safe_union : attribute.sub_safe_union()) {
+        GenerateDriverImplForAttribute(out, sub_safe_union);
+      }
+      string func_name =
+          "MessageTo" + ClearStringWithNameSpaceAccess(attribute.name());
+      // Add extern C to allow resource_manager to dynamically load this
+      // function.
+      out << "extern \"C\" ";
+      out << "void " << func_name << "(const VariableSpecificationMessage&, "
+          << attribute.name() << "*, "
+          << "const string&) {"
+          << "\n";
+      out.indent();
+      out << "/* ERROR: TYPE_SAFE_UNION is not supported yet. */\n";
       out.unindent();
       out << "}\n";
       break;
@@ -1205,6 +1201,10 @@ void HalHidlCodeGen::GenerateDriverImplForTypedVariable(Formatter& out,
       out << "/* ERROR: TYPE_REF is not supported yet. */\n";
       break;
     }
+    case TYPE_SAFE_UNION: {
+      out << "/* ERROR: TYPE_SAFE_UNION is not supported yet. */\n";
+      break;
+    }
     default:
     {
       cerr << __func__ << " ERROR: unsupported type " << val.type() << ".\n";
@@ -1415,6 +1415,10 @@ void HalHidlCodeGen::GenerateVerificationCodeForTypedVariable(Formatter& out,
     case TYPE_REF:
     {
       out << "/* ERROR: TYPE_REF is not supported yet. */\n";
+      break;
+    }
+    case TYPE_SAFE_UNION: {
+      out << "/* ERROR: TYPE_SAFE_UNION is not supported yet. */\n";
       break;
     }
     default:
@@ -1697,6 +1701,11 @@ void HalHidlCodeGen::GenerateSetResultCodeForTypedVariable(Formatter& out,
       out << "/* ERROR: TYPE_REF is not supported yet. */\n";
       break;
     }
+    case TYPE_SAFE_UNION: {
+      out << result_msg << "->set_type(TYPE_SAFE_UNION);\n";
+      out << "/* ERROR: TYPE_SAFE_UNION is not supported yet. */\n";
+      break;
+    }
     default:
     {
       cerr << __func__ << " ERROR: unsupported type " << val.type() << ".\n";
@@ -1707,13 +1716,17 @@ void HalHidlCodeGen::GenerateSetResultCodeForTypedVariable(Formatter& out,
 
 void HalHidlCodeGen::GenerateSetResultDeclForAttribute(Formatter& out,
     const VariableSpecificationMessage& attribute) {
-  if (attribute.type() == TYPE_STRUCT || attribute.type() == TYPE_UNION) {
+  if (attribute.type() == TYPE_STRUCT || attribute.type() == TYPE_UNION ||
+      attribute.type() == TYPE_SAFE_UNION) {
     // Recursively generate SetResult method implementation for all sub_types.
     for (const auto sub_struct : attribute.sub_struct()) {
       GenerateSetResultDeclForAttribute(out, sub_struct);
     }
     for (const auto sub_union : attribute.sub_union()) {
       GenerateSetResultDeclForAttribute(out, sub_union);
+    }
+    for (const auto sub_safe_union : attribute.sub_safe_union()) {
+      GenerateSetResultDeclForAttribute(out, sub_safe_union);
     }
   }
   // Add extern C to allow resource_manager to dynamically load this function.
@@ -1726,13 +1739,17 @@ void HalHidlCodeGen::GenerateSetResultDeclForAttribute(Formatter& out,
 
 void HalHidlCodeGen::GenerateSetResultImplForAttribute(Formatter& out,
     const VariableSpecificationMessage& attribute) {
-  if (attribute.type() == TYPE_STRUCT || attribute.type() == TYPE_UNION) {
+  if (attribute.type() == TYPE_STRUCT || attribute.type() == TYPE_UNION ||
+      attribute.type() == TYPE_SAFE_UNION) {
     // Recursively generate SetResult method implementation for all sub_types.
     for (const auto sub_struct : attribute.sub_struct()) {
       GenerateSetResultImplForAttribute(out, sub_struct);
     }
     for (const auto sub_union : attribute.sub_union()) {
       GenerateSetResultImplForAttribute(out, sub_union);
+    }
+    for (const auto sub_safe_union : attribute.sub_safe_union()) {
+      GenerateSetResultImplForAttribute(out, sub_safe_union);
     }
   }
   // Add extern C to allow resource_manager to dynamically load this function.
@@ -1773,6 +1790,7 @@ void HalHidlCodeGen::GenerateDefaultReturnValForTypedVariable(
     case TYPE_ARRAY:
     case TYPE_STRUCT:
     case TYPE_UNION:
+    case TYPE_SAFE_UNION:
     case TYPE_HANDLE:
     case TYPE_HIDL_MEMORY:
     case TYPE_FMQ_SYNC:

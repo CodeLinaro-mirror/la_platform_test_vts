@@ -16,8 +16,9 @@
 
 package com.android.tradefed.testtype;
 
+import com.android.annotations.VisibleForTesting;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
-import com.android.ddmlib.Log.LogLevel;
+import com.android.compatibility.common.tradefed.build.VtsCompatibilityInvocationHelper;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.Option;
 import com.android.tradefed.config.OptionClass;
@@ -45,28 +46,26 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedWriter;
-import java.util.Collection;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Paths;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.TreeSet;
-import java.util.Set;
-import java.util.List;
-import java.util.TreeSet;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 /**
- * A Test that runs a vts multi device test package (part of Vendor Test Suite,
- * VTS) on given device.
+ * A Test that runs a vts multi device test package (part of Vendor Test Suite, VTS) on given
+ * device.<p>
+ * TODO: Complete unit tests
  */
-
 @OptionClass(alias = "vtsmultidevicetest")
 public class VtsMultiDeviceTest
         implements IDeviceTest, IRemoteTest, ITestFilterReceiver, IRuntimeHintProvider,
@@ -92,6 +91,7 @@ public class VtsMultiDeviceTest
     static final String ABI_BITNESS = "abi_bitness";
     static final String SKIP_ON_32BIT_ABI = "skip_on_32bit_abi";
     static final String SKIP_ON_64BIT_ABI = "skip_on_64bit_abi";
+    static final String SHELL_DEFAULT_NOHUP = "shell_default_nohup";
     static final String SKIP_IF_THERMAL_THROTTLING = "skip_if_thermal_throttling";
     static final String DISABLE_CPU_FREQUENCY_SCALING = "disable_cpu_frequency_scaling";
     static final String DISABLE_FRAMEWORK = "DISABLE_FRAMEWORK";
@@ -293,12 +293,14 @@ public class VtsMultiDeviceTest
                     + "0 means using number of avaiable CPU threads.")
     private int mLtpNumberOfThreads = -1;
 
-    @Option(name = "skip-on-32bit-abi",
-        description = "Whether to skip tests on 32bit ABI.")
+    @Option(name = "shell-default-nohup",
+            description = "Whether to by default use nohup for shell commands.")
+    private boolean mShellDefaultNohup = false;
+
+    @Option(name = "skip-on-32bit-abi", description = "Whether to skip tests on 32bit ABI.")
     private boolean mSkipOn32BitAbi = false;
 
-    @Option(name = "skip-on-64bit-abi",
-        description = "Whether to skip tests on 64bit ABI.")
+    @Option(name = "skip-on-64bit-abi", description = "Whether to skip tests on 64bit ABI.")
     private boolean mSkipOn64BitAbi = false;
 
     @Option(name = "skip-if-thermal-throttling",
@@ -437,8 +439,14 @@ public class VtsMultiDeviceTest
     @Option(name = "gtest-batch-mode", description = "Run Gtest binaries in batch mode.")
     private boolean mGtestBatchMode = false;
 
-    @Option(name = "log-severity", description = "Set the log severity level.")
-    private String mLogSeverity = "INFO";
+    @Option(name = "log-severity",
+            description = "Set the log severity level."
+                    + "Note, this is a legacy option and does not affect how log files are saved."
+                    + "By setting it to INFO, it will only make python DEBUG log not showing on "
+                    + "console even if TradeFed log display level is set to DEBUG."
+                    + "Therefore, it is not recommemded to set or modify this value in the current"
+                    + "implementation.")
+    private String mLogSeverity = "DEBUG";
 
     @Option(name = "run-as-vts-self-test",
             description = "Run the module as vts-selftest. "
@@ -491,7 +499,7 @@ public class VtsMultiDeviceTest
     private TreeMap<String, Boolean> mConfigBool = new TreeMap<>();
 
     private IBuildInfo mBuildInfo = null;
-    private String mRunName = "VtsHostDrivenTest";
+    private String mRunName = null;
     // the path of a dir which contains the test data files.
     private String mTestCaseDataDir = "./";
 
@@ -656,14 +664,6 @@ public class VtsMultiDeviceTest
     @Override
     public void run(ITestInvocationListener listener)
             throws IllegalArgumentException, DeviceNotAvailableException {
-        if (mDevice == null) {
-            throw new DeviceNotAvailableException("Device has not been set.");
-        }
-
-        if (mBuildInfo == null) {
-            throw new RuntimeException("BuildInfo has not been set.");
-        }
-
         mOutputUtil = new OutputUtil(listener);
         mOutputUtil.setTestModuleName(mTestModuleName);
         if (mAbi != null) {
@@ -735,6 +735,33 @@ public class VtsMultiDeviceTest
         JSONObject defaultJsonObject = new JSONObject(content);
 
         JsonUtil.deepMergeJsonObjects(jsonObject, defaultJsonObject);
+    }
+
+    /**
+     * Derive mRunName from module name or test paths.
+     *
+     * @return the derived mRunName.
+     * @throws RuntimeException if mTestModuleName, mTestConfigPath, and mTestCasePath are null.
+     */
+    private String deriveRunName() {
+        if (mRunName != null) {
+            return mRunName;
+        }
+
+        if (mTestModuleName != null) {
+            mRunName = mTestModuleName;
+        } else {
+            CLog.w("--test-module-name not set (not recommended); deriving automatically");
+            if (mTestConfigPath != null) {
+                mRunName = new File(mTestConfigPath).getName().replace(CONFIG_FILE_EXTENSION, "");
+            } else if (mTestCasePath != null) {
+                mRunName = new File(mTestCasePath).getName();
+            } else {
+                throw new RuntimeException(
+                        "Failed to derive test module name; use --test-module-name option");
+            }
+        }
+        return mRunName;
     }
 
     /**
@@ -817,21 +844,7 @@ public class VtsMultiDeviceTest
         JSONArray testBedArray = (JSONArray) jsonObject.get(TEST_BED);
         if (testBedArray.length() == 0) {
             JSONObject testBedItemObject = new JSONObject();
-            String testName;
-            if (mTestModuleName != null) {
-                testName = mTestModuleName;
-            } else {
-                CLog.w("--test-module-name not set (not recommended); deriving automatically");
-                if (mTestConfigPath != null) {
-                    testName = new File(mTestConfigPath).getName();
-                    testName = testName.replace(CONFIG_FILE_EXTENSION, "");
-                } else if (mTestCasePath != null) {
-                    testName = new File(mTestCasePath).getName();
-                } else {
-                    throw new RuntimeException(
-                        "Failed to derive test module name; use --test-module-name option");
-                }
-            }
+            String testName = deriveRunName();
             CLog.d("Setting test module name as %s", testName);
             testBedItemObject.put(NAME, testName);
             testBedItemObject.put(ANDROIDDEVICE, deviceArray);
@@ -904,6 +917,11 @@ public class VtsMultiDeviceTest
             }
             jsonObject.put(LOG_SEVERITY, logSeverity);
             CLog.d("Added %s to the Json object: %s", LOG_SEVERITY, logSeverity);
+        }
+
+        if (mShellDefaultNohup) {
+            jsonObject.put(SHELL_DEFAULT_NOHUP, mShellDefaultNohup);
+            CLog.d("Added %s to the Json object", SHELL_DEFAULT_NOHUP);
         }
 
         if (mAbi != null) {
@@ -1211,9 +1229,13 @@ public class VtsMultiDeviceTest
      */
     private void doRunTest(ITestLifeCycleReceiver listener)
             throws RuntimeException, IllegalArgumentException {
+        long methodStartTime = System.currentTimeMillis();
         CLog.d("Device serial number: " + mDevice.getSerialNumber());
 
         setTestCaseDataDir();
+
+        VtsMultiDeviceTestResultParser parser =
+                new VtsMultiDeviceTestResultParser(listener, deriveRunName());
 
         JSONObject jsonObject = new JSONObject();
         File vtsRunnerLogDir = null;
@@ -1252,7 +1274,16 @@ public class VtsMultiDeviceTest
             CLog.w("max-test-timeout is less than test-timeout. Set max timeout to %dms.", timeout);
         }
 
-        VtsPythonRunnerHelper vtsPythonRunnerHelper = createVtsPythonRunnerHelper();
+        // TODO: Stop relying on VtsCompatibilityInvocationHelper
+        File workingDir = null;
+        VtsCompatibilityInvocationHelper invocationHelper = createInvocationHelper();
+        try {
+            workingDir = invocationHelper.getTestsDir();
+        } catch (FileNotFoundException e) {
+            CLog.e("VtsCompatibilityInvocationHelper cannot find test case directory. "
+                    + "Command working directory not set.");
+        }
+        VtsPythonRunnerHelper vtsPythonRunnerHelper = createVtsPythonRunnerHelper(workingDir);
 
         List<String> cmd = new ArrayList<>();
         cmd.add("python");
@@ -1283,20 +1314,24 @@ public class VtsMultiDeviceTest
                 CLog.e("Command stderr: " + commandResult.getStderr());
                 CLog.e("Command status: " + commandStatus);
                 CLog.e("Python log: ");
-                mOutputUtil.collectVtsRunnerOutputs(vtsRunnerLogDir);
+                mOutputUtil.ZipVtsRunnerOutputDir(vtsRunnerLogDir);
                 printToDeviceLogcatAboutTestModuleStatus("ERROR");
-                throw new RuntimeException("Failed to run VTS test");
+                listener.testRunFailed("Failed to run VTS test. Python process failed.");
+                listener.testRunEnded(System.currentTimeMillis() - methodStartTime,
+                        Collections.<String, String>emptyMap());
+                return;
             }
             printToDeviceLogcatAboutTestModuleStatus("END");
         }
 
-        VtsMultiDeviceTestResultParser parser =
-                new VtsMultiDeviceTestResultParser(listener, mRunName);
-
         if (mUseStdoutLogs) {
             if (commandResult.getStdout() == null) {
-                CLog.e("The std:out is null for CommandResult.");
-                throw new RuntimeException("The std:out is null for CommandResult.");
+                String msg = "The std:out is null for CommandResult.";
+                CLog.e(msg);
+                listener.testRunFailed(msg);
+                listener.testRunEnded(System.currentTimeMillis() - methodStartTime,
+                        Collections.<String, String>emptyMap());
+                return;
             }
             parser.processNewLines(commandResult.getStdout().split("\n"));
         } else {
@@ -1317,8 +1352,12 @@ public class VtsMultiDeviceTest
                     CLog.e("Error occurred in parsing Json String : %s", jsonData);
                 }
                 if (object == null) {
-                    CLog.e("Json object is null.");
-                    throw new RuntimeException("Json object is null.");
+                    String msg = "Json object is null.";
+                    CLog.e(msg);
+                    listener.testRunFailed(msg);
+                    listener.testRunEnded(System.currentTimeMillis() - methodStartTime,
+                            Collections.<String, String>emptyMap());
+                    return;
                 }
                 parser.processJsonFile(object);
 
@@ -1332,7 +1371,7 @@ public class VtsMultiDeviceTest
                 }
             }
         }
-        mOutputUtil.collectVtsRunnerOutputs(vtsRunnerLogDir);
+        mOutputUtil.ZipVtsRunnerOutputDir(vtsRunnerLogDir);
 
         File reportMsg = FileUtil.findFile(vtsRunnerLogDir, REPORT_MESSAGE_FILE_NAME);
         CLog.d("Report message path: %s", reportMsg);
@@ -1414,9 +1453,18 @@ public class VtsMultiDeviceTest
     }
 
     /**
-     * Creates VtsPythonRunnerHelper.
+     * Creates a {@link VtsPythonRunnerHelper}.
      */
-    protected VtsPythonRunnerHelper createVtsPythonRunnerHelper() {
-        return new VtsPythonRunnerHelper(mBuildInfo);
+    @VisibleForTesting
+    protected VtsPythonRunnerHelper createVtsPythonRunnerHelper(File workingDir) {
+        return new VtsPythonRunnerHelper(mBuildInfo, workingDir);
+    }
+
+    /**
+     * Creates a {@link VtsCompatibilityInvocationHelper} to get the working directory.
+     */
+    @VisibleForTesting
+    protected VtsCompatibilityInvocationHelper createInvocationHelper() {
+        return new VtsCompatibilityInvocationHelper();
     }
 }

@@ -14,6 +14,7 @@
 # limitations under the License.
 
 vts_hal_driver_libs := \
+  android.hardware.atrace@1.0-vts.driver \
   android.hardware.audio@2.0-vts.driver \
   android.hardware.audio.common@2.0-vts.driver \
   android.hardware.audio.effect@2.0-vts.driver \
@@ -57,6 +58,7 @@ vts_hal_driver_libs := \
   android.hardware.graphics.composer@2.2-vts.driver \
   android.hardware.graphics.mapper@2.0-vts.driver \
   android.hardware.graphics.mapper@2.1-vts.driver \
+  android.hardware.health.storage@1.0-vts.driver \
   android.hardware.health@1.0-vts.driver \
   android.hardware.health@2.0-vts.driver \
   android.hardware.ir@1.0-vts.driver \
@@ -115,6 +117,7 @@ vts_hal_driver_libs := \
   android.system.net.netd@1.1-vts.driver \
 
 vts_hal_profiler_libs := \
+  android.hardware.atrace@1.0-vts.profiler \
   android.hardware.audio@2.0-vts.profiler \
   android.hardware.audio.common@2.0-vts.profiler \
   android.hardware.audio.effect@2.0-vts.profiler \
@@ -158,6 +161,7 @@ vts_hal_profiler_libs := \
   android.hardware.graphics.composer@2.2-vts.profiler \
   android.hardware.graphics.mapper@2.0-vts.profiler \
   android.hardware.graphics.mapper@2.1-vts.profiler \
+  android.hardware.health.storage@1.0-vts.profiler \
   android.hardware.health@1.0-vts.profiler \
   android.hardware.health@2.0-vts.profiler \
   android.hardware.ir@1.0-vts.profiler \
@@ -216,6 +220,7 @@ vts_hal_profiler_libs := \
   android.system.net.netd@1.1-vts.profiler \
 
 vts_hal_test_bins := \
+  VtsHalAtraceV1_0TargetTest \
   VtsHalAudioV2_0TargetTest \
   VtsHalAudioV4_0TargetTest \
   VtsHalAudioEffectV2_0TargetTest \
@@ -242,6 +247,7 @@ vts_hal_test_bins := \
   VtsHalGraphicsComposerV2_2TargetTest \
   VtsHalGraphicsMapperV2_0TargetTest \
   VtsHalGraphicsMapperV2_1TargetTest \
+  VtsHalHealthStorageV1_0TargetTest \
   VtsHalHealthV1_0TargetTest \
   VtsHalHealthV2_0TargetTest \
   VtsHalIrV1_0TargetTest \
@@ -301,6 +307,8 @@ vts_hal_test_bins := \
 vts_hal_test_bins += \
   VtsVndkHidlBufferpoolV1_0TargetSingleTest \
   VtsVndkHidlBufferpoolV1_0TargetMultiTest \
+  VtsVndkHidlBufferpoolV2_0TargetSingleTest \
+  VtsVndkHidlBufferpoolV2_0TargetMultiTest \
 
 vts_test_lib_hidl_packages := \
   $(vts_hal_driver_libs) \

@@ -175,12 +175,8 @@ void HalHidlProfilerCodeGen::GenerateProfilerForHandleVariable(
   std::string handle_name = arg_name + "_h";
   out << "auto " << handle_name << " = " << arg_value
       << ".getNativeHandle();\n";
-  out << "if (!" << handle_name << ") {\n";
+  out << "if (" << handle_name << ") {\n";
   out.indent();
-  out << "LOG(WARNING) << \"null handle\";\n";
-  out << "return;\n";
-  out.unindent();
-  out << "}\n";
   out << arg_name << "->mutable_handle_value()->set_version(" << handle_name
       << "->version);\n";
   out << arg_name << "->mutable_handle_value()->set_num_ints(" << handle_name
@@ -250,6 +246,13 @@ void HalHidlProfilerCodeGen::GenerateProfilerForHandleVariable(
       << "->data[i]);\n";
   out.unindent();
   out << "}\n";
+  out.unindent();
+  out << "}\n";
+  out.unindent();
+  out << "} else {\n";
+  out.indent();
+  out << "LOG(WARNING) << \"null handle\";\n";
+  out << arg_name << "->mutable_handle_value()->set_hidl_handle_address(0);\n";
   out.unindent();
   out << "}\n";
 }
@@ -347,6 +350,13 @@ void HalHidlProfilerCodeGen::GenerateProfilerForFMQUnsyncVariable(
   out << "}\n";
   out.unindent();
   out << "}\n";
+}
+
+void HalHidlProfilerCodeGen::GenerateProfilerForSafeUnionVariable(
+    Formatter& out, const VariableSpecificationMessage&,
+    const std::string& arg_name, const std::string&) {
+  out << arg_name << "->set_type(TYPE_SAFE_UNION);\n";
+  out << "/* ERROR: TYPE_SAFE_UNION is not supported yet. */\n";
 }
 
 void HalHidlProfilerCodeGen::GenerateProfilerForMethod(
@@ -539,7 +549,6 @@ void HalHidlProfilerCodeGen::GenerateProfilerSanityCheck(
   out.indent();
   out << "LOG(WARNING) << \"incorrect package. Expect: "
       << GetPackageName(message) << " actual: \" << package;\n";
-  out << "return;\n";
   out.unindent();
   out << "}\n";
   out << "std::string version_str = std::string(version);\n";
@@ -552,7 +561,6 @@ void HalHidlProfilerCodeGen::GenerateProfilerSanityCheck(
   out.indent();
   out << "LOG(WARNING) << \"incorrect version. Expect: " << GetVersion(message)
       << " or lower (if version != x.0), actual: \" << version;\n";
-  out << "return;\n";
   out.unindent();
   out << "}\n";
 
@@ -561,7 +569,6 @@ void HalHidlProfilerCodeGen::GenerateProfilerSanityCheck(
   out.indent();
   out << "LOG(WARNING) << \"incorrect interface. Expect: "
       << GetComponentName(message) << " actual: \" << interface;\n";
-  out << "return;\n";
   out.unindent();
   out << "}\n";
   out << "\n";

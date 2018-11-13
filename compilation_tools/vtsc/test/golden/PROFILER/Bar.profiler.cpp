@@ -28,18 +28,15 @@ void HIDL_INSTRUMENTATION_FUNCTION_android_hardware_tests_bar_V1_0_IBar(
         std::vector<void *> *args __attribute__((__unused__))) {
     if (strcmp(package, "android.hardware.tests.bar") != 0) {
         LOG(WARNING) << "incorrect package. Expect: android.hardware.tests.bar actual: " << package;
-        return;
     }
     std::string version_str = std::string(version);
     int major_version = stoi(version_str.substr(0, version_str.find('.')));
     int minor_version = stoi(version_str.substr(version_str.find('.') + 1));
     if (major_version != 1 || minor_version > 0) {
         LOG(WARNING) << "incorrect version. Expect: 1.0 or lower (if version != x.0), actual: " << version;
-        return;
     }
     if (strcmp(interface, "IBar") != 0) {
         LOG(WARNING) << "incorrect interface. Expect: IBar actual: " << interface;
-        return;
     }
 
     VtsProfilingInterface& profiler = VtsProfilingInterface::getInstance(TRACEFILEPREFIX);
@@ -1525,52 +1522,53 @@ void HIDL_INSTRUMENTATION_FUNCTION_android_hardware_tests_bar_V1_0_IBar(
                             auto *result_0_vector_result_0_index __attribute__((__unused__)) = result_0->add_vector_value();
                             result_0_vector_result_0_index->set_type(TYPE_HANDLE);
                             auto result_0_vector_result_0_index_h = (*result_val_0)[result_0_index].getNativeHandle();
-                            if (!result_0_vector_result_0_index_h) {
-                                LOG(WARNING) << "null handle";
-                                return;
-                            }
-                            result_0_vector_result_0_index->mutable_handle_value()->set_version(result_0_vector_result_0_index_h->version);
-                            result_0_vector_result_0_index->mutable_handle_value()->set_num_ints(result_0_vector_result_0_index_h->numInts);
-                            result_0_vector_result_0_index->mutable_handle_value()->set_num_fds(result_0_vector_result_0_index_h->numFds);
-                            for (int i = 0; i < result_0_vector_result_0_index_h->numInts + result_0_vector_result_0_index_h->numFds; i++) {
-                                if(i < result_0_vector_result_0_index_h->numFds) {
-                                    auto* fd_val_i = result_0_vector_result_0_index->mutable_handle_value()->add_fd_val();
-                                    char filePath[PATH_MAX];
-                                    string procPath = "/proc/self/fd/" + to_string(result_0_vector_result_0_index_h->data[i]);
-                                    ssize_t r = readlink(procPath.c_str(), filePath, sizeof(filePath));
-                                    if (r == -1) {
-                                        LOG(ERROR) << "Unable to get file path";
-                                        continue;
-                                    }
-                                    filePath[r] = '\0';
-                                    fd_val_i->set_file_name(filePath);
-                                    struct stat statbuf;
-                                    fstat(result_0_vector_result_0_index_h->data[i], &statbuf);
-                                    fd_val_i->set_mode(statbuf.st_mode);
-                                    if (S_ISREG(statbuf.st_mode) || S_ISDIR(statbuf.st_mode)) {
-                                        fd_val_i->set_type(S_ISREG(statbuf.st_mode)? FILE_TYPE: DIR_TYPE);
-                                        int flags = fcntl(result_0_vector_result_0_index_h->data[i], F_GETFL);
-                                        fd_val_i->set_flags(flags);
-                                    }
-                                    else if (S_ISCHR(statbuf.st_mode) || S_ISBLK(statbuf.st_mode)) {
-                                        fd_val_i->set_type(DEV_TYPE);
-                                        if (strcmp(filePath, "/dev/ashmem") == 0) {
-                                            int size = ashmem_get_size_region(result_0_vector_result_0_index_h->data[i]);
-                                            fd_val_i->mutable_memory()->set_size(size);
+                            if (result_0_vector_result_0_index_h) {
+                                result_0_vector_result_0_index->mutable_handle_value()->set_version(result_0_vector_result_0_index_h->version);
+                                result_0_vector_result_0_index->mutable_handle_value()->set_num_ints(result_0_vector_result_0_index_h->numInts);
+                                result_0_vector_result_0_index->mutable_handle_value()->set_num_fds(result_0_vector_result_0_index_h->numFds);
+                                for (int i = 0; i < result_0_vector_result_0_index_h->numInts + result_0_vector_result_0_index_h->numFds; i++) {
+                                    if(i < result_0_vector_result_0_index_h->numFds) {
+                                        auto* fd_val_i = result_0_vector_result_0_index->mutable_handle_value()->add_fd_val();
+                                        char filePath[PATH_MAX];
+                                        string procPath = "/proc/self/fd/" + to_string(result_0_vector_result_0_index_h->data[i]);
+                                        ssize_t r = readlink(procPath.c_str(), filePath, sizeof(filePath));
+                                        if (r == -1) {
+                                            LOG(ERROR) << "Unable to get file path";
+                                            continue;
                                         }
+                                        filePath[r] = '\0';
+                                        fd_val_i->set_file_name(filePath);
+                                        struct stat statbuf;
+                                        fstat(result_0_vector_result_0_index_h->data[i], &statbuf);
+                                        fd_val_i->set_mode(statbuf.st_mode);
+                                        if (S_ISREG(statbuf.st_mode) || S_ISDIR(statbuf.st_mode)) {
+                                            fd_val_i->set_type(S_ISREG(statbuf.st_mode)? FILE_TYPE: DIR_TYPE);
+                                            int flags = fcntl(result_0_vector_result_0_index_h->data[i], F_GETFL);
+                                            fd_val_i->set_flags(flags);
+                                        }
+                                        else if (S_ISCHR(statbuf.st_mode) || S_ISBLK(statbuf.st_mode)) {
+                                            fd_val_i->set_type(DEV_TYPE);
+                                            if (strcmp(filePath, "/dev/ashmem") == 0) {
+                                                int size = ashmem_get_size_region(result_0_vector_result_0_index_h->data[i]);
+                                                fd_val_i->mutable_memory()->set_size(size);
+                                            }
+                                        }
+                                        else if (S_ISFIFO(statbuf.st_mode)){
+                                            fd_val_i->set_type(PIPE_TYPE);
+                                        }
+                                        else if (S_ISSOCK(statbuf.st_mode)) {
+                                            fd_val_i->set_type(SOCKET_TYPE);
+                                        }
+                                        else {
+                                            fd_val_i->set_type(LINK_TYPE);
+                                        }
+                                    } else {
+                                        result_0_vector_result_0_index->mutable_handle_value()->add_int_val(result_0_vector_result_0_index_h->data[i]);
                                     }
-                                    else if (S_ISFIFO(statbuf.st_mode)){
-                                        fd_val_i->set_type(PIPE_TYPE);
-                                    }
-                                    else if (S_ISSOCK(statbuf.st_mode)) {
-                                        fd_val_i->set_type(SOCKET_TYPE);
-                                    }
-                                    else {
-                                        fd_val_i->set_type(LINK_TYPE);
-                                    }
-                                } else {
-                                    result_0_vector_result_0_index->mutable_handle_value()->add_int_val(result_0_vector_result_0_index_h->data[i]);
                                 }
+                            } else {
+                                LOG(WARNING) << "null handle";
+                                result_0_vector_result_0_index->mutable_handle_value()->set_hidl_handle_address(0);
                             }
                         }
                     } else {
@@ -1611,6 +1609,58 @@ void HIDL_INSTRUMENTATION_FUNCTION_android_hardware_tests_bar_V1_0_IBar(
                     if ((*args).size() != 0) {
                         LOG(ERROR) << "Number of return values does not match. expect: 0, actual: " << (*args).size() << ", method name: closeHandles, event type: " << event;
                         break;
+                    }
+                    break;
+                }
+                default:
+                {
+                    LOG(WARNING) << "not supported. ";
+                    break;
+                }
+            }
+        }
+        profiler.AddTraceEvent(event, package, version, interface, msg);
+    }
+    if (strcmp(method, "repeatWithFmq") == 0) {
+        FunctionSpecificationMessage msg;
+        msg.set_name("repeatWithFmq");
+        if (!args) {
+            LOG(WARNING) << "no argument passed";
+        } else {
+            switch (event) {
+                case details::HidlInstrumentor::CLIENT_API_ENTRY:
+                case details::HidlInstrumentor::SERVER_API_ENTRY:
+                case details::HidlInstrumentor::PASSTHROUGH_ENTRY:
+                {
+                    if ((*args).size() != 1) {
+                        LOG(ERROR) << "Number of arguments does not match. expect: 1, actual: " << (*args).size() << ", method name: repeatWithFmq, event type: " << event;
+                        break;
+                    }
+                    auto *arg_0 __attribute__((__unused__)) = msg.add_arg();
+                    ::android::hardware::tests::foo::V1_0::IFoo::WithFmq *arg_val_0 __attribute__((__unused__)) = reinterpret_cast<::android::hardware::tests::foo::V1_0::IFoo::WithFmq*> ((*args)[0]);
+                    if (arg_val_0 != nullptr) {
+                        arg_0->set_type(TYPE_STRUCT);
+                        profile____android__hardware__tests__foo__V1_0__IFoo__WithFmq(arg_0, (*arg_val_0));
+                    } else {
+                        LOG(WARNING) << "argument 0 is null.";
+                    }
+                    break;
+                }
+                case details::HidlInstrumentor::CLIENT_API_EXIT:
+                case details::HidlInstrumentor::SERVER_API_EXIT:
+                case details::HidlInstrumentor::PASSTHROUGH_EXIT:
+                {
+                    if ((*args).size() != 1) {
+                        LOG(ERROR) << "Number of return values does not match. expect: 1, actual: " << (*args).size() << ", method name: repeatWithFmq, event type: " << event;
+                        break;
+                    }
+                    auto *result_0 __attribute__((__unused__)) = msg.add_return_type_hidl();
+                    ::android::hardware::tests::foo::V1_0::IFoo::WithFmq *result_val_0 __attribute__((__unused__)) = reinterpret_cast<::android::hardware::tests::foo::V1_0::IFoo::WithFmq*> ((*args)[0]);
+                    if (result_val_0 != nullptr) {
+                        result_0->set_type(TYPE_STRUCT);
+                        profile____android__hardware__tests__foo__V1_0__IFoo__WithFmq(result_0, (*result_val_0));
+                    } else {
+                        LOG(WARNING) << "return value 0 is null.";
                     }
                     break;
                 }
@@ -1679,52 +1729,53 @@ void HIDL_INSTRUMENTATION_FUNCTION_android_hardware_tests_bar_V1_0_IBar(
                     if (arg_val_0 != nullptr) {
                         arg_0->set_type(TYPE_HANDLE);
                         auto arg_0_h = (*arg_val_0).getNativeHandle();
-                        if (!arg_0_h) {
-                            LOG(WARNING) << "null handle";
-                            return;
-                        }
-                        arg_0->mutable_handle_value()->set_version(arg_0_h->version);
-                        arg_0->mutable_handle_value()->set_num_ints(arg_0_h->numInts);
-                        arg_0->mutable_handle_value()->set_num_fds(arg_0_h->numFds);
-                        for (int i = 0; i < arg_0_h->numInts + arg_0_h->numFds; i++) {
-                            if(i < arg_0_h->numFds) {
-                                auto* fd_val_i = arg_0->mutable_handle_value()->add_fd_val();
-                                char filePath[PATH_MAX];
-                                string procPath = "/proc/self/fd/" + to_string(arg_0_h->data[i]);
-                                ssize_t r = readlink(procPath.c_str(), filePath, sizeof(filePath));
-                                if (r == -1) {
-                                    LOG(ERROR) << "Unable to get file path";
-                                    continue;
-                                }
-                                filePath[r] = '\0';
-                                fd_val_i->set_file_name(filePath);
-                                struct stat statbuf;
-                                fstat(arg_0_h->data[i], &statbuf);
-                                fd_val_i->set_mode(statbuf.st_mode);
-                                if (S_ISREG(statbuf.st_mode) || S_ISDIR(statbuf.st_mode)) {
-                                    fd_val_i->set_type(S_ISREG(statbuf.st_mode)? FILE_TYPE: DIR_TYPE);
-                                    int flags = fcntl(arg_0_h->data[i], F_GETFL);
-                                    fd_val_i->set_flags(flags);
-                                }
-                                else if (S_ISCHR(statbuf.st_mode) || S_ISBLK(statbuf.st_mode)) {
-                                    fd_val_i->set_type(DEV_TYPE);
-                                    if (strcmp(filePath, "/dev/ashmem") == 0) {
-                                        int size = ashmem_get_size_region(arg_0_h->data[i]);
-                                        fd_val_i->mutable_memory()->set_size(size);
+                        if (arg_0_h) {
+                            arg_0->mutable_handle_value()->set_version(arg_0_h->version);
+                            arg_0->mutable_handle_value()->set_num_ints(arg_0_h->numInts);
+                            arg_0->mutable_handle_value()->set_num_fds(arg_0_h->numFds);
+                            for (int i = 0; i < arg_0_h->numInts + arg_0_h->numFds; i++) {
+                                if(i < arg_0_h->numFds) {
+                                    auto* fd_val_i = arg_0->mutable_handle_value()->add_fd_val();
+                                    char filePath[PATH_MAX];
+                                    string procPath = "/proc/self/fd/" + to_string(arg_0_h->data[i]);
+                                    ssize_t r = readlink(procPath.c_str(), filePath, sizeof(filePath));
+                                    if (r == -1) {
+                                        LOG(ERROR) << "Unable to get file path";
+                                        continue;
                                     }
+                                    filePath[r] = '\0';
+                                    fd_val_i->set_file_name(filePath);
+                                    struct stat statbuf;
+                                    fstat(arg_0_h->data[i], &statbuf);
+                                    fd_val_i->set_mode(statbuf.st_mode);
+                                    if (S_ISREG(statbuf.st_mode) || S_ISDIR(statbuf.st_mode)) {
+                                        fd_val_i->set_type(S_ISREG(statbuf.st_mode)? FILE_TYPE: DIR_TYPE);
+                                        int flags = fcntl(arg_0_h->data[i], F_GETFL);
+                                        fd_val_i->set_flags(flags);
+                                    }
+                                    else if (S_ISCHR(statbuf.st_mode) || S_ISBLK(statbuf.st_mode)) {
+                                        fd_val_i->set_type(DEV_TYPE);
+                                        if (strcmp(filePath, "/dev/ashmem") == 0) {
+                                            int size = ashmem_get_size_region(arg_0_h->data[i]);
+                                            fd_val_i->mutable_memory()->set_size(size);
+                                        }
+                                    }
+                                    else if (S_ISFIFO(statbuf.st_mode)){
+                                        fd_val_i->set_type(PIPE_TYPE);
+                                    }
+                                    else if (S_ISSOCK(statbuf.st_mode)) {
+                                        fd_val_i->set_type(SOCKET_TYPE);
+                                    }
+                                    else {
+                                        fd_val_i->set_type(LINK_TYPE);
+                                    }
+                                } else {
+                                    arg_0->mutable_handle_value()->add_int_val(arg_0_h->data[i]);
                                 }
-                                else if (S_ISFIFO(statbuf.st_mode)){
-                                    fd_val_i->set_type(PIPE_TYPE);
-                                }
-                                else if (S_ISSOCK(statbuf.st_mode)) {
-                                    fd_val_i->set_type(SOCKET_TYPE);
-                                }
-                                else {
-                                    fd_val_i->set_type(LINK_TYPE);
-                                }
-                            } else {
-                                arg_0->mutable_handle_value()->add_int_val(arg_0_h->data[i]);
                             }
+                        } else {
+                            LOG(WARNING) << "null handle";
+                            arg_0->mutable_handle_value()->set_hidl_handle_address(0);
                         }
                     } else {
                         LOG(WARNING) << "argument 0 is null.";

@@ -123,6 +123,7 @@ public class VtsMultiDeviceTest
     static final String LOGCAT_ON_FAILURE = "LOGCAT_ON_FAILURE";
     static final String ENABLE_COVERAGE = "enable_coverage";
     static final String EXCLUDE_COVERAGE_PATH = "exclude_coverage_path";
+    static final String ENABLE_LOG_UPLOADING = "enable_log_uploading";
     static final String ENABLE_PROFILING = "enable_profiling";
     static final String PROFILING_ARG_VALUE = "profiling_arg_value";
     static final String ENABLE_SANCOV = "enable_sancov";
@@ -132,6 +133,7 @@ public class VtsMultiDeviceTest
     static final String COVERAGE_REPORT_PATH = "coverage_report_path";
     static final String GLOBAL_COVERAGE = "global_coverage";
     static final String LTP_NUMBER_OF_THREADS = "ltp_number_of_threads";
+    static final String MAX_RETRY_COUNT = "max_retry_count";
     static final String MOBLY_TEST_MODULE = "MOBLY_TEST_MODULE";
     static final String NATIVE_SERVER_PROCESS_NAME = "native_server_process_name";
     static final String PASSTHROUGH_MODE = "passthrough_mode";
@@ -234,6 +236,14 @@ public class VtsMultiDeviceTest
     @Option(name = "use-stdout-logs",
             description = "Flag that determines whether to use std:out to parse output.")
     private boolean mUseStdoutLogs = false;
+
+    @Option(name = "enable-dashboard-uploading",
+            description = "Enables the runner's dashboard result uploading feature.")
+    private Boolean mEnableDashboardUploading = null;
+
+    @Option(name = "enable-log-uploading",
+            description = "Enables the runner's log uploading feature.")
+    private Boolean mEnableLogUploading = null;
 
     @Option(name = "include-filter",
             description = "The positive filter of the test names to run.")
@@ -501,6 +511,11 @@ public class VtsMultiDeviceTest
                     + "If the value for the same key is set multiple times, only the last value is "
                     + "used.")
     private TreeMap<String, Boolean> mConfigBool = new TreeMap<>();
+
+    @Option(name = "max-retry-count",
+            description = "The max number of retries. Currerntly done by VTS Python runner in "
+                    + "a test case granularity.")
+    private int mMaxRetryCount = 0;
 
     private IBuildInfo mBuildInfo = null;
     private String mRunName = null;
@@ -1186,6 +1201,17 @@ public class VtsMultiDeviceTest
             jsonObject.put(CONFIG_BOOL, new JSONObject(mConfigBool));
             CLog.d("Added %s to the Json object", CONFIG_BOOL);
         }
+
+        if (mEnableLogUploading != null) {
+            jsonObject.put(ENABLE_LOG_UPLOADING, mEnableLogUploading);
+            CLog.d("Added %s to the Json object (value: %s)", ENABLE_LOG_UPLOADING,
+                    mEnableLogUploading);
+        }
+
+        if (mMaxRetryCount > 0) {
+            jsonObject.put(MAX_RETRY_COUNT, mMaxRetryCount);
+            CLog.d("Added %s to the Json object", MAX_RETRY_COUNT);
+        }
     }
 
     /**
@@ -1388,19 +1414,20 @@ public class VtsMultiDeviceTest
 
         if (reportMsg == null) {
             CLog.e("Cannot find report message proto file.");
-        } else if (reportMsg.length() > 0) {
+        } else if (reportMsg.length() > 0
+                && (mEnableDashboardUploading == null || mEnableDashboardUploading)) {
             CLog.i("Uploading report message. File size: %s", reportMsg.length());
             VtsDashboardUtil dashboardUtil = new VtsDashboardUtil(configReader);
             dashboardUtil.Upload(reportMsg.getAbsolutePath());
         } else {
-            CLog.d("Result uploading is not enabled.");
+            CLog.d("Dashboard result uploading is not enabled.");
         }
 
         FileUtil.recursiveDelete(vtsRunnerLogDir);
         CLog.d("Deleted the runner log dir, %s.", vtsRunnerLogDir);
         if (jsonFilePath != null) {
-          FileUtil.deleteFile(new File(jsonFilePath));
-          CLog.d("Deleted the runner json config file, %s.", jsonFilePath);
+            FileUtil.deleteFile(new File(jsonFilePath));
+            CLog.d("Deleted the runner json config file, %s.", jsonFilePath);
         }
 
         if (interruptMessage != null) {

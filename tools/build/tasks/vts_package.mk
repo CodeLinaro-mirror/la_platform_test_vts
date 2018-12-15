@@ -143,13 +143,6 @@ host_vndk_abi_dumps := \
   $(foreach target,$(vts_vndk_abi_dump_target_tuple_list),\
     $(call create-vndk-abi-dump-from-target,$(target),$(VTS_TESTCASES_OUT)/vts/testcases/vndk/golden))
 
-host_kernel_config_files :=\
-  $(call find-files-in-subdirs,kernel/configs,"android-base*.config" -and -type f,.)
-
-host_kernel_config_copy_pairs := \
-  $(foreach f,$(host_kernel_config_files),\
-    kernel/configs/$(f):$(VTS_TESTCASES_OUT)/vts/testcases/kernel/config/data/$(f))
-
 ifneq ($(TARGET_BUILD_PDK),true)
 
 host_camera_its_files := \
@@ -247,6 +240,25 @@ system_property_compatibility_test_res_copy_pairs := \
 $(VTS_TESTCASES_OUT)/vts/testcases/vndk/golden/platform_vndk_version.txt:
 	@echo -n $(PLATFORM_VNDK_VERSION) > $@
 
+# Package roots that contains /prebuilt_hashes, and thus can be analyzed.
+vts_hidl_hals_package_roots := \
+    android.hardware:hardware/interfaces \
+
+vts_hidl_hals := \
+    $(call find-files-in-subdirs, ., "*.hal" -and -type f, \
+        $(foreach pair,$(vts_hidl_hals_package_roots),$(call word-colon,2,$(pair))))
+
+vts_hidl_hashes := \
+    $(foreach pair,$(vts_hidl_hals_package_roots),$(call word-colon,2,$(pair))/current.txt) \
+    $(call find-files-in-subdirs, ., "*.txt" -and -type f, \
+        $(foreach pair,$(vts_hidl_hals_package_roots),$(call word-colon,2,$(pair))/prebuilt_hashes))
+
+vts_hidl_hals_dump := $(VTS_TESTCASES_OUT)/DATA/etc/hidl_hals_for_release.json
+$(vts_hidl_hals_dump): $(HOST_OUT)/bin/dump_hals_for_release $(vts_hidl_hals) $(vts_hidl_hashes)
+	$< --pretty --package-root $(vts_hidl_hals_package_roots) \
+	    --filter-out '::types$$' '^android[.]hardware[.]tests[.]' \
+	    -- $(vts_hidl_hashes) > $@
+
 vts_test_core_copy_pairs := \
   $(call copy-many-files,$(host_framework_copy_pairs)) \
   $(call copy-many-files,$(host_testcase_copy_pairs)) \
@@ -260,7 +272,6 @@ vts_copy_pairs := \
   $(call copy-many-files,$(target_native_copy_pairs)) \
   $(call copy-many-files,$(target_trace_copy_pairs)) \
   $(call copy-many-files,$(target_hostdriven_copy_pairs)) \
-  $(call copy-many-files,$(host_kernel_config_copy_pairs)) \
   $(call copy-many-files,$(host_camera_its_copy_pairs)) \
   $(call copy-many-files,$(host_systrace_copy_pairs)) \
   $(call copy-many-files,$(media_test_res_copy_pairs)) \
@@ -273,6 +284,7 @@ vts_copy_pairs := \
   $(call copy-many-files,$(target_script_copy_pairs)) \
   $(call copy-many-files,$(system_property_compatibility_test_res_copy_pairs)) \
   $(VTS_TESTCASES_OUT)/vts/testcases/vndk/golden/platform_vndk_version.txt \
+  $(vts_hidl_hals_dump) \
 
 .PHONY: vts-test-core
 vts-test-core: $(vts_test_core_copy_pairs)

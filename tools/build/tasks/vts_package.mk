@@ -150,13 +150,6 @@ kernel_rootdir_test_rc_copy_pairs := \
   $(foreach f,$(kernel_rootdir_test_rc_files),\
     system/core/rootdir/$(f):$(VTS_TESTCASES_OUT)/vts/testcases/kernel/api/rootdir/init_rc_files/$(f)) \
 
-acts_framework_files := \
-  $(call find-files-in-subdirs,tools/test/connectivity/acts/framework/acts,"*.py" -and -type f,.)
-
-acts_framework_copy_pairs := \
-  $(foreach f,$(acts_framework_files),\
-    tools/test/connectivity/acts/framework/acts/$(f):$(VTS_TESTCASES_OUT)/acts/$(f))
-
 acts_testcases_files := \
   $(call find-files-in-subdirs,tools/test/connectivity/acts/tests/google,"*.py" -and -type f,.)
 
@@ -189,6 +182,15 @@ $(vts_hidl_hals_dump): $(HOST_OUT)/bin/dump_hals_for_release $(vts_hidl_hals) $(
 	    --filter-out '::types$$' '^android[.]hardware[.]tests[.]' \
 	    -- $(vts_hidl_hashes) > $@
 
+# for VTF (Vendor Test Framework) packages
+VTF_OUT_ROOT := $(HOST_OUT)/vts
+VTF_TESTCASES_OUT := $(VTF_OUT_ROOT)/android-vts/testcases
+VTF_TOOLS_OUT := $(VTF_OUT_ROOT)/android-vts/tools
+VTF_EXTRA_SCRIPTS :=
+
+include $(LOCAL_PATH)/framework/vtf_package.mk
+
+# finally back to the rules for VTS (Vendor Test Suite) packages
 vts_copy_pairs := \
   $(vtf_copy_pairs) \
   $(vts_test_core_copy_pairs) \

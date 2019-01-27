@@ -13,12 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Test duplicating section names:
 
-.section test.dup,"",@note
-nop
+# Please use this when your VTS module can't be part of general-tests.
+LOCAL_MODULE_CLASS := FAKE
+LOCAL_IS_HOST_MODULE := true
+LOCAL_COMPATIBILITY_SUITE := vts
 
-# Test path name of program interpreter:
+include $(BUILD_SYSTEM)/base_rules.mk
 
-.section .interp,"a",@progbits
-.string "/lib64/ld-linux-x86-64.so.2"
+$(LOCAL_BUILT_MODULE):
+	@echo "VTS host-driven test target: $(PRIVATE_MODULE)"
+	$(hide) touch $@
+

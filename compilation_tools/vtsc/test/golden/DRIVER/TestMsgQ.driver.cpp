@@ -10,8 +10,8 @@
 using namespace android::hardware::tests::msgq::V1_0;
 namespace android {
 namespace vts {
-extern "C" ::android::hardware::tests::msgq::V1_0::ITestMsgQ::EventFlagBits EnumValue__android__hardware__tests__msgq__V1_0__ITestMsgQ__EventFlagBits(const ScalarDataValueMessage& arg) {
-    return (::android::hardware::tests::msgq::V1_0::ITestMsgQ::EventFlagBits) arg.uint32_t();
+extern "C" void MessageTo__android__hardware__tests__msgq__V1_0__ITestMsgQ__EventFlagBits(const VariableSpecificationMessage& var_msg __attribute__((__unused__)), ::android::hardware::tests::msgq::V1_0::ITestMsgQ::EventFlagBits* arg __attribute__((__unused__)), const string& callback_socket_name __attribute__((__unused__))) {
+    *arg = (::android::hardware::tests::msgq::V1_0::ITestMsgQ::EventFlagBits)var_msg.scalar_value().uint32_t();
 }
 uint32_t Random__android__hardware__tests__msgq__V1_0__ITestMsgQ__EventFlagBits() {
     uint32_t choice = (uint32_t) rand() / 2;
@@ -344,7 +344,7 @@ bool FuzzerExtended_android_hardware_tests_msgq_V1_0_ITestMsgQ::VerifyResults(co
     if (!strcmp(actual_result.name().c_str(), "getFmqUnsyncWrite")) {
         if (actual_result.return_type_hidl_size() != expected_result.return_type_hidl_size() ) { return false; }
         if (actual_result.return_type_hidl(0).scalar_value().bool_t() != expected_result.return_type_hidl(0).scalar_value().bool_t()) { return false; }
-        /* ERROR: TYPE_FMQ_UNSYNC is not supported yet. */
+        LOG(ERROR) << "TYPE_FMQ_UNSYNC is not supported yet. ";
         return true;
     }
     if (!strcmp(actual_result.name().c_str(), "requestWriteFmqSync")) {

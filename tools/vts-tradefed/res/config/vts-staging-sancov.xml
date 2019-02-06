@@ -33,6 +33,8 @@
   <option name="compatibility:include-filter" value="VtsHalRadioV1_1Target" />
   <option name="compatibility:include-filter" value="VtsHalRenderscriptV1_0Target" />
   <option name="compatibility:include-filter" value="VtsHalSapV1_0Target" />
+  <option name="compatibility:include-filter" value="VtsHalWifiHostapdV1_0Target" />
+  <option name="compatibility:include-filter" value="VtsHalWifiHostapdV1_1Target" />
   <option name="compatibility:include-filter" value="VtsHalWifiV1_0Host" />
   <option name="compatibility:include-filter" value="VtsHalWifiV1_1Target" />
   <option name="compatibility:include-filter" value="VtsHalWifiNanV1_0Target" />
@@ -69,6 +71,7 @@
   <option name="compatibility:include-filter" value="VtsHalSensorsV1_0Target" />
   <option name="compatibility:include-filter" value="VtsHalSoundtriggerV2_0Target" />
   <option name="compatibility:include-filter" value="VtsHalSoundtriggerV2_1Target" />
+  <option name="compatibility:include-filter" value="VtsHalStatsV1_0Target" />
   <option name="compatibility:include-filter" value="VtsHalTetherOffloadConfigV1_0Target" />
   <option name="compatibility:include-filter" value="VtsHalTetherOffloadControlV1_0Target" />
   <option name="compatibility:include-filter" value="VtsHalThermalV1_0Target" />

@@ -256,6 +256,7 @@ vts_hal_test_bins := \
   VtsHalGnssV1_1TargetTest \
   VtsHalGraphicsComposerV2_1TargetTest \
   VtsHalGraphicsComposerV2_2TargetTest \
+  VtsHalGraphicsComposerV2_3TargetTest \
   VtsHalGraphicsMapperV2_0TargetTest \
   VtsHalGraphicsMapperV2_1TargetTest \
   VtsHalHealthStorageV1_0TargetTest \
@@ -292,6 +293,7 @@ vts_hal_test_bins := \
   VtsHalSensorsV1_0TargetTest \
   VtsHalSoundtriggerV2_0TargetTest \
   VtsHalSoundtriggerV2_1TargetTest \
+  VtsHalStatsV1_0TargetTest \
   VtsHalTetheroffloadConfigV1_0TargetTest \
   VtsHalTetheroffloadControlV1_0TargetTest \
   VtsHalThermalV1_0TargetTest \
@@ -308,6 +310,8 @@ vts_hal_test_bins := \
   VtsHalVibratorV1_3TargetTest \
   VtsHalVrV1_0TargetTest \
   VtsHalWeaverV1_0TargetTest \
+  VtsHalWifiHostapdV1_0TargetTest \
+  VtsHalWifiHostapdV1_1TargetTest \
   VtsHalWifiV1_0TargetTest \
   VtsHalWifiV1_1TargetTest \
   VtsHalWifiV1_2TargetTest \

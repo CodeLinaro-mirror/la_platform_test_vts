@@ -28,6 +28,7 @@ import time
 import traceback
 
 from vts.runners.host import asserts
+from vts.runners.host import const
 from vts.runners.host import errors
 from vts.runners.host import keys
 from vts.runners.host import logger as vts_logger
@@ -70,6 +71,8 @@ PROPERTY_PRODUCT_SKU = "ro.boot.product.hardware.sku"
 _FASTBOOT_VAR_HAS_VBMETA = "has-slot:vbmeta"
 
 SYSPROP_DEV_BOOTCOMPLETE = "dev.bootcomplete"
+SYSPROP_LLK_BLACKLIST_PARENT = "ro.llk.blacklist.parent"
+SYSPROP_LLK_BLACKLIST_PARENT_VALUE = ",vts_hal_agent64,vts_hal_agent32,vts_shell_driver64,vts_shell_driver32"
 SYSPROP_SYS_BOOT_COMPLETED = "sys.boot_completed"
 # the name of a system property which tells whether to stop properly configured
 # native servers where properly configured means a server's init.rc is
@@ -923,9 +926,9 @@ class AndroidDevice(object):
             return False
 
         cmd = 'ps -g system | grep system_server'
-        res = self.adb.shell(cmd)
+        res = self.adb.shell(cmd, no_except=True)
 
-        return 'system_server' in res
+        return 'system_server' in res[const.STDOUT]
 
     def startFramework(self,
                        wait_for_completion=True,
@@ -975,7 +978,6 @@ class AndroidDevice(object):
         logging.debug("stopping Android framework")
         self.adb.shell("stop")
         self.setProp(SYSPROP_SYS_BOOT_COMPLETED, 0)
-        self.setProp(SYSPROP_DEV_BOOTCOMPLETE, 0)
         logging.info("Android framework stopped")
 
     def stop(self, stop_native_server=False):
@@ -1194,9 +1196,26 @@ class AndroidDevice(object):
                 raise
         event.End()
 
-    def stopServices(self):
-        """Stops long running services on the android device.
+    def Heal(self):
+        """Performs a self healing.
+
+        Includes self diagnosis that looks for any framework errors.
+
+        Returns:
+            bool, True if everything is ok; False otherwise.
         """
+        res = True
+
+        if self.shell:
+            res &= self.shell.Heal()
+
+        if not res:
+            logging.error('Self diagnosis found problems in Android device %s', self.serial)
+
+        return res
+
+    def stopServices(self):
+        """Stops long running services on the android device."""
         if self.adb_logcat_process:
             self.stopAdbLogcat()
         if getattr(self, "enable_sl4a", False):
@@ -1219,6 +1238,16 @@ class AndroidDevice(object):
                 "HAL agent is already running on %s." % self.serial)
 
         event = tfi.Begin("start vts agent", tfi.categories.FRAMEWORK_SETUP)
+
+        llk_blacklist_parent = self.getProp(SYSPROP_LLK_BLACKLIST_PARENT)
+        if not llk_blacklist_parent:
+            self.setProp(SYSPROP_LLK_BLACKLIST_PARENT,
+                         SYSPROP_LLK_BLACKLIST_PARENT_VALUE)
+        else:
+            if llk_blacklist_parent != SYSPROP_LLK_BLACKLIST_PARENT_VALUE:
+                logging.error('Failed to protect VTF agents from livelock check.'
+                              'Sysprop %s is already set as %s',
+                              SYSPROP_LLK_BLACKLIST_PARENT, llk_blacklist_parent)
 
         event_cleanup = tfi.Begin("start vts agent -- cleanup", tfi.categories.FRAMEWORK_SETUP)
         cleanup_commands = [

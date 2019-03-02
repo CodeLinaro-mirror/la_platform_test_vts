@@ -421,9 +421,8 @@ public class VtsDevicePreparer implements ITargetPreparer, ITargetCleaner {
      * @throws DeviceNotAvailableException
      */
     void stopFramework() throws DeviceNotAvailableException {
-        this.setProperty(SYSPROP_DEV_BOOTCOMPLETE, "0");
-        this.setProperty(SYSPROP_SYS_BOOT_COMPLETED, "0");
         mDevice.executeShellCommand("stop");
+        this.setProperty(SYSPROP_SYS_BOOT_COMPLETED, "0");
     }
 
     /**
@@ -471,8 +470,10 @@ public class VtsDevicePreparer implements ITargetPreparer, ITargetCleaner {
     }
 
     boolean isBootCompleted() throws DeviceNotAvailableException {
-        return mDevice.getProperty(SYSPROP_SYS_BOOT_COMPLETED).equals("1")
-                && mDevice.getProperty(SYSPROP_DEV_BOOTCOMPLETE).equals("1");
+        String sysBootCompleted = mDevice.getProperty(SYSPROP_SYS_BOOT_COMPLETED);
+        String devBootCompleted = mDevice.getProperty(SYSPROP_DEV_BOOTCOMPLETE);
+        return sysBootCompleted != null && sysBootCompleted.equals("1") && devBootCompleted != null
+                && devBootCompleted.equals("1");
     }
 
     /**

@@ -1,4 +1,5 @@
-# Copyright (C) 2016 The Android Open Source Project
+#
+# Copyright (C) 2018 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,6 +12,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#
 
-.PHONY: vts-tradefed-standalone
-vts-tradefed-standalone: vts-tradefed vts-tradefed-tests loganalysis hosttestlib compatibility-host-util tradefed
+# Please use this when your VTS module can't be part of general-tests.
+LOCAL_MODULE_CLASS := FAKE
+LOCAL_IS_HOST_MODULE := true
+LOCAL_COMPATIBILITY_SUITE := vts
+
+include $(BUILD_SYSTEM)/base_rules.mk
+
+$(LOCAL_BUILT_MODULE):
+	@echo "VTS host-driven test target: $(PRIVATE_MODULE)"
+	$(hide) touch $@
+

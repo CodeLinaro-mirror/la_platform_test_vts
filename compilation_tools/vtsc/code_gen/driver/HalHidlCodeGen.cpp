@@ -429,13 +429,13 @@ void HalHidlCodeGen::GenerateClassHeader(Formatter& out,
     const ComponentSpecificationMessage& message,
     const string& fuzzer_extended_class_name) {
   if (message.component_name() != "types") {
-    for (const auto attribute : message.interface().attribute()) {
+    for (const auto& attribute : message.interface().attribute()) {
       GenerateAllFunctionDeclForAttribute(out, attribute);
     }
     DriverCodeGenBase::GenerateClassHeader(out, message,
                                            fuzzer_extended_class_name);
   } else {
-    for (const auto attribute : message.attribute()) {
+    for (const auto& attribute : message.attribute()) {
       GenerateAllFunctionDeclForAttribute(out, attribute);
     };
   }
@@ -502,14 +502,14 @@ void HalHidlCodeGen::GenerateClassImpl(Formatter& out,
     const ComponentSpecificationMessage& message,
     const string& fuzzer_extended_class_name) {
   if (message.component_name() != "types") {
-    for (auto attribute : message.interface().attribute()) {
+    for (const auto& attribute : message.interface().attribute()) {
       GenerateAllFunctionImplForAttribute(out, attribute);
     }
     GenerateGetServiceImpl(out, message, fuzzer_extended_class_name);
     DriverCodeGenBase::GenerateClassImpl(out, message,
                                          fuzzer_extended_class_name);
   } else {
-    for (auto attribute : message.attribute()) {
+    for (const auto& attribute : message.attribute()) {
       GenerateAllFunctionImplForAttribute(out, attribute);
     }
   }
@@ -663,78 +663,64 @@ void HalHidlCodeGen::GenerateRandomFunctionImplForAttribute(Formatter& out,
 
 void HalHidlCodeGen::GenerateDriverDeclForAttribute(Formatter& out,
     const VariableSpecificationMessage& attribute) {
-  if (attribute.type() == TYPE_STRUCT || attribute.type() == TYPE_UNION ||
-      attribute.type() == TYPE_SAFE_UNION) {
-    // Recursively generate SetResult method implementation for all sub_types.
-    for (const auto sub_struct : attribute.sub_struct()) {
-      GenerateDriverDeclForAttribute(out, sub_struct);
-    }
-    for (const auto sub_union : attribute.sub_union()) {
-      GenerateDriverDeclForAttribute(out, sub_union);
-    }
-    for (const auto sub_safe_union : attribute.sub_safe_union()) {
-      GenerateDriverDeclForAttribute(out, sub_safe_union);
-    }
-    string func_name = "MessageTo"
-        + ClearStringWithNameSpaceAccess(attribute.name());
-    // Add extern C to allow resource_manager to dynamically load this function.
-    out << "extern \"C\" ";
-    out << "void " << func_name
-        << "(const VariableSpecificationMessage& var_msg, " << attribute.name()
-        << "* arg, const string& callback_socket_name);\n";
-  } else if (attribute.type() == TYPE_ENUM) {
-    string func_name = "EnumValue"
-            + ClearStringWithNameSpaceAccess(attribute.name());
-    // Add extern C to allow resource_manager to dynamically load this function.
-    out << "extern \"C\" ";
-    // Message to value converter
-    out << attribute.name() << " " << func_name
-        << "(const ScalarDataValueMessage& arg);\n";
-  } else {
-    cerr << __func__ << " unsupported attribute type " << attribute.type()
-         << "\n";
+  if (!IsUserDefinedType(attribute.type())) {
+    cerr << attribute.type() << " is not a user defined type\n";
     exit(-1);
   }
+  for (const auto& sub_struct : attribute.sub_struct()) {
+    GenerateDriverDeclForAttribute(out, sub_struct);
+  }
+  for (const auto& sub_union : attribute.sub_union()) {
+    GenerateDriverDeclForAttribute(out, sub_union);
+  }
+  for (const auto& sub_safe_union : attribute.sub_safe_union()) {
+    GenerateDriverDeclForAttribute(out, sub_safe_union);
+  }
+  string func_name =
+      "MessageTo" + ClearStringWithNameSpaceAccess(attribute.name());
+  // Add extern C to allow resource_manager to dynamically load this function.
+  out << "extern \"C\" ";
+  out << "void " << func_name
+      << "(const VariableSpecificationMessage& var_msg, " << attribute.name()
+      << "* arg, const string& callback_socket_name);\n";
 }
 
 void HalHidlCodeGen::GenerateDriverImplForAttribute(Formatter& out,
     const VariableSpecificationMessage& attribute) {
+  if (!IsUserDefinedType(attribute.type())) {
+    cerr << attribute.type() << " is not a user defined type\n";
+    exit(-1);
+  }
+  // Recursively generate driver implementation method for all sub_types.
+  for (const auto& sub_struct : attribute.sub_struct()) {
+    GenerateDriverImplForAttribute(out, sub_struct);
+  }
+  for (const auto& sub_union : attribute.sub_union()) {
+    GenerateDriverImplForAttribute(out, sub_union);
+  }
+  for (const auto& sub_safe_union : attribute.sub_safe_union()) {
+    GenerateDriverImplForAttribute(out, sub_safe_union);
+  }
+  string func_name =
+      "MessageTo" + ClearStringWithNameSpaceAccess(attribute.name());
+  // Add extern C to allow resource_manager to dynamically load this
+  // function.
+  out << "extern \"C\" ";
+  out << "void " << func_name
+      << "(const VariableSpecificationMessage& "
+         "var_msg __attribute__((__unused__)), "
+      << attribute.name() << "* arg __attribute__((__unused__)), "
+      << "const string& callback_socket_name __attribute__((__unused__))) {"
+      << "\n";
+  out.indent();
+
   switch (attribute.type()) {
-    case TYPE_ENUM:
-    {
-      string func_name = "EnumValue"
-          + ClearStringWithNameSpaceAccess(attribute.name());
-      // Add extern C to allow resource_manager to dynamically load this
-      // function.
-      out << "extern \"C\" ";
-      // Message to value converter
-      out << attribute.name() << " " << func_name
-          << "(const ScalarDataValueMessage& arg) {\n";
-      out.indent();
-      out << "return (" << attribute.name() << ") arg."
+    case TYPE_ENUM: {
+      out << "*arg = (" << attribute.name() << ")var_msg.scalar_value()."
           << attribute.enum_value().scalar_type() << "();\n";
-      out.unindent();
-      out << "}" << "\n";
       break;
     }
-    case TYPE_STRUCT:
-    {
-      // Recursively generate driver implementation method for all sub_types.
-      for (const auto sub_struct : attribute.sub_struct()) {
-        GenerateDriverImplForAttribute(out, sub_struct);
-      }
-      string func_name = "MessageTo"
-          + ClearStringWithNameSpaceAccess(attribute.name());
-      // Add extern C to allow resource_manager to dynamically load this
-      // function.
-      out << "extern \"C\" ";
-      out << "void " << func_name
-          << "(const VariableSpecificationMessage& "
-             "var_msg __attribute__((__unused__)), "
-          << attribute.name() << "* arg __attribute__((__unused__)), "
-          << "const string& callback_socket_name __attribute__((__unused__))) {"
-          << "\n";
-      out.indent();
+    case TYPE_STRUCT: {
       int struct_index = 0;
       for (const auto& struct_value : attribute.struct_value()) {
         GenerateDriverImplForTypedVariable(
@@ -742,70 +728,36 @@ void HalHidlCodeGen::GenerateDriverImplForAttribute(Formatter& out,
             "var_msg.struct_value(" + std::to_string(struct_index) + ")");
         struct_index++;
       }
-      out.unindent();
-      out << "}\n";
       break;
     }
-    case TYPE_UNION:
-    {
-      // Recursively generate driver implementation method for all sub_types.
-      for (const auto sub_union : attribute.sub_union()) {
-        GenerateDriverImplForAttribute(out, sub_union);
-      }
-      string func_name = "MessageTo"
-          + ClearStringWithNameSpaceAccess(attribute.name());
-      // Add extern C to allow resource_manager to dynamically load this
-      // function.
-      out << "extern \"C\" ";
-      out << "void " << func_name
-          << "(const VariableSpecificationMessage& var_msg, "
-          << attribute.name() << "* arg, "
-          << "const string& callback_socket_name __attribute__((__unused__))) {"
-          << "\n";
-      out.indent();
+    case TYPE_UNION: {
       int union_index = 0;
       for (const auto& union_value : attribute.union_value()) {
         out << "if (var_msg.union_value(" << union_index << ").name() == \""
-            << union_value.name() << "\") {" << "\n";
+            << union_value.name() << "\") {"
+            << "\n";
         out.indent();
         GenerateDriverImplForTypedVariable(
             out, union_value, "arg->" + union_value.name(),
             "var_msg.union_value(" + std::to_string(union_index) + ")");
         union_index++;
         out.unindent();
-        out << "}" << "\n";
+        out << "}\n";
       }
-      out.unindent();
-      out << "}\n";
       break;
     }
     case TYPE_SAFE_UNION: {
-      // Recursively generate driver implementation method for all sub_types.
-      for (const auto sub_safe_union : attribute.sub_safe_union()) {
-        GenerateDriverImplForAttribute(out, sub_safe_union);
-      }
-      string func_name =
-          "MessageTo" + ClearStringWithNameSpaceAccess(attribute.name());
-      // Add extern C to allow resource_manager to dynamically load this
-      // function.
-      out << "extern \"C\" ";
-      out << "void " << func_name << "(const VariableSpecificationMessage&, "
-          << attribute.name() << "*, "
-          << "const string&) {"
-          << "\n";
-      out.indent();
-      out << "/* ERROR: TYPE_SAFE_UNION is not supported yet. */\n";
-      out.unindent();
-      out << "}\n";
+      out << "LOG(ERROR) << \"TYPE_SAFE_UNION is not supported yet. \";\n";
       break;
     }
-    default:
-    {
+    default: {
       cerr << __func__ << " unsupported attribute type " << attribute.type()
            << "\n";
       exit(-1);
     }
   }
+  out.unindent();
+  out << "}\n";
 }
 
 void HalHidlCodeGen::GenerateGetServiceImpl(Formatter& out,
@@ -862,10 +814,10 @@ void HalHidlCodeGen::GenerateDriverImplForTypedVariable(Formatter& out,
     case TYPE_ENUM:
     {
       if (val.has_predefined_type()) {
-        string func_name = "EnumValue"
-            + ClearStringWithNameSpaceAccess(val.predefined_type());
-        out << arg_name << " = " << func_name << "(" << arg_value_name
-            << ".scalar_value());\n";
+        string func_name =
+            "MessageTo" + ClearStringWithNameSpaceAccess(val.predefined_type());
+        out << func_name << "(" << arg_value_name << ", &(" << arg_name
+            << "), callback_socket_name);\n";
       } else {
         out << arg_name << " = (" << val.name() << ")" << arg_value_name << "."
             << "enum_value().scalar_value(0)." << val.enum_value().scalar_type()
@@ -918,7 +870,7 @@ void HalHidlCodeGen::GenerateDriverImplForTypedVariable(Formatter& out,
             << "), callback_socket_name);\n";
       } else {
         int struct_index = 0;
-        for (const auto struct_field : val.struct_value()) {
+        for (const auto& struct_field : val.struct_value()) {
           string struct_field_name = arg_name + "." + struct_field.name();
           string struct_field_value_name = arg_value_name + ".struct_value("
               + std::to_string(struct_index) + ")";
@@ -939,7 +891,7 @@ void HalHidlCodeGen::GenerateDriverImplForTypedVariable(Formatter& out,
             << "), callback_socket_name);\n";
       } else {
         int union_index = 0;
-        for (const auto union_field : val.union_value()) {
+        for (const auto& union_field : val.union_value()) {
           string union_field_name = arg_name + "." + union_field.name();
           string union_field_value_name = arg_value_name + ".union_value("
               + std::to_string(union_index) + ")";
@@ -1098,7 +1050,7 @@ void HalHidlCodeGen::GenerateDriverImplForTypedVariable(Formatter& out,
       out << "} else {\n";
       out.indent();
       if (type_name.find("::android::hidl") == 0) {
-        out << "/* ERROR: general interface is not supported yet. */\n";
+        out << "LOG(ERROR) << \"general interface is not supported yet. \";\n";
       } else {
         ReplaceSubString(type_name, "::", "_");
         out << arg_name << " = VtsFuzzerCreateVts" << type_name
@@ -1149,13 +1101,14 @@ void HalHidlCodeGen::GenerateDriverImplForTypedVariable(Formatter& out,
     }
     case TYPE_POINTER:
     {
-      out << "/* ERROR: TYPE_POINTER is not supported yet. */\n";
+      out << "LOG(ERROR) << \"TYPE_POINTER is not supported yet. \";\n";
       break;
     }
     case TYPE_FMQ_SYNC:
     case TYPE_FMQ_UNSYNC: {
       if (arg_name.find("->") != std::string::npos) {
-        cout << "Nested structure with fmq is not supported yet." << endl;
+        out << "LOG(ERROR) << \"Nested structure with fmq is not supported "
+               "yet. \";\n";
       } else {
         // TODO(zhuoyao): consider record and use the queue capacity.
         std::string element_type = GetCppVariableType(val.fmq_value(0));
@@ -1198,11 +1151,11 @@ void HalHidlCodeGen::GenerateDriverImplForTypedVariable(Formatter& out,
     }
     case TYPE_REF:
     {
-      out << "/* ERROR: TYPE_REF is not supported yet. */\n";
+      out << "LOG(ERROR) << \"TYPE_REF is not supported yet. \";\n";
       break;
     }
     case TYPE_SAFE_UNION: {
-      out << "/* ERROR: TYPE_SAFE_UNION is not supported yet. */\n";
+      out << "LOG(ERROR) << \"TYPE_SAFE_UNION is not supported yet. \";\n";
       break;
     }
     default:
@@ -1227,7 +1180,7 @@ void HalHidlCodeGen::GenerateVerificationFunctionImpl(Formatter& out,
         << "\n";
     out << "const FunctionSpecificationMessage& actual_result "
            "__attribute__((__unused__))) {\n";
-    for (const FunctionSpecificationMessage api : message.interface().api()) {
+    for (const FunctionSpecificationMessage& api : message.interface().api()) {
       out << "if (!strcmp(actual_result.name().c_str(), \"" << api.name()
           << "\")) {\n";
       out.indent();
@@ -1379,46 +1332,46 @@ void HalHidlCodeGen::GenerateVerificationCodeForTypedVariable(Formatter& out,
     }
     case TYPE_HIDL_CALLBACK:
     {
-      out << "/* ERROR: TYPE_HIDL_CALLBACK is not supported yet. */\n";
+      out << "LOG(ERROR) << \"TYPE_HILD_CALLBACK is not supported yet. \";\n";
       break;
     }
     case TYPE_HANDLE:
     {
-      out << "/* ERROR: TYPE_HANDLE is not supported yet. */\n";
+      out << "LOG(ERROR) << \"TYPE_HANDLE is not supported yet. \";\n";
       break;
     }
     case TYPE_HIDL_INTERFACE:
     {
-      out << "/* ERROR: TYPE_HIDL_INTERFACE is not supported yet. */\n";
+      out << "LOG(ERROR) << \"TYPE_HIDL_INTERFACE is not supported yet. \";\n";
       break;
     }
     case TYPE_HIDL_MEMORY:
     {
-      out << "/* ERROR: TYPE_HIDL_MEMORY is not supported yet. */\n";
+      out << "LOG(ERROR) << \"TYPE_HIDL_MEMORY is not supported yet. \";\n";
       break;
     }
     case TYPE_POINTER:
     {
-      out << "/* ERROR: TYPE_POINTER is not supported yet. */\n";
+      out << "LOG(ERROR) << \"TYPE_POINTER is not supported yet. \";\n";
       break;
     }
     case TYPE_FMQ_SYNC:
     {
-      out << "/* ERROR: TYPE_FMQ_SYNC is not supported yet. */\n";
+      out << "LOG(ERROR) << \"TYPE_FMQ_SYNC is not supported yet. \";\n";
       break;
     }
     case TYPE_FMQ_UNSYNC:
     {
-      out << "/* ERROR: TYPE_FMQ_UNSYNC is not supported yet. */\n";
+      out << "LOG(ERROR) << \"TYPE_FMQ_UNSYNC is not supported yet. \";\n";
       break;
     }
     case TYPE_REF:
     {
-      out << "/* ERROR: TYPE_REF is not supported yet. */\n";
+      out << "LOG(ERROR) << \"TYPE_REF is not supported yet. \";\n";
       break;
     }
     case TYPE_SAFE_UNION: {
-      out << "/* ERROR: TYPE_SAFE_UNION is not supported yet. */\n";
+      out << "LOG(ERROR) << \"TYPE_SAFE_UNION is Not supported yet. \";\n";
       break;
     }
     default:
@@ -1433,10 +1386,10 @@ void HalHidlCodeGen::GenerateVerificationDeclForAttribute(Formatter& out,
     const VariableSpecificationMessage& attribute) {
   if (attribute.type() == TYPE_STRUCT || attribute.type() == TYPE_UNION) {
     // Recursively generate verification method implementation for all sub_types.
-    for (const auto sub_struct : attribute.sub_struct()) {
+    for (const auto& sub_struct : attribute.sub_struct()) {
       GenerateVerificationDeclForAttribute(out, sub_struct);
     }
-    for (const auto sub_union : attribute.sub_union()) {
+    for (const auto& sub_union : attribute.sub_union()) {
       GenerateVerificationDeclForAttribute(out, sub_union);
     }
   }
@@ -1450,10 +1403,10 @@ void HalHidlCodeGen::GenerateVerificationImplForAttribute(Formatter& out,
     const VariableSpecificationMessage& attribute) {
   if (attribute.type() == TYPE_STRUCT || attribute.type() == TYPE_UNION) {
     // Recursively generate verification method implementation for all sub_types.
-    for (const auto sub_struct : attribute.sub_struct()) {
+    for (const auto& sub_struct : attribute.sub_struct()) {
       GenerateVerificationImplForAttribute(out, sub_struct);
     }
-    for (const auto sub_union : attribute.sub_union()) {
+    for (const auto& sub_union : attribute.sub_union()) {
       GenerateVerificationImplForAttribute(out, sub_union);
     }
   }
@@ -1562,7 +1515,7 @@ void HalHidlCodeGen::GenerateSetResultCodeForTypedVariable(Formatter& out,
             + ClearStringWithNameSpaceAccess(val.predefined_type());
         out << func_name << "(" << result_msg << ", " << result_value << ");\n";
       } else {
-        for (const auto struct_field : val.struct_value()) {
+        for (const auto& struct_field : val.struct_value()) {
           string struct_field_name = result_msg + "_" + struct_field.name();
           out << "auto *" << struct_field_name << " = " << result_msg
               << "->add_struct_value();\n";
@@ -1585,7 +1538,7 @@ void HalHidlCodeGen::GenerateSetResultCodeForTypedVariable(Formatter& out,
             + ClearStringWithNameSpaceAccess(val.predefined_type());
         out << func_name << "(" << result_msg << ", " << result_value << ");\n";
       } else {
-        for (const auto union_field : val.union_value()) {
+        for (const auto& union_field : val.union_value()) {
           string union_field_name = result_msg + "_" + union_field.name();
           out << "auto *" << union_field_name << " = " << result_msg
               << "->add_union_value();\n";
@@ -1603,7 +1556,7 @@ void HalHidlCodeGen::GenerateSetResultCodeForTypedVariable(Formatter& out,
     case TYPE_HIDL_CALLBACK:
     {
       out << result_msg << "->set_type(TYPE_HIDL_CALLBACK);\n";
-      out << "/* ERROR: TYPE_HIDL_CALLBACK is not supported yet. */\n";
+      out << "LOG(ERROR) << \"TYPE HIDL_CALLBACK is not supported yet. \";\n";
       break;
     }
     case TYPE_HANDLE:
@@ -1649,7 +1602,7 @@ void HalHidlCodeGen::GenerateSetResultCodeForTypedVariable(Formatter& out,
     case TYPE_POINTER:
     {
       out << result_msg << "->set_type(TYPE_POINTER);\n";
-      out << "/* ERROR: TYPE_POINTER is not supported yet. */\n";
+      out << "LOG(ERROR) << \"TYPE_POINTER is not supported yet. \";\n";
       break;
     }
     case TYPE_FMQ_SYNC:
@@ -1698,12 +1651,12 @@ void HalHidlCodeGen::GenerateSetResultCodeForTypedVariable(Formatter& out,
     case TYPE_REF:
     {
       out << result_msg << "->set_type(TYPE_REF);\n";
-      out << "/* ERROR: TYPE_REF is not supported yet. */\n";
+      out << "LOG(ERROR) << \"TYPE_REF is not supported yet. \";\n";
       break;
     }
     case TYPE_SAFE_UNION: {
       out << result_msg << "->set_type(TYPE_SAFE_UNION);\n";
-      out << "/* ERROR: TYPE_SAFE_UNION is not supported yet. */\n";
+      out << "LOG(ERROR) << \"TYPE_SAFE_UNION is not supported yet. \";\n";
       break;
     }
     default:
@@ -1719,13 +1672,13 @@ void HalHidlCodeGen::GenerateSetResultDeclForAttribute(Formatter& out,
   if (attribute.type() == TYPE_STRUCT || attribute.type() == TYPE_UNION ||
       attribute.type() == TYPE_SAFE_UNION) {
     // Recursively generate SetResult method implementation for all sub_types.
-    for (const auto sub_struct : attribute.sub_struct()) {
+    for (const auto& sub_struct : attribute.sub_struct()) {
       GenerateSetResultDeclForAttribute(out, sub_struct);
     }
-    for (const auto sub_union : attribute.sub_union()) {
+    for (const auto& sub_union : attribute.sub_union()) {
       GenerateSetResultDeclForAttribute(out, sub_union);
     }
-    for (const auto sub_safe_union : attribute.sub_safe_union()) {
+    for (const auto& sub_safe_union : attribute.sub_safe_union()) {
       GenerateSetResultDeclForAttribute(out, sub_safe_union);
     }
   }
@@ -1742,13 +1695,13 @@ void HalHidlCodeGen::GenerateSetResultImplForAttribute(Formatter& out,
   if (attribute.type() == TYPE_STRUCT || attribute.type() == TYPE_UNION ||
       attribute.type() == TYPE_SAFE_UNION) {
     // Recursively generate SetResult method implementation for all sub_types.
-    for (const auto sub_struct : attribute.sub_struct()) {
+    for (const auto& sub_struct : attribute.sub_struct()) {
       GenerateSetResultImplForAttribute(out, sub_struct);
     }
-    for (const auto sub_union : attribute.sub_union()) {
+    for (const auto& sub_union : attribute.sub_union()) {
       GenerateSetResultImplForAttribute(out, sub_union);
     }
-    for (const auto sub_safe_union : attribute.sub_safe_union()) {
+    for (const auto& sub_safe_union : attribute.sub_safe_union()) {
       GenerateSetResultImplForAttribute(out, sub_safe_union);
     }
   }

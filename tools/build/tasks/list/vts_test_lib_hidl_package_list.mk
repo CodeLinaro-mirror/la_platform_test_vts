@@ -79,6 +79,7 @@ vts_hal_driver_libs := \
   android.hardware.power@1.1-vts.driver \
   android.hardware.power@1.2-vts.driver \
   android.hardware.power@1.3-vts.driver \
+  android.hardware.power.stats@1.0-vts.driver \
   android.hardware.radio@1.0-vts.driver \
   android.hardware.radio@1.1-vts.driver \
   android.hardware.radio@1.2-vts.driver \
@@ -104,6 +105,7 @@ vts_hal_driver_libs := \
   android.hardware.vibrator@1.0-vts.driver \
   android.hardware.vibrator@1.1-vts.driver \
   android.hardware.vibrator@1.2-vts.driver \
+  android.hardware.vibrator@1.3-vts.driver \
   android.hardware.vr@1.0-vts.driver \
   android.hardware.weaver@1.0-vts.driver \
   android.hardware.wifi@1.0-vts.driver \
@@ -113,6 +115,7 @@ vts_hal_driver_libs := \
   android.hardware.wifi.offload@1.0-vts.driver \
   android.hardware.wifi.supplicant@1.0-vts.driver \
   android.hardware.wifi.supplicant@1.1-vts.driver \
+  android.hardware.wifi.supplicant@1.2-vts.driver \
   android.hidl.memory.block@1.0-vts.driver \
   android.hidl.memory.token@1.0-vts.driver \
   android.system.net.netd@1.0-vts.driver \
@@ -184,6 +187,7 @@ vts_hal_profiler_libs := \
   android.hardware.power@1.1-vts.profiler \
   android.hardware.power@1.2-vts.profiler \
   android.hardware.power@1.3-vts.profiler \
+  android.hardware.power.stats@1.0-vts.profiler \
   android.hardware.radio@1.0-vts.profiler \
   android.hardware.radio@1.1-vts.profiler \
   android.hardware.radio@1.2-vts.profiler \
@@ -209,6 +213,7 @@ vts_hal_profiler_libs := \
   android.hardware.vibrator@1.0-vts.profiler \
   android.hardware.vibrator@1.1-vts.profiler \
   android.hardware.vibrator@1.2-vts.profiler \
+  android.hardware.vibrator@1.3-vts.profiler \
   android.hardware.vr@1.0-vts.profiler \
   android.hardware.weaver@1.0-vts.profiler \
   android.hardware.wifi@1.0-vts.profiler \
@@ -218,6 +223,7 @@ vts_hal_profiler_libs := \
   android.hardware.wifi.offload@1.0-vts.profiler \
   android.hardware.wifi.supplicant@1.0-vts.profiler \
   android.hardware.wifi.supplicant@1.1-vts.profiler \
+  android.hardware.wifi.supplicant@1.2-vts.profiler \
   android.hidl.memory.block@1.0-vts.profiler \
   android.hidl.memory.token@1.0-vts.profiler \
   android.system.net.netd@1.0-vts.profiler \
@@ -250,6 +256,7 @@ vts_hal_test_bins := \
   VtsHalGnssV1_1TargetTest \
   VtsHalGraphicsComposerV2_1TargetTest \
   VtsHalGraphicsComposerV2_2TargetTest \
+  VtsHalGraphicsComposerV2_3TargetTest \
   VtsHalGraphicsMapperV2_0TargetTest \
   VtsHalGraphicsMapperV2_1TargetTest \
   VtsHalHealthStorageV1_0TargetTest \
@@ -276,6 +283,7 @@ vts_hal_test_bins := \
   VtsHalPowerV1_1TargetTest \
   VtsHalPowerV1_2TargetTest \
   VtsHalPowerV1_3TargetTest \
+  VtsHalPowerStatsV1_0TargetTest \
   VtsHalRadioV1_0TargetTest \
   VtsHalRadioV1_1TargetTest \
   VtsHalRadioV1_2TargetTest \
@@ -285,28 +293,37 @@ vts_hal_test_bins := \
   VtsHalSensorsV1_0TargetTest \
   VtsHalSoundtriggerV2_0TargetTest \
   VtsHalSoundtriggerV2_1TargetTest \
+  VtsHalStatsV1_0TargetTest \
   VtsHalTetheroffloadConfigV1_0TargetTest \
   VtsHalTetheroffloadControlV1_0TargetTest \
   VtsHalThermalV1_0TargetTest \
   VtsHalThermalV1_1TargetTest \
   VtsHalThermalV2_0TargetTest \
   thermal_hidl_stress_test \
+  VtsHalBufferHubV1_0TargetTest \
   VtsHalTvInputV1_0TargetTest \
   VtsHalUsbV1_0TargetTest \
   VtsHalUsbV1_1TargetTest \
   VtsHalVibratorV1_0TargetTest \
   VtsHalVibratorV1_1TargetTest \
   VtsHalVibratorV1_2TargetTest \
+  VtsHalVibratorV1_3TargetTest \
   VtsHalVrV1_0TargetTest \
   VtsHalWeaverV1_0TargetTest \
+  VtsHalWifiHostapdV1_0TargetTest \
+  VtsHalWifiHostapdV1_1TargetTest \
   VtsHalWifiV1_0TargetTest \
   VtsHalWifiV1_1TargetTest \
   VtsHalWifiV1_2TargetTest \
+  VtsHalWifiV1_3TargetTest \
   VtsHalWifiNanV1_0TargetTest \
   VtsHalWifiNanV1_2TargetTest \
   VtsHalWifiOffloadV1_0TargetTest \
   VtsHalWifiSupplicantV1_0TargetTest \
   VtsHalWifiSupplicantV1_1TargetTest \
+  VtsHalWifiSupplicantV1_2TargetTest \
+  VtsHalWifiSupplicantP2pV1_0TargetTest \
+  VtsHalWifiSupplicantP2pV1_2TargetTest \
   VtsHidlAllocatorV1_0TargetTest \
 
 # Binaries which are part of VNDK but in the form of HIDL.

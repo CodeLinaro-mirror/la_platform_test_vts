@@ -16,10 +16,6 @@
 <configuration description="VTS Main Test Plan Simplified Base Config for Presubmit Tests">
   <include name="vts-base-single-device" />
 
-  <test class="com.android.compatibility.common.tradefed.testtype.suite.CompatibilityTestSuite">
-    <option name="config-patterns" value="Vts.*\.config" />
-  </test>
-
   <target_preparer class="com.android.tradefed.targetprep.VtsDevicePreparer">
     <option name="enable-adb-root" value="true"/>
     <option name="start-framework" value="true"/>
@@ -28,6 +24,8 @@
 
   <option name="compatibility:test-arg" value="com.android.tradefed.testtype.VtsMultiDeviceTest:enable-dashboard-uploading:false" />
   <option name="compatibility:test-arg" value="com.android.tradefed.testtype.VtsMultiDeviceTest:enable-log-uploading:false" />
+  <option name="compatibility:test-arg" value="com.android.tradefed.testtype.VtsMultiDeviceTest:bug-report-on-failure:false" />
+  <option name="compatibility:test-arg" value="com.android.tradefed.testtype.VtsMultiDeviceTest:logcat-on-failure:false" />
 
   <option name="compatibility:primary-abi-only" value="true" />
   <option name="plan" value="vts" />

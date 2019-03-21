@@ -40,6 +40,7 @@ vts_hal_driver_libs := \
   android.hardware.camera.metadata@3.3-vts.driver \
   android.hardware.camera.provider@2.4-vts.driver \
   android.hardware.cas@1.0-vts.driver \
+  android.hardware.cas@1.1-vts.driver \
   android.hardware.cas.native@1.0-vts.driver \
   android.hardware.configstore@1.0-vts.driver \
   android.hardware.configstore@1.2-vts.driver \
@@ -149,6 +150,7 @@ vts_hal_profiler_libs := \
   android.hardware.camera.metadata@3.3-vts.profiler \
   android.hardware.camera.provider@2.4-vts.profiler \
   android.hardware.cas@1.0-vts.profiler \
+  android.hardware.cas@1.1-vts.profiler \
   android.hardware.cas.native@1.0-vts.profiler \
   android.hardware.configstore@1.0-vts.profiler \
   android.hardware.configstore@1.2-vts.profiler \
@@ -246,6 +248,7 @@ vts_hal_test_bins := \
   VtsHalBroadcastradioV2_0TargetTest \
   VtsHalCameraProviderV2_4TargetTest \
   VtsHalCasV1_0TargetTest \
+  VtsHalCasV1_1TargetTest \
   VtsHalConfigstoreV1_0TargetTest \
   VtsHalConfigstoreV1_2TargetTest \
   VtsHalContexthubV1_0TargetTest \
@@ -264,6 +267,7 @@ vts_hal_test_bins := \
   VtsHalHealthStorageV1_0TargetTest \
   VtsHalHealthV1_0TargetTest \
   VtsHalHealthV2_0TargetTest \
+  VtsHalInputClassifierV1_0TargetTest \
   VtsHalIrV1_0TargetTest \
   VtsHalKeymasterV3_0TargetTest \
   VtsHalKeymasterV4_0TargetTest \
@@ -290,6 +294,8 @@ vts_hal_test_bins := \
   VtsHalRadioV1_0TargetTest \
   VtsHalRadioV1_1TargetTest \
   VtsHalRadioV1_2TargetTest \
+  VtsHalRadioV1_3TargetTest \
+  VtsHalRadioV1_4TargetTest \
   VtsHalRenderscriptV1_0TargetTest \
   VtsHalSapV1_0TargetTest \
   VtsHalSecureElementV1_0TargetTest \

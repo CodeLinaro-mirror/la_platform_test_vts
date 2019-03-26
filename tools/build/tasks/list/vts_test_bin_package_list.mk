@@ -35,9 +35,6 @@ vts_test_bin_packages := \
     simpleperf_cpu_hotplug_test \
     binderThroughputTest \
     hwbinderThroughputTest \
-    bionic-unit-tests \
-    bionic-unit-tests-gcc \
-    bionic-unit-tests-static \
     stressapptest \
     libcutils_test \
     vts_test_binary_qtaguid_module \
@@ -63,6 +60,8 @@ vts_test_bin_packages += \
     dt_early_mount_test \
     kernel_net_tests \
     vts_kernel_tun_test \
+    vts_kernel_toolchain \
+    vts_meminfo_test \
 
 # Binder tests.
 vts_test_bin_packages += \

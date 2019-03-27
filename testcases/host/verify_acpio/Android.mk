@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2016 The Android Open Source Project
+# Copyright (C) 2018 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,9 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
 LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := BionicUnitTestsStatic
+LOCAL_MODULE := VtsFirmwareAcpioVerification
+VTS_CONFIG_SRC_DIR := testcases/host/verify_acpio
 include test/vts/tools/build/Android.host_config.mk

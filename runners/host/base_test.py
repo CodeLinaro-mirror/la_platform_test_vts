@@ -49,7 +49,6 @@ from vts.utils.python.systrace import systrace_utils
 from vts.utils.python.web import feature_utils
 from vts.utils.python.web import web_utils
 
-from acts import signals as acts_signals
 
 # Macro strings for test result reporting
 TEST_CASE_TEMPLATE = "[Test Case] %s %s"
@@ -57,7 +56,7 @@ RESULT_LINE_TEMPLATE = TEST_CASE_TEMPLATE + " %s"
 STR_TEST = "test"
 STR_GENERATE = "generate"
 TIMEOUT_SECS_LOG_UPLOADING = 60
-TIMEOUT_SECS_TEARDOWN_CLASS = 30
+TIMEOUT_SECS_TEARDOWN_CLASS = 120
 _REPORT_MESSAGE_FILE_NAME = "report_proto.msg"
 _BUG_REPORT_FILE_PREFIX = "bugreport_"
 _BUG_REPORT_FILE_EXTENSION = ".zip"
@@ -847,7 +846,7 @@ class BaseTestClass(object):
             return
         try:
             func()
-        except (signals.TestAbortAll, acts_signals.TestAbortAll) as e:
+        except signals.TestAbortAll as e:
             raise signals.TestAbortAll, e, sys.exc_info()[2]
         except Exception as e:
             logging.exception("Exception happened when executing %s for %s.",
@@ -990,22 +989,22 @@ class BaseTestClass(object):
                 finished = True
             finally:
                 self._tearDown(test_name)
-        except (signals.TestFailure, acts_signals.TestFailure, AssertionError) as e:
+        except (signals.TestFailure, AssertionError) as e:
             tr_record.testFail(e)
             self._exec_procedure_func(self._onFail)
             finished = True
-        except (signals.TestSkip, acts_signals.TestSkip) as e:
+        except signals.TestSkip as e:
             # Test skipped.
             tr_record.testSkip(e)
             self._exec_procedure_func(self._onSkip)
             finished = True
-        except (signals.TestAbortClass, acts_signals.TestAbortClass) as e:
+        except signals.TestAbortClass as e:
             # Abort signals, pass along.
             tr_record.testFail(e)
             self._is_final_run = True
             finished = True
             raise signals.TestAbortClass, e, sys.exc_info()[2]
-        except (signals.TestAbortAll, acts_signals.TestAbortAll) as e:
+        except signals.TestAbortAll as e:
             # Abort signals, pass along.
             tr_record.testFail(e)
             self._is_final_run = True
@@ -1013,7 +1012,7 @@ class BaseTestClass(object):
             raise signals.TestAbortAll, e, sys.exc_info()[2]
         except utils.TimeoutError as e:
             logging.exception(e)
-            # Mark current test case as failure and abort remaing  tests.
+            # Mark current test case as failure and abort remaining tests.
             tr_record.testFail(e)
             self._is_final_run = True
             finished = True
@@ -1027,30 +1026,22 @@ class BaseTestClass(object):
             raise
         except AdbError as e:
             logging.error(e)
-            for device in self.android_devices:
-                try:
-                    device.getProp("ro.build.version.sdk")
-                except AdbError:
-                    if device.serial in android_device.list_adb_devices():
-                        device.log.error(
-                            "Device is in adb devices, but is not responding, abort test!")
-                    else:
-                        device.log.error("Device is not in adb devices, abort test!")
-                    # Non-recoverable adb failure. Mark test failure and abort
-                    tr_record.testFail(e)
-                    self._is_final_run = True
-                    finished = True
-                    raise signals.TestAbortAll, e, sys.exc_info()[2]
+            if not self.Heal():
+                # Non-recoverable adb failure. Mark test failure and abort
+                tr_record.testFail(e)
+                self._is_final_run = True
+                finished = True
+                raise signals.TestAbortAll, e, sys.exc_info()[2]
             # error specific to the test case, mark test failure and continue with remaining test
             tr_record.testFail(e)
             self._exec_procedure_func(self._onFail)
             finished = True
-        except (signals.TestPass, acts_signals.TestPass) as e:
+        except signals.TestPass as e:
             # Explicit test pass.
             tr_record.testPass(e)
             self._exec_procedure_func(self._onPass)
             finished = True
-        except (signals.TestSilent, acts_signals.TestSilent) as e:
+        except signals.TestSilent as e:
             # Suppress test reporting.
             is_silenced = True
             self._exec_procedure_func(self._onSilent)
@@ -1178,7 +1169,7 @@ class BaseTestClass(object):
         """
         try:
             return func(*args)
-        except (signals.TestAbortAll, acts_signals.TestAbortAll) as e:
+        except signals.TestAbortAll as e:
             raise signals.TestAbortAll, e, sys.exc_info()[2]
         except:
             logging.exception("Exception happened when executing %s in %s.",
@@ -1267,7 +1258,7 @@ class BaseTestClass(object):
         commands = ['ps aux | grep vts',
                     'cat /proc/meminfo']
         for cmd in commands:
-            results = device.adb.shell(cmd, no_except=True)
+            results = device.adb.shell(cmd, no_except=True, timeout=adb.DEFAULT_ADB_SHORT_TIMEOUT)
             logging.debug('device diagnosis command %s', cmd)
             logging.debug('                 output: %s', results[const.STDOUT])
 
@@ -1294,11 +1285,11 @@ class BaseTestClass(object):
 
             for device in self.android_devices:
                 if device.serial not in available_devices:
-                    logging.warn('device %s become unavailable after tests. recovering...',
-                                 device.serial)
+                    device.log.warn(
+                        "device become unavailable after tests. wait for device come back")
                     _timeout = timeout - time.time() + start
                     if _timeout < 0 or not device.waitForBootCompletion(timeout=_timeout):
-                        logging.error('failed to restore device %s', device.serial)
+                        device.log.error('failed to restore device %s')
                         return False
                     device.rootAdb()
                     device.stopServices()
@@ -1407,11 +1398,11 @@ class BaseTestClass(object):
                 self.results.skipClass(
                     self.test_module_name,
                     "All test cases skipped; unable to find any test case.")
-        except (signals.TestAbortClass, acts_signals.TestAbortClass) as e:
+        except signals.TestAbortClass as e:
             logging.error("Received TestAbortClass signal")
             class_error = e
             self._is_final_run = True
-        except (signals.TestAbortAll, acts_signals.TestAbortAll) as e:
+        except signals.TestAbortAll as e:
             logging.info("Received TestAbortAll signal")
             class_error = e
             self._is_final_run = True
@@ -1508,6 +1499,7 @@ class BaseTestClass(object):
             return
 
         for device in self.android_devices:
+            if device.fatal_error: continue
             file_name = (_BUG_REPORT_FILE_PREFIX
                          + prefix
                          + '_%s' % device.serial
@@ -1593,7 +1585,7 @@ class BaseTestClass(object):
             return
 
         for device in self.android_devices:
-            if not device.isAdbLogcatOn:
+            if (not device.isAdbLogcatOn) or device.fatal_error:
                 continue
             for buffer in LOGCAT_BUFFERS:
                 file_name = (_LOGCAT_FILE_PREFIX

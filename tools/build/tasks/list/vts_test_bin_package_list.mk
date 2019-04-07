@@ -26,6 +26,8 @@ vts_test_bin_packages := \
     libhwbinder_benchmark \
     libhwbinder_latency \
     libbinder_benchmark \
+    libdm_test \
+    liblp_test \
     vts_codelab_target_binary \
     vts_selftest_flaky_test \
     vts_selftest_zero_testcase_binary_test \
@@ -103,3 +105,5 @@ vts_test_bin_packages += \
 vts_test_bin_packages += \
     vts_compatibilityMatrix_validate_test \
     vts_halManifest_validate_test \
+    vts_mediaCodecs_validate_test \
+    vts_mediaProfiles_validate_test \

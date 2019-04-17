@@ -26,6 +26,8 @@ vts_test_bin_packages := \
     libhwbinder_benchmark \
     libhwbinder_latency \
     libbinder_benchmark \
+    libdm_test \
+    liblp_test \
     vts_codelab_target_binary \
     vts_selftest_flaky_test \
     vts_selftest_zero_testcase_binary_test \
@@ -59,6 +61,7 @@ vts_test_bin_packages += \
 vts_test_bin_packages += \
     dt_early_mount_test \
     kernel_net_tests \
+    vts_kernel_loopconfig_test \
     vts_kernel_tun_test \
     vts_kernel_toolchain \
     vts_meminfo_test \
@@ -93,3 +96,14 @@ vts_test_bin_packages += \
 # libpower tests
 vts_test_bin_packages += \
     libpower_test
+
+# libprocessgroup JSON schema tests
+vts_test_bin_packages += \
+    vts_processgroup_validate_test \
+
+# configfile as API tests
+vts_test_bin_packages += \
+    vts_compatibilityMatrix_validate_test \
+    vts_halManifest_validate_test \
+    vts_mediaCodecs_validate_test \
+    vts_mediaProfiles_validate_test \

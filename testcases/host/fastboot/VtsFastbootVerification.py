@@ -22,6 +22,7 @@ import subprocess
 from vts.runners.host import asserts
 from vts.runners.host import base_test
 from vts.runners.host import test_runner
+from vts.utils.python.android import api
 
 FASTBOOT_VAR_SUPER_PARTITION_NAME = "super-partition-name"
 
@@ -35,6 +36,12 @@ class VtsFastbootVerificationTest(base_test.BaseTestClass):
             gtest_bin_path: Path to the fuzzy_fastboot gtest binary
         """
         self.dut = self.android_devices[0]
+        # precondition_api_level only skips test cases, issuing the
+        # 'adb reboot fastboot' could cause undefined behavior in a
+        # pre-Q device and hence we need to skip the setup for those
+        # devices.
+        if self.dut.getLaunchApiLevel() <= api.PLATFORM_API_LEVEL_P:
+          return
         self.shell = self.dut.shell
         self.gtest_bin_path = os.path.join("host", "nativetest64", "fuzzy_fastboot",
                                            "fuzzy_fastboot")
@@ -81,6 +88,15 @@ class VtsFastbootVerificationTest(base_test.BaseTestClass):
         ]
         retcode = subprocess.call(fastboot_gtest_cmd_reboot_test)
         asserts.assertTrue(retcode == 0, "Error in fastbootd reboot test")
+
+    def testLogicalPartitionFlashing(self):
+        """Runs fuzzy_fastboot to verify the commands to reboot into fastbootd and bootloader."""
+        fastboot_gtest_cmd_lp_flashing = [
+            "%s" % self.gtest_bin_path, "--serial=%s" % self.dut.serial,
+            "--gtest_filter=LogicalPartitionCompliance.CreateResizeDeleteLP"
+        ]
+        retcode = subprocess.call(fastboot_gtest_cmd_lp_flashing)
+        asserts.assertTrue(retcode == 0, "Error in flashing logical partitions")
 
     def tearDownClass(self):
         """Reboot to Android."""

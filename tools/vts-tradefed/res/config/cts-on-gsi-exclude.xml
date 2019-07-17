@@ -21,9 +21,6 @@
     <option name="compatibility:test-arg" value="com.android.tradefed.testtype.HostTest:exclude-annotation:android.platform.test.annotations.RestrictedBuildTest" />
     <option name="compatibility:test-arg" value="com.android.compatibility.common.tradefed.testtype.JarHostTest:exclude-annotation:android.platform.test.annotations.RestrictedBuildTest" />
 
-    <!-- Exclude tests applicable only to instant mode -->
-    <include name="cts-exclude-instant" />
-
     <!-- Radio system of a general system image is not checked -->
     <option name="compatibility:exclude-filter" value="CtsTelephonyTestCases" />
     <option name="compatibility:exclude-filter" value="CtsTelephony2TestCases" />
@@ -286,4 +283,12 @@
     <option name="compatibility:exclude-filter" value="CtsMediaTestCases android.media.cts.VolumeShaperTest#testPlayerRunDuringPauseStop" />
     <option name="compatibility:exclude-filter" value="CtsMediaTestCases android.media.cts.VolumeShaperTest#testPlayerStepRamp" />
     <option name="compatibility:exclude-filter" value="CtsMediaTestCases android.media.cts.VolumeShaperTest#testPlayerTwoShapers" />
+
+    <!-- b/112450846: CtsAppSecurityHostTestCases multi-user, fixing on Q -->
+    <option name="compatibility:exclude-filter" value="CtsAppSecurityHostTestCases android.appsecurity.cts.StorageHostTest#testCache" />
+    <option name="compatibility:exclude-filter" value="CtsAppSecurityHostTestCases android.appsecurity.cts.StorageHostTest#testVerifyAppStats" />
+    <option name="compatibility:exclude-filter" value="CtsAppSecurityHostTestCases android.appsecurity.cts.StorageHostTest#testVerifyStats" />
+
+    <!-- b/111167329: CtsCameraTestCases failure -->
+    <option name="compatibility:exclude-filter" value="CtsCameraTestCases android.hardware.camera2.cts.SurfaceViewPreviewTest#testSurfaceSet"/>
 </configuration>

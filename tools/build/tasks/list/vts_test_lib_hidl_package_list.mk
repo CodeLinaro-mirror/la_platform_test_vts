@@ -23,7 +23,9 @@ vts_hal_driver_libs := \
   android.hardware.audio.effect@4.0-vts.driver \
   android.hardware.authsecret@1.0-vts.driver \
   android.hardware.automotive.audiocontrol@1.0-vts.driver \
+  android.hardware.automotive.can@1.0-vts.driver \
   android.hardware.automotive.evs@1.0-vts.driver \
+  android.hardware.automotive.evs@1.1-vts.driver \
   android.hardware.automotive.vehicle@2.0-vts.driver \
   android.hardware.biometrics.face@1.0-vts.driver \
   android.hardware.biometrics.fingerprint@2.1-vts.driver \
@@ -111,6 +113,7 @@ vts_hal_driver_libs := \
   android.hardware.thermal@2.0-vts.driver \
   android.hardware.tv.cec@1.0-vts.driver \
   android.hardware.tv.input@1.0-vts.driver \
+  android.hardware.tv.tuner@1.0-vts.driver \
   android.hardware.usb@1.0-vts.driver \
   android.hardware.usb@1.1-vts.driver \
   android.hardware.usb.gadget@1.0-vts.driver \
@@ -128,6 +131,7 @@ vts_hal_driver_libs := \
   android.hardware.wifi.supplicant@1.0-vts.driver \
   android.hardware.wifi.supplicant@1.1-vts.driver \
   android.hardware.wifi.supplicant@1.2-vts.driver \
+  android.hardware.wifi.supplicant@1.3-vts.driver \
   android.hidl.memory.block@1.0-vts.driver \
   android.hidl.memory.token@1.0-vts.driver \
   android.hidl.safe_union@1.0-vts.driver \
@@ -144,7 +148,9 @@ vts_hal_profiler_libs := \
   android.hardware.audio.effect@4.0-vts.profiler \
   android.hardware.authsecret@1.0-vts.profiler \
   android.hardware.automotive.audiocontrol@1.0-vts.profiler \
+  android.hardware.automotive.can@1.0-vts.profiler \
   android.hardware.automotive.evs@1.0-vts.profiler \
+  android.hardware.automotive.evs@1.1-vts.profiler \
   android.hardware.automotive.vehicle@2.0-vts.profiler \
   android.hardware.biometrics.face@1.0-vts.profiler \
   android.hardware.biometrics.fingerprint@2.1-vts.profiler \
@@ -225,6 +231,7 @@ vts_hal_profiler_libs := \
   android.hardware.thermal@2.0-vts.profiler \
   android.hardware.tv.cec@1.0-vts.profiler \
   android.hardware.tv.input@1.0-vts.profiler \
+  android.hardware.tv.tuner@1.0-vts.profiler \
   android.hardware.usb@1.0-vts.profiler \
   android.hardware.usb@1.1-vts.profiler \
   android.hardware.usb.gadget@1.0-vts.profiler \
@@ -242,6 +249,7 @@ vts_hal_profiler_libs := \
   android.hardware.wifi.supplicant@1.0-vts.profiler \
   android.hardware.wifi.supplicant@1.1-vts.profiler \
   android.hardware.wifi.supplicant@1.2-vts.profiler \
+  android.hardware.wifi.supplicant@1.3-vts.profiler \
   android.hidl.memory.block@1.0-vts.profiler \
   android.hidl.memory.token@1.0-vts.profiler \
   android.system.net.netd@1.0-vts.profiler \
@@ -265,15 +273,18 @@ vts_hal_test_bins := \
   VtsHalBroadcastradioV2_0TargetTest \
   VtsHalCameraProviderV2_4TargetTest \
   VtsHalCameraServiceV2_0TargetTest \
+  VtsHalCanBusV1_0TargetTest \
+  VtsHalCanBusVirtualV1_0TargetTest \
+  VtsHalCanControllerV1_0TargetTest \
   VtsHalCasV1_0TargetTest \
   VtsHalCasV1_1TargetTest \
   VtsHalConfigstoreV1_0TargetTest \
-  VtsHalConfigstoreV1_2TargetTest \
   VtsHalContexthubV1_0TargetTest \
   VtsHalDrmV1_0TargetTest \
   VtsHalDrmV1_1TargetTest \
   VtsHalDumpstateV1_0TargetTest \
   VtsHalEvsV1_0TargetTest \
+  VtsHalEvsV1_1TargetTest \
   VtsHalGatekeeperV1_0TargetTest \
   VtsHalGnssV1_0TargetTest \
   VtsHalGnssV1_1TargetTest \
@@ -342,6 +353,7 @@ vts_hal_test_bins := \
   thermal_hidl_stress_test \
   VtsHalBufferHubV1_0TargetTest \
   VtsHalTvInputV1_0TargetTest \
+  VtsHalTvTunerV1_0TargetTest \
   VtsHalUsbV1_0TargetTest \
   VtsHalUsbV1_1TargetTest \
   VtsHalVibratorV1_0TargetTest \

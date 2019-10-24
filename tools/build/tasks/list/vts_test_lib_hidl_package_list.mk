@@ -21,6 +21,12 @@ vts_hal_driver_libs := \
   android.hardware.audio@4.0-vts.driver \
   android.hardware.audio.common@4.0-vts.driver \
   android.hardware.audio.effect@4.0-vts.driver \
+  android.hardware.audio@5.0-vts.driver \
+  android.hardware.audio.common@5.0-vts.driver \
+  android.hardware.audio.effect@5.0-vts.driver \
+  android.hardware.audio@6.0-vts.driver \
+  android.hardware.audio.common@6.0-vts.driver \
+  android.hardware.audio.effect@6.0-vts.driver \
   android.hardware.authsecret@1.0-vts.driver \
   android.hardware.automotive.audiocontrol@1.0-vts.driver \
   android.hardware.automotive.can@1.0-vts.driver \
@@ -121,11 +127,13 @@ vts_hal_driver_libs := \
   android.hardware.vibrator@1.1-vts.driver \
   android.hardware.vibrator@1.2-vts.driver \
   android.hardware.vibrator@1.3-vts.driver \
+  android.hardware.vibrator@1.4-vts.driver \
   android.hardware.vr@1.0-vts.driver \
   android.hardware.weaver@1.0-vts.driver \
   android.hardware.wifi@1.0-vts.driver \
   android.hardware.wifi@1.1-vts.driver \
   android.hardware.wifi@1.2-vts.driver \
+  android.hardware.wifi@1.4-vts.driver \
   android.hardware.wifi.hostapd@1.0-vts.driver \
   android.hardware.wifi.offload@1.0-vts.driver \
   android.hardware.wifi.supplicant@1.0-vts.driver \
@@ -146,6 +154,12 @@ vts_hal_profiler_libs := \
   android.hardware.audio@4.0-vts.profiler \
   android.hardware.audio.common@4.0-vts.profiler \
   android.hardware.audio.effect@4.0-vts.profiler \
+  android.hardware.audio@5.0-vts.profiler \
+  android.hardware.audio.common@5.0-vts.profiler \
+  android.hardware.audio.effect@5.0-vts.profiler \
+  android.hardware.audio@6.0-vts.profiler \
+  android.hardware.audio.common@6.0-vts.profiler \
+  android.hardware.audio.effect@6.0-vts.profiler \
   android.hardware.authsecret@1.0-vts.profiler \
   android.hardware.automotive.audiocontrol@1.0-vts.profiler \
   android.hardware.automotive.can@1.0-vts.profiler \
@@ -188,6 +202,7 @@ vts_hal_profiler_libs := \
   android.hardware.graphics.composer@2.2-vts.profiler \
   android.hardware.graphics.mapper@2.0-vts.profiler \
   android.hardware.graphics.mapper@2.1-vts.profiler \
+  android.hardware.graphics.mapper@3.0-vts.profiler \
   android.hardware.health.storage@1.0-vts.profiler \
   android.hardware.health@1.0-vts.profiler \
   android.hardware.health@2.0-vts.profiler \
@@ -239,11 +254,13 @@ vts_hal_profiler_libs := \
   android.hardware.vibrator@1.1-vts.profiler \
   android.hardware.vibrator@1.2-vts.profiler \
   android.hardware.vibrator@1.3-vts.profiler \
+  android.hardware.vibrator@1.4-vts.profiler \
   android.hardware.vr@1.0-vts.profiler \
   android.hardware.weaver@1.0-vts.profiler \
   android.hardware.wifi@1.0-vts.profiler \
   android.hardware.wifi@1.1-vts.profiler \
   android.hardware.wifi@1.2-vts.profiler \
+  android.hardware.wifi@1.4-vts.profiler \
   android.hardware.wifi.hostapd@1.0-vts.profiler \
   android.hardware.wifi.offload@1.0-vts.profiler \
   android.hardware.wifi.supplicant@1.0-vts.profiler \
@@ -260,9 +277,11 @@ vts_hal_test_bins := \
   VtsHalAudioV2_0TargetTest \
   VtsHalAudioV4_0TargetTest \
   VtsHalAudioV5_0TargetTest \
+  VtsHalAudioV6_0TargetTest \
   VtsHalAudioEffectV2_0TargetTest \
   VtsHalAudioEffectV4_0TargetTest \
   VtsHalAudioEffectV5_0TargetTest \
+  VtsHalAudioEffectV6_0TargetTest \
   VtsHalAuthSecretV1_0TargetTest \
   VtsHalBiometricsFaceV1_0TargetTest \
   VtsHalBiometricsFingerprintV2_1TargetTest \
@@ -294,6 +313,7 @@ vts_hal_test_bins := \
   VtsHalGraphicsComposerV2_3TargetTest \
   VtsHalGraphicsMapperV2_0TargetTest \
   VtsHalGraphicsMapperV2_1TargetTest \
+  VtsHalGraphicsMapperV3_0TargetTest \
   VtsHalHealthStorageV1_0TargetTest \
   VtsHalHealthV1_0TargetTest \
   VtsHalHealthV2_0TargetTest \
@@ -360,6 +380,7 @@ vts_hal_test_bins := \
   VtsHalVibratorV1_1TargetTest \
   VtsHalVibratorV1_2TargetTest \
   VtsHalVibratorV1_3TargetTest \
+  VtsHalVibratorV1_4TargetTest \
   VtsHalVrV1_0TargetTest \
   VtsHalWeaverV1_0TargetTest \
   VtsHalWifiHostapdV1_0TargetTest \
@@ -369,6 +390,8 @@ vts_hal_test_bins := \
   VtsHalWifiV1_1TargetTest \
   VtsHalWifiV1_2TargetTest \
   VtsHalWifiV1_3TargetTest \
+  VtsHalWifiApV1_0TargetTest \
+  VtsHalWifiApV1_4TargetTest \
   VtsHalWifiNanV1_0TargetTest \
   VtsHalWifiNanV1_2TargetTest \
   VtsHalWifiOffloadV1_0TargetTest \
@@ -390,7 +413,5 @@ vts_test_lib_hidl_packages := \
   $(vts_hal_driver_libs) \
   $(vts_hal_profiler_libs) \
   $(vts_hal_test_bins) \
-  libhwbinder \
   libhidlbase \
-  libhidltransport \
   libvtswidevine_prebuilt \

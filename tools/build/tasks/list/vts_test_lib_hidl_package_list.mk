@@ -74,6 +74,7 @@ vts_hal_driver_libs := \
   android.hardware.graphics.mapper@2.0-vts.driver \
   android.hardware.graphics.mapper@2.1-vts.driver \
   android.hardware.graphics.mapper@3.0-vts.driver \
+  android.hardware.graphics.mapper@4.0-vts.driver \
   android.hardware.health.storage@1.0-vts.driver \
   android.hardware.health@1.0-vts.driver \
   android.hardware.health@2.0-vts.driver \
@@ -128,7 +129,6 @@ vts_hal_driver_libs := \
   android.hardware.vibrator@1.1-vts.driver \
   android.hardware.vibrator@1.2-vts.driver \
   android.hardware.vibrator@1.3-vts.driver \
-  android.hardware.vibrator@1.4-vts.driver \
   android.hardware.vr@1.0-vts.driver \
   android.hardware.weaver@1.0-vts.driver \
   android.hardware.wifi@1.0-vts.driver \
@@ -205,6 +205,7 @@ vts_hal_profiler_libs := \
   android.hardware.graphics.mapper@2.0-vts.profiler \
   android.hardware.graphics.mapper@2.1-vts.profiler \
   android.hardware.graphics.mapper@3.0-vts.profiler \
+  android.hardware.graphics.mapper@4.0-vts.profiler \
   android.hardware.health.storage@1.0-vts.profiler \
   android.hardware.health@1.0-vts.profiler \
   android.hardware.health@2.0-vts.profiler \
@@ -317,6 +318,7 @@ vts_hal_test_bins := \
   VtsHalGraphicsMapperV2_0TargetTest \
   VtsHalGraphicsMapperV2_1TargetTest \
   VtsHalGraphicsMapperV3_0TargetTest \
+  VtsHalGraphicsMapperV4_0TargetTest \
   VtsHalHealthStorageV1_0TargetTest \
   VtsHalHealthV1_0TargetTest \
   VtsHalHealthV2_0TargetTest \
@@ -342,6 +344,8 @@ vts_hal_test_bins := \
   VtsHalNeuralnetworksV1_1TargetTest \
   VtsHalNeuralnetworksV1_2TargetTest \
   VtsHalNeuralnetworksV1_2Benchmark \
+  VtsHalNeuralnetworksV1_3TargetTest \
+  VtsHalNeuralnetworksV1_3Benchmark \
   VtsHalNfcV1_0TargetTest \
   VtsHalNfcV1_1TargetTest \
   VtsHalNfcV1_2TargetTest \

@@ -1,4 +1,4 @@
-// Copyright (C) 2016 The Android Open Source Project
+// Copyright (C) 2020 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,20 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-tradefed_binary_host {
-    name: "vts10-tradefed",
-    wrapper: "etc/vts10-tradefed",
-    short_name: "VTS10",
-    full_name: "Vendor Test Suite V10",
-    version: "10_r1",
-    static_libs: [
-        "libvts_protos_host",
-        "gson-prebuilt-jar",
-        "google-api-java-client-min-repackaged",
-        "cts-tradefed-harness",
-        "vts10-tradefed-harness",
-    ],
-    libs: ["vts-core-tradefed-harness"],
-    manifest: "MANIFEST.mf",
-    java_resource_dirs: ["res"],
+filegroup {
+    name: "libvtswidevine-arm-prebuilts",
+    srcs: ["libvtswidevine/arm/*.so"],
+}
+
+filegroup {
+    name: "libvtswidevine-arm64-prebuilts",
+    srcs: ["libvtswidevine/arm64/*.so"],
+}
+
+filegroup {
+    name: "libvtswidevine-x86-prebuilts",
+    srcs: ["libvtswidevine/x86/*.so"],
+}
+
+filegroup {
+    name: "libvtswidevine-x86_64-prebuilts",
+    srcs: ["libvtswidevine/x86_64/*.so"],
 }

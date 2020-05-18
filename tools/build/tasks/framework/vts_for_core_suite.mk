@@ -17,8 +17,8 @@
 -include external/linux-kselftest/android/kselftest_test_list.mk
 -include external/ltp/android/ltp_package_list.mk
 
-VTS_CORE_OUT_ROOT := $(HOST_OUT)/vts-core
-VTS_CORE_TESTCASES_OUT := $(VTS_CORE_OUT_ROOT)/android-vts-core/testcases
+VTS_CORE_OUT_ROOT := $(HOST_OUT)/vts
+VTS_CORE_TESTCASES_OUT := $(VTS_CORE_OUT_ROOT)/android-vts/testcases
 
 build_list_dir := test/vts/tools/build/tasks/list
 build_utils_dir := test/vts/tools/build/utils
@@ -36,9 +36,9 @@ vts_target_native_modules := \
 vts_target_native_copy_pairs := \
   $(call target-native-copy-pairs,$(vts_target_native_modules),$(VTS_CORE_TESTCASES_OUT))
 
-# Package vts-tradefed jars
-test_suite_tools += $(HOST_OUT_JAVA_LIBRARIES)/vts-tradefed.jar \
-    $(HOST_OUT_JAVA_LIBRARIES)/vts-tradefed-tests.jar
+# Package vts10-tradefed jars
+test_suite_tools += $(HOST_OUT_JAVA_LIBRARIES)/vts10-tradefed.jar \
+    $(HOST_OUT_JAVA_LIBRARIES)/vts10-tradefed-tests.jar
 
 # Packaging rule for host-side Python logic, configs, and data files
 host_framework_files := \

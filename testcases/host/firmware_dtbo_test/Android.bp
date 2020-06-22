@@ -1,4 +1,4 @@
-// Copyright (C) 2019 The Android Open Source Project
+// Copyright (C) 2020 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,28 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-java_library_host {
-    name: "vts-core-tradefed-harness",
-    srcs: ["src/**/*.java"],
-    java_resource_dirs: ["res"],
+java_test_host {
+    name: "FirmwareDtboVerification",
     libs: [
-        "tradefed",
-        "compatibility-host-util",
-    ],
-    static_libs: [
         "compatibility-tradefed",
-    ],
-}
-
-tradefed_binary_host {
-    name: "vts-tradefed",
-    wrapper: "etc/vts-tradefed",
-    short_name: "VTS",
-    full_name: "Vendor Test Suite",
-    version: "11_r1",
-    static_libs: [
-        "cts-tradefed-harness",
+        "tradefed",
+        "tradefed-common-util",
         "vts-core-tradefed-harness",
     ],
-    required: ["compatibility-host-util"],
+    srcs: ["src/**/*.java"],
+    test_suites: [
+        "general-tests",
+        "vts",
+    ],
+    // (b/153848038), Change to ":mkdtboimg.py" after resolving.
+    data: [
+        ":mkdtboimg",
+    ],
+    target_required: ["ufdt_verify_overlay"],
+    required: ["mkdtboimg.py"],
 }

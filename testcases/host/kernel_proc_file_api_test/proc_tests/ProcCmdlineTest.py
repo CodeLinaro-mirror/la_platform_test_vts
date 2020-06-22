@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2016 The Android Open Source Project
+# Copyright (C) 2020 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,16 +12,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#
 
-# APKs used by VTS10 framework.
-vts_apk_packages := \
-  VtsAgentApp \
-  CtsVerifier \
-  sl4a \
+from proc_tests import KernelProcFileTestBase
 
-# Other tests APKs included as part of VTS10.
-vts_apk_packages += \
-  DeviceHealthTests
 
-vts_prebuilt_apk_packages := \
+class ProcCmdlineTest(KernelProcFileTestBase.KernelProcFileTestBase):
+    '''/proc/cmdline contains arguments passed to the kernel.'''
 
+    def parse_contents(self, contents):
+        if len(contents) == 0 or contents[-1] != '\n':
+            raise SyntaxError("missing newline")
+        return contents[:-1].split(' ')
+
+    def get_path(self):
+        return "/proc/cmdline"

@@ -76,8 +76,6 @@ public class Helper {
      */
     private final BufferedWriter mMetricsLog;
 
-    private final TestInformation mTestInformation;
-
     // These are timeout values used to wait for certain types of actions to complete.
     public static final int WAIT_INSTALL_APK_MILLIS = 120 * 1000;
     public static final int WAIT_SET_GLOBAL_SETTING_MILLIS = 5 * 1000;
@@ -103,8 +101,6 @@ public class Helper {
         mMethodName = methodName;
         mMetricsTextLogFile = temporaryFolder.newFile(String.format("metrics_%s.txt", mMethodName));
         mMetricsLog = new BufferedWriter(new FileWriter(mMetricsTextLogFile));
-
-        mTestInformation = testInformation;
 
         preTestSetup();
         assertDeviceStateOk();
@@ -337,37 +333,5 @@ public class Helper {
     /** construct the file full path from initialPath and pathSegments */
     public static File path(final File initialPath, final String... pathSegments) {
         return FileUtil.getFileForPath(initialPath, pathSegments);
-    }
-
-    /** Retries executing |runnable.run()| |NUM_RETRIES| times. On retry, reboots the device. */
-    public void runWithRetry(final RunnableWithThrowable runnable) throws Throwable {
-        // noinspection ConstantConditions
-        for (int i = 1; i <= NUM_RETRIES; ++i) {
-            try {
-                runnable.run();
-                return;
-            } catch (final Throwable throwable) {
-                // Log it.
-                LogUtil.CLog.e(throwable);
-
-                if (i >= NUM_RETRIES) {
-                    // Give up.
-                    LogUtil.CLog.e("Giving up after %d retries.", NUM_RETRIES);
-                    throw throwable;
-                } else {
-                    // Reboot the device.
-                    mTestInformation.getDevice().reboot();
-
-                    preTestSetup();
-
-                    LogUtil.CLog.i("Waiting for %s seconds after reboot.",
-                            PAUSE_AFTER_REBOOT_MILLIS / 1000);
-                    RunUtil.getDefault().sleep(PAUSE_AFTER_REBOOT_MILLIS);
-
-                    LogUtil.CLog.w("Retry %d.", i);
-                }
-            }
-        }
-        fail("Unreachable");
     }
 }

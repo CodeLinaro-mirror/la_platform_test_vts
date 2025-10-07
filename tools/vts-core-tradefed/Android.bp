@@ -35,10 +35,18 @@ tradefed_binary_host {
     wrapper: "etc/vts-tradefed",
     short_name: "VTS",
     full_name: "Vendor Test Suite",
-    version: "15_r3",
+    version: "16.1_r1",
     static_libs: [
         "vts-core-tradefed-harness",
         "cts-tradefed-harness",
     ],
     required: ["compatibility-host-util"],
+}
+
+compatibility_test_suite_package {
+    name: "vts",
+    tradefed: "vts-tradefed",
+    readme: "README",
+    build_test_list: true,
+    build_metadata: true,
 }

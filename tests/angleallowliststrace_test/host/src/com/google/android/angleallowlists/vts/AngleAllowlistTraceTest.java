@@ -530,6 +530,14 @@ public class AngleAllowlistTraceTest extends BaseHostJUnit4Test {
         return false;
     }
 
+    private boolean isVendorAPILevelMeetingA16Requirement(ITestDevice device) throws Exception {
+        if (mBypassVendorApiRequirement) {
+            return true;
+        }
+        final int vendorApiLevel = PropertyUtil.getVsrApiLevel(device);
+        return vendorApiLevel >= 202504;
+    }
+
     private void verifyTraceList(List<String> traceNames) {
         Set<String> traceNamesSet = new HashSet<>();
         for (String traceName : traceNames) {
@@ -557,9 +565,7 @@ public class AngleAllowlistTraceTest extends BaseHostJUnit4Test {
         Assume.assumeFalse(isLowRamDevice(getDevice()));
         Assume.assumeTrue(FeatureUtil.isHandheld(getDevice()));
         Assume.assumeTrue(isVulkan11Supported(getDevice()));
-        final int vendorApiLevel = PropertyUtil.getVsrApiLevel(getDevice());
-        Assume.assumeTrue("Vendor API level must be 202504, but got " + vendorApiLevel,
-                mBypassVendorApiRequirement || vendorApiLevel == 202504);
+        Assume.assumeTrue(isVendorAPILevelMeetingA16Requirement(getDevice()));
 
         // Query current_user
         final File cmdStdOutFile = new File(mTemporaryFolder.getRoot(), "cmdStdOut.txt");
@@ -589,7 +595,7 @@ public class AngleAllowlistTraceTest extends BaseHostJUnit4Test {
         AngleCommon.clearSettings(getDevice());
     }
 
-    @VsrTest(requirements = {"GMS-VSR-3.2.9-003"})
+    @VsrTest(requirements = {"VSR-5.1"})
     @Test
     public void testAngleTraces() throws Throwable {
         // Firstly check ANGLE is available in System Partition

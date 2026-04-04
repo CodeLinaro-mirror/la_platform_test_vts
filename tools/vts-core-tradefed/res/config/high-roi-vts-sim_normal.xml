@@ -15,8 +15,6 @@
 -->
 <configuration description="Run high ROI VTS sim_normal tests.">
     <include name="vts"/>
-    <!-- VtsHalRadioTargetTest -->
-    <option name="compatibility:include-filter" value="VtsHalRadioTargetTest PerInstance/RadioNetworkTest#getDataRegistrationState/0_android_hardware_radio_network_IRadioNetwork_slot1"/>
-    <option name="compatibility:include-filter" value="VtsHalRadioTargetTest PerInstance/RadioNetworkTest#setSatelliteNetworkInfo/0_android_hardware_radio_network_IRadioNetwork_slot1"/>
-    <option name="compatibility:include-filter" value="VtsHalRadioTargetTest PerInstance/RadioSimTest#changeIccPin2ForApp/0_android_hardware_radio_sim_IRadioSim_slot1"/>
+    <!-- CtsSampleHostTestCases -->
+    <option name="compatibility:include-filter" value="CtsSampleHostTestCases android.sample.cts.SampleHostDeviceInfo#testCollectDeviceInfo"/>
 </configuration>

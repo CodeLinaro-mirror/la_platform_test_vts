@@ -15,6 +15,10 @@
  */
 package com.android.gpu.vts;
 
+import static com.android.gpu.vts.Util.isHandheld;
+import static com.android.gpu.vts.Util.isPC;
+import static com.android.gpu.vts.Util.mustChipsetMeetGrfRequirement;
+import static com.android.gpu.vts.Util.mustNotBeEssentialTierChipset;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -44,9 +48,10 @@ public class VulkanTest extends BaseHostJUnit4Test {
     private static final int VK_PHYSICAL_DEVICE_TYPE_CPU = 4;
     private static final int VULKAN_1_1_API_VERSION = 0x401000;
     private static final int VULKAN_1_3_API_VERSION = 0x403000;
+    private static final int VULKAN_1_4_API_VERSION = 0x404000;
 
-    // Feature version corresponding to dEQP level for 2025-03-01.
-    public static final int DEQP_LEVEL_FOR_VENDOR_26Q2 = 0x7E90301;
+    // Feature version corresponding to dEQP level for 2026-03-01.
+    public static final int DEQP_LEVEL_FOR_VENDOR_26Q2 = 0x07EA0301;
 
     // Feature version corresponding to dEQP level for 2025-03-01.
     public static final int DEQP_LEVEL_FOR_VENDOR_25Q2 = 0x7E90301;
@@ -78,6 +83,8 @@ public class VulkanTest extends BaseHostJUnit4Test {
     // the string to parse to confirm that Skia is using vulkan
     private static final String SKIA_PIPELINE = "Pipeline=Skia";
     private static final String SKIA_VULKAN_PIPELINE = "Pipeline=Skia (Vulkan)";
+    private static final String SKIA_GRAPHITE_VULKAN = "RE Vulkan (Graphite)";
+    private static final String SKIA_GANESH_VULKAN = "RE Vulkan (Ganesh)";
 
     private JSONObject[] mVulkanDevices;
     private JSONObject mVulkanProfiles;
@@ -208,8 +215,7 @@ public class VulkanTest extends BaseHostJUnit4Test {
     @VsrTest(requirements = {"VSR-3.2.2-001", "VSR-3.2.2-002", "VSR-3.2.2-003", "VSR-3.2.2-004",
                      "VSR-3.2.2-005", "VSR-3.2.2-006"})
     @Test
-    public void
-    checkVulkanDeqpLevelIsHighEnough() throws Exception {
+    public void checkVulkanDeqpLevelIsHighEnough() throws Exception {
         final int apiLevel = Util.getVendorApiLevelOrFirstProductApiLevel(getDevice());
 
         assumeTrue("Test does not apply for API level lower than R", apiLevel >= Build.RVC);
@@ -299,31 +305,13 @@ public class VulkanTest extends BaseHostJUnit4Test {
         }
     }
 
-    private boolean mustChipsetMeetA15Requirement() throws Exception {
-        final long boardFirstApiLevel = getDevice().getIntProperty("ro.board.first_api_level", 0);
-        final long boardApiLevel = getDevice().getIntProperty("ro.board.api_level", 0);
-
-        return boardApiLevel >= Build.VENDOR_24Q2 ||
-            boardFirstApiLevel >= Build.VENDOR_24Q2;
-    }
-
-    private boolean mustChipsetMeetA16Requirement() throws Exception {
-        // All SoCs starting or restarting GRF with A16, or not in GRF
-        final long boardFirstApiLevel = getDevice().getIntProperty("ro.board.first_api_level", 0);
-        final long boardApiLevel = getDevice().getIntProperty("ro.board.api_level", 0);
-
-        return boardApiLevel >= Build.VENDOR_25Q2 ||
-            boardFirstApiLevel >= Build.VENDOR_25Q2;
-    }
-
     /**
      * All SoCs released with V must support Skia Vulkan with HWUI
      */
     @VsrTest(requirements = {"VSR-3.2.1-009"})
     @Test
     public void checkSkiaVulkanSupport() throws Exception {
-
-        assumeTrue(mustChipsetMeetA15Requirement());
+        assumeTrue(mustChipsetMeetGrfRequirement(getDevice(), Build.VENDOR_24Q2));
 
         final String gfxinfo = getDevice().executeShellCommand("dumpsys gfxinfo");
         assertNotNull(gfxinfo);
@@ -357,7 +345,7 @@ public class VulkanTest extends BaseHostJUnit4Test {
     @VsrTest(requirements = {"VSR-3.2.1-008"})
     @Test
     public void checkAndroidBaselineProfile2022Support() throws Exception {
-        assumeTrue(mustChipsetMeetA15Requirement());
+        assumeTrue(mustChipsetMeetGrfRequirement(getDevice(), Build.VENDOR_24Q2));
         assumeFalse("Exclude new graphics requirements for TV", FeatureUtil.isTV(getDevice()));
 
         boolean hasOnlyCpuDevice = true;
@@ -382,7 +370,7 @@ public class VulkanTest extends BaseHostJUnit4Test {
     @VsrTest(requirements = {"VSR-3.2.1-008"})
     @Test
     public void checkVpAndroid15MinimumsSupport() throws Exception {
-        assumeTrue(mustChipsetMeetA15Requirement());
+        assumeTrue(mustChipsetMeetGrfRequirement(getDevice(), Build.VENDOR_24Q2));
         assumeFalse("Exclude new graphics requirements for TV", FeatureUtil.isTV(getDevice()));
         assumeFalse(
                 "Exclude new graphics requirements for Watch", FeatureUtil.isWatch(getDevice()));
@@ -409,7 +397,7 @@ public class VulkanTest extends BaseHostJUnit4Test {
     @VsrTest(requirements = {"VSR-3.2.1-009"})
     @Test
     public void checkVpAndroid16MinimumsSupport() throws Exception {
-        assumeTrue(mustChipsetMeetA16Requirement());
+        assumeTrue(mustChipsetMeetGrfRequirement(getDevice(), Build.VENDOR_25Q2));
         assumeFalse("Exclude new graphics requirements for TV", FeatureUtil.isTV(getDevice()));
         assumeFalse(
                 "Exclude new graphics requirements for Watch", FeatureUtil.isWatch(getDevice()));
@@ -459,15 +447,16 @@ public class VulkanTest extends BaseHostJUnit4Test {
                 assumeTrue("Chipsets entering GRF before A17 should support protectedMemory",
                         protectedMemory == 1);
             else
-                assertTrue("Chipsets starting or restarting GRF with A17 must support protectedMemory",
+                assertTrue(
+                        "Chipsets starting or restarting GRF with A17 must support protectedMemory",
                         protectedMemory == 1);
         }
     }
 
     /**
-     * All SoCs starting or restarting GRF with A17 must support VK_EXT_global_priority (or VK_KHR_global_priority).
-     * For A15/A16 produce assumption failure if this requirement is not met instead of failing.
-     * Swiftshader and other CPU-based implementations are exempt.
+     * All SoCs starting or restarting GRF with A17 must support VK_EXT_global_priority (or
+     * VK_KHR_global_priority). For A15/A16 produce assumption failure if this requirement is not
+     * met instead of failing. Swiftshader and other CPU-based implementations are exempt.
      */
     @VsrTest(requirements = {"VSR-3.2.1-011"})
     @Test
@@ -494,9 +483,68 @@ public class VulkanTest extends BaseHostJUnit4Test {
                 assumeTrue("Chipsets entering GRF before A17 should support global_priority",
                         extGlobalPriority || khrGlobalPriority);
             else
-                assertTrue("Chipsets starting or restarting GRF with A17 must support global_priority",
+                assertTrue(
+                        "Chipsets starting or restarting GRF with A17 must support global_priority",
                         extGlobalPriority || khrGlobalPriority);
         }
+    }
+
+    /**
+     * All Handheld SoCs starting or restarting GRF with A17 (except for Essential Tier SoCs) must
+     * use Skia's Graphite Vulkan backend with RenderEngine.
+     */
+    @VsrTest(requirements = {"VSR-3.2.1-017"})
+    @Test
+    public void checkSkiaREVulkanSupportHandheld() throws Exception {
+        assumeTrue(mustChipsetMeetGrfRequirement(getDevice(), Build.VENDOR_26Q2));
+        assumeTrue(mustNotBeEssentialTierChipset(getDevice()));
+        assumeTrue(mustMeetFirstApiLevel33OrHigher());
+        assumeTrue(
+                "Include new graphics requirements for handheld devices", isHandheld(getDevice()));
+
+        String reLine = getRenderEngineLine();
+
+        // For handheld devices, only the Graphite backend is required. If the test fails,
+        // the extracted RenderEngine line will be printed to provide more context for the failure.
+        assertTrue(reLine, reLine.contains(SKIA_GRAPHITE_VULKAN));
+    }
+
+    /**
+     * All PC SoCs starting or restarting GRF with A17 (except for Essential Tier SoCs) must use
+     * Skia's Vulkan backend (either Graphite or Ganesh) with RenderEngine.
+     */
+    @VsrTest(requirements = {"VSR-3.2.1-017"})
+    @Test
+    public void checkSkiaREVulkanSupportPC() throws Exception {
+        assumeTrue(mustChipsetMeetGrfRequirement(getDevice(), Build.VENDOR_26Q2));
+        assumeTrue(mustNotBeEssentialTierChipset(getDevice()));
+        assumeTrue(mustMeetFirstApiLevel33OrHigher());
+        assumeTrue("Include new graphics requirements for PC devices", isPC(getDevice()));
+
+        String reLine = getRenderEngineLine();
+
+        // For PC devices, either the Graphite or Ganesh Vulkan backend is acceptable for Skia's
+        // RenderEngine. If the test fails, the extracted RenderEngine line will be printed to
+        // provide more context for the failure.
+        assertTrue(reLine,
+                reLine.contains(SKIA_GRAPHITE_VULKAN) || reLine.contains(SKIA_GANESH_VULKAN));
+    }
+
+    private String getRenderEngineLine() throws Exception {
+        final String sfDump = getDevice().executeShellCommand("dumpsys SurfaceFlinger");
+        assertNotNull(sfDump);
+        assertTrue(sfDump.length() > 0);
+
+        // Extract the RenderEngine (-RE) line from the SurfaceFlinger dump
+        String reLine = "The device is not using Skia's Vulkan backend with RenderEngine.";
+        String[] lines = sfDump.split(System.getProperty("line.separator"));
+        for (String line : lines) {
+            if (line.contains("-RE")) {
+                reLine = line.trim();
+                break;
+            }
+        }
+        return reLine;
     }
 
     private boolean hasExtension(JSONObject device, String name, int minVersion) throws Exception {
@@ -508,5 +556,95 @@ public class VulkanTest extends BaseHostJUnit4Test {
                 return true;
         }
         return false;
+    }
+
+    /**
+     * All SoCs starting or restarting GRF with A17 (except for Essential Tier SoCs) must support
+     * VRA17
+     */
+    @VsrTest(requirements = {"VSR-3.2.1-016"})
+    @Test
+    public void checkVpAndroid17RequirementsSupport() throws Exception {
+        assumeTrue(mustChipsetMeetGrfRequirement(getDevice(), Build.VENDOR_26Q2));
+        assumeTrue(mustNotBeEssentialTierChipset(getDevice()));
+        assumeTrue(mustMeetFirstApiLevel33OrHigher());
+        assumeTrue("Include new graphics requirements only for handheld and PC devices",
+                isHandheld(getDevice()) || isPC(getDevice()));
+
+        boolean hasOnlyCpuDevice = true;
+        for (JSONObject device : mVulkanDevices) {
+            if (device.getJSONObject("properties").getInt("deviceType")
+                    != VK_PHYSICAL_DEVICE_TYPE_CPU) {
+                hasOnlyCpuDevice = false;
+            }
+        }
+
+        if (hasOnlyCpuDevice) {
+            return; // CPU-only devices are exempt from profile requirements.
+        }
+
+        // Check for Vulkan Profiles for Android 17 (VRA17) support.
+        String androidSupported = mVulkanProfiles.getString("VP_ANDROID_17_requirements");
+        assertEquals(
+                "This SoC must support VP_ANDROID_17_requirements.", "SUPPORTED", androidSupported);
+    }
+
+    /**
+     * All SoCs starting or restarting GRF with A17 (except for Essential Tier SoCs) must support
+     * AVP 2025
+     */
+    @VsrTest(requirements = {"VSR-3.2.1-016"})
+    @Test
+    public void checkVpAndroidVulkanProfile2025Support() throws Exception {
+        assumeTrue(mustChipsetMeetGrfRequirement(getDevice(), Build.VENDOR_26Q2));
+        assumeTrue(mustNotBeEssentialTierChipset(getDevice()));
+        assumeTrue(mustMeetFirstApiLevel33OrHigher());
+        assumeTrue("Include new graphics requirements only for handheld and PC devices",
+                isHandheld(getDevice()) || isPC(getDevice()));
+
+        boolean hasOnlyCpuDevice = true;
+        for (JSONObject device : mVulkanDevices) {
+            if (device.getJSONObject("properties").getInt("deviceType")
+                    != VK_PHYSICAL_DEVICE_TYPE_CPU) {
+                hasOnlyCpuDevice = false;
+            }
+        }
+
+        if (hasOnlyCpuDevice) {
+            return; // CPU-only devices are exempt from profile requirements.
+        }
+
+        // Check for Android Vulkan Profile 2025 (AVP 2025) support.
+        String vulkanProfileSupported = mVulkanProfiles.getString("VP_ANDROID_vulkan_profile_2025");
+        assertEquals("This SoC must support VP_ANDROID_vulkan_profile_2025.", "SUPPORTED",
+                vulkanProfileSupported);
+    }
+
+    /**
+     * All SoCs starting or restarting GRF with A17 (except for Essential Tier SoCs) must support
+     * Vulkan 1.4
+     */
+    @VsrTest(requirements = {"VSR-3.2.1-015"})
+    @Test
+    public void checkVulkan1_4Requirements() throws Exception {
+        assumeTrue(mustChipsetMeetGrfRequirement(getDevice(), Build.VENDOR_26Q2));
+        assumeTrue(mustNotBeEssentialTierChipset(getDevice()));
+        assumeTrue(mustMeetFirstApiLevel33OrHigher());
+        assumeTrue("Include new graphics requirements only for handheld and PC devices",
+                isHandheld(getDevice()) || isPC(getDevice()));
+
+        // Check for Vulkan 1.4 support.
+        assertTrue("Device must have Vulkan support", mVulkanDevices.length > 0);
+        for (JSONObject device : mVulkanDevices) {
+            final int apiVersion = device.getJSONObject("properties").getInt("apiVersion");
+            // Assert for each device
+            assertTrue(
+                    "Every Vulkan device must support 1.4", apiVersion >= VULKAN_1_4_API_VERSION);
+        }
+    }
+
+    private boolean mustMeetFirstApiLevel33OrHigher() throws Exception {
+        long firstApiLevel = getDevice().getIntProperty("ro.product.first_api_level", 0);
+        return firstApiLevel >= Build.TM;
     }
 }
